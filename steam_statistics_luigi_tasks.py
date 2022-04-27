@@ -7,6 +7,7 @@ from pyarrow import Table, parquet
 from requests import get
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
+from datetime import datetime
 
 
 def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_path, file_mask):
@@ -109,8 +110,8 @@ def ask_app_in_steam_store(app_id, app_name):
     soup = BeautifulSoup(app_page.text, "lxml")
     # ua = UserAgent(cache=False)
     # test = ua.random
-    app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')  # Недавние
-    result = {"rating_30d": {"%": "", "count": ""}, "rating_all_time": {"%": "", "count": ""}}
+    app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
+    result = {"rating_30d": {"%": "", "count": ""}, "rating_all_time": {"%": "", "count": ""}, "tags": {}}
     for rating in app_ratings:
         rating = rating.text
         rating = rating.replace("\t", "")
@@ -130,6 +131,41 @@ def ask_app_in_steam_store(app_id, app_name):
             rating = rating.split(' ')
             result['rating_all_time'].update({"%": rating[0]})
             result['rating_all_time'].update({"count": rating[1]})
+    app_tags = soup.find_all('a', class_='app_tag')
+    for tags in app_tags:
+        for tag in tags:
+            tag = tag.replace("\n", "")
+            tag = tag.replace("\r", "")
+            while "	" in tag:  # This is not "space"!
+                tag = tag.replace("	", "")
+            result['tags'].update({tag: 'True'})
+    app_content_makers = soup.find_all('div', class_='grid_content')
+    for makers in app_content_makers:
+        for maker in makers:
+            maker = str(maker)
+            while "	" in maker:
+                maker = maker.replace("	", "")
+            if 'developer' in maker:
+                maker = maker.split('>')
+                maker = maker[1]
+                maker = maker.replace('</a', '')
+                result.update({'developer': maker})
+            if 'publisher' in maker:
+                maker = maker.split('>')
+                maker = maker[1]
+                maker = maker.replace('</a', '')
+                result.update({'publisher': maker})
+    app_release_date = soup.find_all('div', class_='date')
+    for date in app_release_date:
+        date = str(date)
+        date = date.replace('<div class="date">', '')
+        date = date.replace('</div>', '')
+        date = date.replace(',', '')
+        date = datetime.strptime(date, '%d %b %Y')  # b - месяц словом
+        date = str(date)
+        date = date.split(' ')
+        date = date[0]
+        result.update({'date': date})
 
     return result
 

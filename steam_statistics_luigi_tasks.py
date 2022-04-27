@@ -104,7 +104,36 @@ def my_beautiful_task_universal_parser_part(result_successor, file_mask, drop_li
     return interested_data
 
 
+def steam_apps_parser(interested_data):
+    """Удаляем то что не является приложениями."""
+    for value in interested_data:
+        all_aps_data = interested_data.get(value)
+        all_aps_data = all_aps_data.iloc[0]
+        all_aps_data = all_aps_data.to_dict()
+        all_aps_data = all_aps_data.get('applist')
+        interested_data = DataFrame(all_aps_data)
+        interested_data = interested_data[~interested_data['name'].str.contains('Soundtrack')]
+        interested_data = interested_data[~interested_data['name'].str.contains('OST')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Artbook')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Texture')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Demo')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Playtest')]
+        interested_data = interested_data[~interested_data['name'].str.contains('DLC')]
+        interested_data = interested_data[~interested_data['name'].str.contains('test2')]
+        interested_data = interested_data[~interested_data['name'].str.contains('test3')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Pieterw')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Closed Beta')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Open Beta')]
+        interested_data = interested_data[~interested_data['name'].str.contains('RPG Maker')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Pack')]
+        null_filter = interested_data['name'] != ""
+        interested_data = interested_data[null_filter]
+        interested_data = interested_data.reset_index()
+    return interested_data
+
+
 def ask_app_in_steam_store(app_id, app_name):
+    """Парсинг страницы приложения."""
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
     app_page = get(app_page_url)
     soup = BeautifulSoup(app_page.text, "lxml")
@@ -165,7 +194,11 @@ def ask_app_in_steam_store(app_id, app_name):
         date = str(date)
         date = date.split(' ')
         date = date[0]
-        result.update({'date': date})
+        result.update({'steam_release_date': date})
+    date_today = str(datetime.today())
+    date_today = date_today.split(' ')
+    date_today = date_today[0]
+    result.update({'scan_date': date_today})
 
     return result
 

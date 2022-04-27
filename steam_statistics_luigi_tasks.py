@@ -35,10 +35,14 @@ def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_p
 
 def my_beautiful_task_path_parser(result_successor, dir_list, interested_partition, file_mask):
     """Наследование путей из result_successor."""
-    for flag in result_successor:
-        path_to_table = str.replace(flag.path, '_Validate_Success', '')
+    if result_successor is list or result_successor is tuple:
+        for flag in result_successor:
+            path_to_table = str.replace(flag.path, '_Validate_Success', '')
+            dir_list.append(path_to_table)
+    else:
+        path_to_table = str.replace(result_successor.path, '_Validate_Success', '')
         dir_list.append(path_to_table)
-    for parsing_dir in dir_list:  # Парсинг путей.
+    for parsing_dir in dir_list:
         for dirs, folders, files in walk(parsing_dir):
             for file in files:
                 partition_path = f'{dirs}{file}'
@@ -99,13 +103,33 @@ def my_beautiful_task_universal_parser_part(result_successor, file_mask, drop_li
     return interested_data
 
 
-
-
 def ask_app_in_steam_store(app_id, app_name):
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
-    app_page = str(get(app_page_url))
-    soup = BeautifulSoup(app_page, "lxml")
+    app_page = get(app_page_url)
+    soup = BeautifulSoup(app_page.text, "lxml")
     # ua = UserAgent(cache=False)
     # test = ua.random
-    test = soup.find_all()
+    app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')  # Недавние
+    result = {"rating_30d": {"%": "", "count": ""}, "rating_all_time": {"%": "", "count": ""}}
+    for rating in app_ratings:
+        rating = rating.text
+        rating = rating.replace("\t", "")
+        rating = rating.replace("\n", "")
+        rating = rating.replace("\r", "")
+        rating = rating.replace("- ", "")
+        if 'user reviews in the last 30 days' in rating:
+            rating = rating.replace(" user reviews in the last 30 days are positive.", "")
+            rating = rating.replace("of the ", "")
+            rating = rating.split(' ')
+            result['rating_30d'].update({"%": rating[0]})
+            result['rating_30d'].update({"count": rating[1]})
+        if 'user reviews for this game are positive' in rating:
+            rating = rating.replace(" user reviews for this game are positive.", "")
+            rating = rating.replace("of the ", "")
+            rating = rating.replace(",", "")
+            rating = rating.split(' ')
+            result['rating_all_time'].update({"%": rating[0]})
+            result['rating_all_time'].update({"count": rating[1]})
+
+    return result
 

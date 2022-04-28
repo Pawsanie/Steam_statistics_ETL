@@ -4,10 +4,12 @@ from luigi import run, Task, LocalTarget, ExternalTask, ListParameter, DateParam
 from os import walk, path
 from pandas import DataFrame
 from datetime import date, datetime
+from time import sleep
 from requests import get
 import json
+from random import randint
 from steam_statistics_luigi_tasks import my_beautiful_task_data_landing, my_beautiful_task_universal_parser_part, \
-    ask_app_in_steam_store, steam_apps_parser
+    ask_app_in_steam_store, steam_apps_parser, my_beautiful_task_data_frame_merge
 
 
 class AllSteamAppsData(Task):
@@ -55,26 +57,17 @@ class GetSteamAppInfo(Task):
         interested_data = my_beautiful_task_universal_parser_part(result_successor,
                                                                   ".json", drop_list=None)
         interested_data = steam_apps_parser(interested_data)
+        apps_df = None
         # for index in range(len(interested_data)):
-        #     app_name = interested_data.iloc[index]['name']
-        #     app_id = interested_data.iloc[index]['appid']
-        #     ask_app_in_steam_store(app_id, app_name)
-        result = None
-        for index in range(len(interested_data)):
+        for index in range(3):
+            time_wait = randint(3, 6)
             app_name = interested_data.iloc[index]['name']
             app_id = interested_data.iloc[index]['appid']
-            if 'Everlasting Summer' == app_name:
-                result = ask_app_in_steam_store(app_id, app_name)
-                print(result)
-
-
-        # result = str(ask_app_in_steam_store('331470', 'Everlasting Summer'))  # test
-        # print(result)
-            # partition_path = f"{self.get_steam_app_info_path}"
-            # day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
-            # result_path = f"{partition_path}/{day_for_landing}/{'result_test'}"
-            # with open(result_path, 'w') as file:
-            #     file.write(result)
+            sleep(time_wait)
+            result = ask_app_in_steam_store(app_id, app_name)
+            new_df_row = DataFrame.from_dict(result)
+            apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
+        print(apps_df)
 
 
 if __name__ == "__main__":

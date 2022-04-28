@@ -105,7 +105,7 @@ def my_beautiful_task_universal_parser_part(result_successor, file_mask, drop_li
 
 
 def steam_apps_parser(interested_data):
-    """Удаляем то что не является приложениями."""
+    """Удаляем то что не является играми, на этапе работы с сырыми данными.."""
     for value in interested_data:
         all_aps_data = interested_data.get(value)
         all_aps_data = all_aps_data.iloc[0]
@@ -140,7 +140,8 @@ def ask_app_in_steam_store(app_id, app_name):
     # ua = UserAgent(cache=False)
     # test = ua.random
     app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
-    result = {"rating_30d": {"%": "", "count": ""}, "rating_all_time": {"%": "", "count": ""}, "tags": {}}
+    result = {"rating_30d_percent": "", "rating_30d_count": "", "rating_all_time_percent": "",
+              "rating_all_time_count": "", "tags": {}}
     for rating in app_ratings:
         rating = rating.text
         rating = rating.replace("\t", "")
@@ -151,21 +152,21 @@ def ask_app_in_steam_store(app_id, app_name):
             rating = rating.replace(" user reviews in the last 30 days are positive.", "")
             rating = rating.replace("of the ", "")
             rating = rating.split(' ')
-            result['rating_30d'].update({"%": rating[0]})
-            result['rating_30d'].update({"count": rating[1]})
+            result.update({"rating_30d_percent": rating[0]})
+            result.update({"rating_30d_count": rating[1]})
         if 'user reviews for this game are positive' in rating:
             rating = rating.replace(" user reviews for this game are positive.", "")
             rating = rating.replace("of the ", "")
             rating = rating.replace(",", "")
             rating = rating.split(' ')
-            result['rating_all_time'].update({"%": rating[0]})
-            result['rating_all_time'].update({"count": rating[1]})
+            result.update({"rating_all_time_percent": rating[0]})
+            result.update({"rating_all_time_count": rating[1]})
     app_tags = soup.find_all('a', class_='app_tag')
     for tags in app_tags:
         for tag in tags:
             tag = tag.replace("\n", "")
             tag = tag.replace("\r", "")
-            while "	" in tag:  # This is not "space"!
+            while "	" in tag:  # This is not "space"! / Что-то типа пробела, но не он.
                 tag = tag.replace("	", "")
             result['tags'].update({tag: 'True'})
     app_content_makers = soup.find_all('div', class_='grid_content')

@@ -59,9 +59,17 @@ class GetSteamAppInfo(Task):
         #     app_name = interested_data.iloc[index]['name']
         #     app_id = interested_data.iloc[index]['appid']
         #     ask_app_in_steam_store(app_id, app_name)
+        result = None
+        for index in range(len(interested_data)):
+            app_name = interested_data.iloc[index]['name']
+            app_id = interested_data.iloc[index]['appid']
+            if 'Sakura Hime 2' == app_name:
+                result = ask_app_in_steam_store(app_id, app_name)
+                print(result)
 
-        result = str(ask_app_in_steam_store('331470', 'Everlasting Summer'))  # test
-        print(result)
+
+        # result = str(ask_app_in_steam_store('331470', 'Everlasting Summer'))  # test
+        # print(result)
             # partition_path = f"{self.get_steam_app_info_path}"
             # day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
             # result_path = f"{partition_path}/{day_for_landing}/{'result_test'}"

@@ -29,6 +29,10 @@ def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_p
     if data_type_need == 'parquet':
         parquet_table = Table.from_pandas(data_to_landing)
         parquet.write_table(parquet_table, output_path, use_dictionary=False, compression=None)
+    if data_type_need == 'csv':
+        data_to_csv = data_to_landing.to_csv(index=False)
+        with open(output_path, 'w') as csv_file:
+            csv_file.write(data_to_csv)
     flag = open(flag_path, 'w')
     flag.close()
     return flag_path
@@ -139,10 +143,10 @@ def ask_app_in_steam_store(app_id, app_name):
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
     app_page = get(app_page_url, headers=scrap_user)
     soup = BeautifulSoup(app_page.text, "lxml")
-    app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
     result = {}
     result.update({'app_id': [app_id]})
     result.update({'app_name': [app_name]})
+    app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
     for rating in app_ratings:
         rating = rating.text
         rating = rating.replace("\t", "")

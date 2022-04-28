@@ -141,6 +141,8 @@ def ask_app_in_steam_store(app_id, app_name):
     soup = BeautifulSoup(app_page.text, "lxml")
     app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
     result = {}
+    result.update({'app_id': [app_id]})
+    result.update({'app_name': [app_name]})
     for rating in app_ratings:
         rating = rating.text
         rating = rating.replace("\t", "")

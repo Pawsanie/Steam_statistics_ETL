@@ -63,7 +63,7 @@ class GetSteamAppInfo(Task):
         for index in range(len(interested_data)):
             app_name = interested_data.iloc[index]['name']
             app_id = interested_data.iloc[index]['appid']
-            if 'Sakura Hime 2' == app_name:
+            if 'Everlasting Summer' == app_name:
                 result = ask_app_in_steam_store(app_id, app_name)
                 print(result)
 

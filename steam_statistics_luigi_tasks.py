@@ -135,10 +135,9 @@ def steam_apps_parser(interested_data):
 def ask_app_in_steam_store(app_id, app_name):
     """Скрапинг страницы приложения."""
     ua = UserAgent(cache=False)
-    no_cache = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
-    scrap_user = {"User-Agent": str(ua.random)}
+    scrap_user = {"User-Agent": str(ua.random), "Cache-Control": "no-cache", "Pragma": "no-cache"}
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
-    app_page = get(app_page_url, headers=scrap_user, params=no_cache)
+    app_page = get(app_page_url, headers=scrap_user)
     soup = BeautifulSoup(app_page.text, "lxml")
     app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
     result = {"rating_30d_percent": "", "rating_30d_count": "", "rating_all_time_percent": "",
@@ -170,6 +169,8 @@ def ask_app_in_steam_store(app_id, app_name):
             while "	" in tag:  # This is not "space"!
                 tag = tag.replace("	", "")
             result['tags'].update({tag: 'True'})
+            if tag == 'Free to Play':
+                result.update({'price': '0'})
     app_content_makers = soup.find_all('div', class_='grid_content')
     for makers in app_content_makers:
         for maker in makers:
@@ -201,10 +202,27 @@ def ask_app_in_steam_store(app_id, app_name):
     date_today = date_today.split(' ')
     date_today = date_today[0]
     result.update({'scan_date': date_today})
+    # if price have discount
+    app_release_date = soup.find_all('div', class_='discount_block game_purchase_discount')
+    for prices in app_release_date:
+        for price in prices:
+            price = str(price)
+            if '%' not in price:
+                price = price.split('">')
+                price = price[2]
+                price = price.replace('</div><div class="discount_final_price', '')
+                result.update({'price': price})
     app_release_date = soup.find_all('div', class_='game_purchase_price price')
     for price in app_release_date:
-        print('---------------------------------------------')
-        print(price)
-        # result.update({'scan_date': date_today})
-        print('---------------------------------------------')
+        price = str(price)
+        while "	" in price:  # This is not "space"!
+            price = price.replace("	", "")
+        price = price.split('div')
+        price = price[1]
+        price = price.replace("</", "")
+        if 'data-price' in price:
+            price = price.split('>')
+            price = price[1]
+            price = price.replace('\r\n', '')
+            result.update({'price': price})
     return result

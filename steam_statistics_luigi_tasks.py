@@ -133,12 +133,13 @@ def steam_apps_parser(interested_data):
 
 
 def ask_app_in_steam_store(app_id, app_name):
-    """Парсинг страницы приложения."""
+    """Скрапинг страницы приложения."""
+    ua = UserAgent(cache=False)
+    no_cache = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
+    scrap_user = {"User-Agent": str(ua.random)}
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
-    app_page = get(app_page_url)
+    app_page = get(app_page_url, headers=scrap_user, params=no_cache)
     soup = BeautifulSoup(app_page.text, "lxml")
-    # ua = UserAgent(cache=False)
-    # test = ua.random
     app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
     result = {"rating_30d_percent": "", "rating_30d_count": "", "rating_all_time_percent": "",
               "rating_all_time_count": "", "tags": {}}
@@ -166,7 +167,7 @@ def ask_app_in_steam_store(app_id, app_name):
         for tag in tags:
             tag = tag.replace("\n", "")
             tag = tag.replace("\r", "")
-            while "	" in tag:  # This is not "space"! / Что-то типа пробела, но не он.
+            while "	" in tag:  # This is not "space"!
                 tag = tag.replace("	", "")
             result['tags'].update({tag: 'True'})
     app_content_makers = soup.find_all('div', class_='grid_content')
@@ -200,6 +201,10 @@ def ask_app_in_steam_store(app_id, app_name):
     date_today = date_today.split(' ')
     date_today = date_today[0]
     result.update({'scan_date': date_today})
-
+    app_release_date = soup.find_all('div', class_='game_purchase_price price')
+    for price in app_release_date:
+        print('---------------------------------------------')
+        print(price)
+        # result.update({'scan_date': date_today})
+        print('---------------------------------------------')
     return result
-

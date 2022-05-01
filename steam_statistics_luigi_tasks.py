@@ -302,7 +302,7 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
         time_wait = randint(3, 6)
         app_name = interested_data.iloc[index]['name']
         app_id = interested_data.iloc[index]['appid']
-        if str(app_name) not in apps_df_redy['app_name'].values:
+        if str(app_name) not in apps_df_redy['app_name'].values:  # Have conflict with Numpy and Pandas.
             sleep(time_wait)
             result = ask_app_in_steam_store(app_id, app_name)
             new_df_row = DataFrame.from_dict(result)
@@ -312,3 +312,13 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
             print("'" + app_name + "' already is in _safe_dict_data...")
     apps_df = my_beautiful_task_data_frame_merge(apps_df_redy, apps_df)
     return apps_df
+
+
+def get_csv_for_join(result_successor):
+    """
+    Создаёт корневой путь для csv.
+    """
+    path_to_table = str.replace(result_successor.path, '_Validate_Success', '')
+    path_to_table = path_to_table.split('/')
+    interested_data = []
+    return interested_data

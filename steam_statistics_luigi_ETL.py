@@ -1,15 +1,11 @@
-from typing import Optional, Any
-
 from luigi import run, Task, LocalTarget, ExternalTask, ListParameter, DateParameter, Parameter, DictParameter
 from os import walk, path, remove
 from pandas import DataFrame
 from datetime import date, datetime
-from time import sleep
 from requests import get
 import json
-from random import randint
 from steam_statistics_luigi_tasks import my_beautiful_task_data_landing, my_beautiful_task_universal_parser_part, \
-    steam_apps_parser, parsing_steam_data
+    steam_apps_parser, parsing_steam_data, get_csv_for_join
 
 
 class AllSteamAppsData(Task):
@@ -17,7 +13,7 @@ class AllSteamAppsData(Task):
     Получаем список приложений от SteamAPI
     """
     task_namespace = 'AllSteamAppsData'
-    priority = 100
+    priority = 200
     all_steam_apps_path = Parameter(significant=True, description='Root path for gets all aps from steam')
     date_path_part = DateParameter(default=date.today(), description='Dat for root path')
 
@@ -63,6 +59,28 @@ class GetSteamAppInfo(Task):
         safe_dict_data_path = f"{self.get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
         if path.isfile(safe_dict_data_path):
             remove(safe_dict_data_path)
+
+
+class AppInfoCSVJoiner(Task):
+    """
+    Объединяет все сырые CSV таблицы в одну masterdata.
+    """
+    task_namespace = 'AppInfoCSVJoiner'
+    priority = 100
+    app_info_csv_joiner_path = Parameter(significant=True, description='Path to join all GetSteamAppInfo.csv')
+    date_path_part = DateParameter(default=date.today(), description='Dat for root path')
+
+    def requires(self):
+        return {'GetSteamAppInfo': GetSteamAppInfo()}
+
+    def output(self):
+        return LocalTarget(path.join(f"{self.app_info_csv_joiner_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
+
+    def run(self):
+        result_successor = self.input()['GetSteamAppInfo']
+        root_path = get_csv_for_join(result_successor)
+        interested_data = my_beautiful_task_universal_parser_part(root_path,
+                                                                  ".csv", drop_list=None)
 
 
 if __name__ == "__main__":

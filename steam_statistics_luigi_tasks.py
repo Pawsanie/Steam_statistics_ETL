@@ -1,17 +1,19 @@
-from os import walk, path, makedirs
+from os import walk, path, makedirs, remove
 import json
 from pandas import DataFrame, read_csv, read_json
 from numpy import NaN
-import typing
 from pyarrow import Table, parquet
 from requests import get, exceptions
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from datetime import datetime
+from random import randint
+from time import sleep
+from ast import literal_eval
 
 
 def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_path, file_mask):
-    """Приземление распаршеных данных в виде json, или parquet."""
+    """Приземление распаршеных данных в виде json, csv, или parquet."""
     data_type_need = file_mask.split('.')
     data_type_need = data_type_need[1]
     output_path = f'{partition_path}/{day_for_landing}'
@@ -149,7 +151,7 @@ def connect_retry(n):
                     return function(*args, **kwargs)
                 except:
                     try_number = try_number+1
-                    print('Retry...' + try_number)
+                    print('Retry... ' + try_number)
         return function_for_trying
     return function_decor
 
@@ -261,3 +263,51 @@ def ask_app_in_steam_store(app_id, app_name):
     except exceptions.ConnectTimeout as error:
         print(error)
         pass
+
+
+def safe_dict_data(path_to_file, date, df):
+    """Временное хранилище, для загрузки сырых данных."""
+    path_to_file = f"{path_to_file}/{date}"
+    file_path = f"{path_to_file}/{'_safe_dict_data'}"
+    df = str(df.to_dict()) + '\n'
+    if not path.exists(path_to_file):
+        makedirs(path_to_file)
+    with open(file_path, 'a') as safe_file:
+        safe_file.write(df)
+
+
+def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df):
+    safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
+    print(safe_dict_data_path)
+    apps_df_redy = None
+    if path.isfile(safe_dict_data_path):
+        safe_dict_data_file = open(safe_dict_data_path, 'r')
+        rows = safe_dict_data_file.readlines()
+        rows_len = len(rows)-1
+        if rows_len > 0:
+            rows.pop(rows_len)
+            safe_dict_data_file = open(safe_dict_data_path, 'w')
+            for row in rows:
+                safe_dict_data_file.write(row)
+        else:
+            remove(safe_dict_data_path)
+        safe_dict_data_file.close()
+        with open(safe_dict_data_path, 'r') as safe_dict_data_file:
+            for row in safe_dict_data_file:
+                row = DataFrame.from_dict(literal_eval(row.replace('\n', '')))
+                apps_df_redy = my_beautiful_task_data_frame_merge(apps_df_redy, row)
+    else:
+        apps_df_redy = DataFrame({'app_name': []})
+    for index in range(len(interested_data)):
+        time_wait = randint(3, 6)
+        app_name = interested_data.iloc[index]['name']
+        app_id = interested_data.iloc[index]['appid']
+        if str(app_name) not in apps_df_redy['app_name'].values:
+            sleep(time_wait)
+            result = ask_app_in_steam_store(app_id, app_name)
+            new_df_row = DataFrame.from_dict(result)
+            safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row)
+            apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
+        else:
+            print("'" + app_name + "' already is in _safe_dict_data...")
+    return apps_df

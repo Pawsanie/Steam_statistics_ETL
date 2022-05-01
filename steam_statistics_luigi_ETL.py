@@ -9,7 +9,7 @@ from requests import get
 import json
 from random import randint
 from steam_statistics_luigi_tasks import my_beautiful_task_data_landing, my_beautiful_task_universal_parser_part, \
-    ask_app_in_steam_store, steam_apps_parser, my_beautiful_task_data_frame_merge
+    steam_apps_parser, parsing_steam_data
 
 
 class AllSteamAppsData(Task):
@@ -56,15 +56,17 @@ class GetSteamAppInfo(Task):
                                                                   ".json", drop_list=None)
         interested_data = steam_apps_parser(interested_data)
         apps_df = None
-        for index in range(len(interested_data)):
-            time_wait = randint(3, 6)
-            app_name = interested_data.iloc[index]['name']
-            app_id = interested_data.iloc[index]['appid']
-            sleep(time_wait)
-            result = ask_app_in_steam_store(app_id, app_name)
-            new_df_row = DataFrame.from_dict(result)
-            apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
+        parsing_steam_data(interested_data, self.get_steam_app_info_path, day_for_landing, apps_df)
+        # for index in range(len(interested_data)):
+        #     time_wait = randint(3, 6)
+        #     app_name = interested_data.iloc[index]['name']
+        #     app_id = interested_data.iloc[index]['appid']
+        #     sleep(time_wait)
+        #     result = ask_app_in_steam_store(app_id, app_name)
+        #     new_df_row = DataFrame.from_dict(result)
+        #     safe_dict_data(self.get_steam_app_info_path, day_for_landing, new_df_row)
+        #     apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
         my_beautiful_task_data_landing(apps_df, day_for_landing,
                                        self.get_steam_app_info_path, "GetSteamAppInfo.csv")
 

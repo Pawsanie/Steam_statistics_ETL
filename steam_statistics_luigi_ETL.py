@@ -1,7 +1,7 @@
 from typing import Optional, Any
 
 from luigi import run, Task, LocalTarget, ExternalTask, ListParameter, DateParameter, Parameter, DictParameter
-from os import walk, path
+from os import walk, path, remove
 from pandas import DataFrame
 from datetime import date, datetime
 from time import sleep
@@ -58,17 +58,11 @@ class GetSteamAppInfo(Task):
         apps_df = None
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
         parsing_steam_data(interested_data, self.get_steam_app_info_path, day_for_landing, apps_df)
-        # for index in range(len(interested_data)):
-        #     time_wait = randint(3, 6)
-        #     app_name = interested_data.iloc[index]['name']
-        #     app_id = interested_data.iloc[index]['appid']
-        #     sleep(time_wait)
-        #     result = ask_app_in_steam_store(app_id, app_name)
-        #     new_df_row = DataFrame.from_dict(result)
-        #     safe_dict_data(self.get_steam_app_info_path, day_for_landing, new_df_row)
-        #     apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
         my_beautiful_task_data_landing(apps_df, day_for_landing,
                                        self.get_steam_app_info_path, "GetSteamAppInfo.csv")
+        safe_dict_data_path = f"{self.get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
+        if path.isfile(safe_dict_data_path):
+            remove(safe_dict_data_path)
 
 
 if __name__ == "__main__":

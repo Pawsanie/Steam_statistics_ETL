@@ -310,4 +310,5 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
             apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
         else:
             print("'" + app_name + "' already is in _safe_dict_data...")
+    apps_df = my_beautiful_task_data_frame_merge(apps_df_redy, apps_df)
     return apps_df

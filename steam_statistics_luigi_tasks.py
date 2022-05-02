@@ -132,6 +132,8 @@ def steam_apps_parser(interested_data):
         interested_data = interested_data[~interested_data['name'].str.contains('Open Beta')]
         interested_data = interested_data[~interested_data['name'].str.contains('RPG Maker')]
         interested_data = interested_data[~interested_data['name'].str.contains('Pack')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Trailer')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Teaser')]
         null_filter = interested_data['name'] != ""
         interested_data = interested_data[null_filter]
         interested_data = interested_data.reset_index()
@@ -149,13 +151,9 @@ def connect_retry(n):
             while try_number < n:
                 try:
                     return function(*args, **kwargs)
-                # except IndexError:
-                #     pass
                 except:
                     try_number = try_number+1
                     print('Retry... ' + str(try_number))
-                    if try_number > n:
-                        pass
         return function_for_trying
     return function_decor
 
@@ -170,8 +168,6 @@ def ask_app_in_steam_store(app_id, app_name):
     app_page = get(app_page_url, headers=scrap_user)
     soup = BeautifulSoup(app_page.text, "lxml")
     result = {}
-    result.update({'app_id': [app_id]})
-    result.update({'app_name': [app_name]})
     app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
     for rating in app_ratings:
         rating = rating.text
@@ -232,10 +228,6 @@ def ask_app_in_steam_store(app_id, app_name):
             result.update({'steam_release_date': date})
         except ValueError:
             result.update({'steam_release_date': 'in the pipeline'})
-    date_today = str(datetime.today())
-    date_today = date_today.split(' ')
-    date_today = date_today[0]
-    result.update({'scan_date': [date_today]})
     # if price have discount
     app_release_date = soup.find_all('div', class_='discount_block game_purchase_discount')
     for prices in app_release_date:
@@ -260,6 +252,12 @@ def ask_app_in_steam_store(app_id, app_name):
             price = price.replace('\r\n', '')
             result.update({'price': [price]})
     if len(result) != 0:
+        result.update({'app_id': [app_id]})
+        result.update({'app_name': [app_name]})
+        date_today = str(datetime.today())
+        date_today = date_today.split(' ')
+        date_today = date_today[0]
+        result.update({'scan_date': [date_today]})
         return result
 
 
@@ -304,9 +302,14 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
         if str(app_name) not in apps_df_redy['app_name'].values:  # Have conflict with Numpy and Pandas.
             sleep(time_wait)
             result = ask_app_in_steam_store(app_id, app_name)
-            new_df_row = DataFrame.from_dict(result)
-            safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row)
-            apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
+            if result is not None:
+                new_df_row = DataFrame.from_dict(result)
+                inserted_columns = ['app_id', 'app_name']
+                new_columns = ([col for col in inserted_columns if col in new_df_row]
+                               + [col for col in new_df_row if col not in inserted_columns])
+                new_df_row = new_df_row[new_columns]
+                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row)
+                apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
         else:
             print("'" + app_name + "' already is in _safe_dict_data...")
     apps_df = my_beautiful_task_data_frame_merge(apps_df_redy, apps_df)

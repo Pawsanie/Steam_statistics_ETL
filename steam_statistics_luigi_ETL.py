@@ -77,10 +77,11 @@ class AppInfoCSVJoiner(Task):
         return LocalTarget(path.join(f"{self.app_info_csv_joiner_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
-        result_successor = self.input()['GetSteamAppInfo']
-        root_path = get_csv_for_join(result_successor)
-        interested_data = my_beautiful_task_universal_parser_part(root_path,
-                                                                  ".csv", drop_list=None)
+        print('ok')
+        # result_successor = self.input()['GetSteamAppInfo']
+        # root_path = get_csv_for_join(result_successor)
+        # interested_data = my_beautiful_task_universal_parser_part(root_path,
+        #                                                           ".csv", drop_list=None)
 
 
 if __name__ == "__main__":

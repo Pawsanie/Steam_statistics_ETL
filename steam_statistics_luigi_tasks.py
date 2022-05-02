@@ -149,9 +149,13 @@ def connect_retry(n):
             while try_number < n:
                 try:
                     return function(*args, **kwargs)
+                # except IndexError:
+                #     pass
                 except:
                     try_number = try_number+1
-                    print('Retry... ' + try_number)
+                    print('Retry... ' + str(try_number))
+                    if try_number > n:
+                        pass
         return function_for_trying
     return function_decor
 
@@ -163,106 +167,100 @@ def ask_app_in_steam_store(app_id, app_name):
     ua = UserAgent(cache=False, verify_ssl=False)
     scrap_user = {"User-Agent": str(ua.random), "Cache-Control": "no-cache", "Pragma": "no-cache"}
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
-    try:
-        app_page = get(app_page_url, headers=scrap_user)
-        soup = BeautifulSoup(app_page.text, "lxml")
-        result = {}
-        result.update({'app_id': [app_id]})
-        result.update({'app_name': [app_name]})
-        app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
-        for rating in app_ratings:
-            rating = rating.text
-            rating = rating.replace("\t", "")
-            rating = rating.replace("\n", "")
-            rating = rating.replace("\r", "")
-            rating = rating.replace("- ", "")
-            if 'user reviews in the last 30 days' in rating:
-                rating = rating.replace(" user reviews in the last 30 days are positive.", "")
-                rating = rating.replace("of the ", "")
-                rating = rating.split(' ')
-                result.update({"rating_30d_percent": [rating[0]]})
-                result.update({"rating_30d_count": [rating[1]]})
-            if 'user reviews for this game are positive' in rating:
-                rating = rating.replace(" user reviews for this game are positive.", "")
-                rating = rating.replace("of the ", "")
-                rating = rating.replace(",", "")
-                rating = rating.split(' ')
-                result.update({"rating_all_time_percent": [rating[0]]})
-                result.update({"rating_all_time_count": [rating[1]]})
-        app_tags = soup.find_all('a', class_='app_tag')
-        for tags in app_tags:
-            for tag in tags:
-                tag = tag.replace("\n", "")
-                tag = tag.replace("\r", "")
-                while "	" in tag:  # This is not "space"!
-                    tag = tag.replace("	", "")
-                result.update({tag: ['True']})
-                if tag == 'Free to Play':
-                    result.update({'price': ['0']})
-        app_content_makers = soup.find_all('div', class_='grid_content')
-        for makers in app_content_makers:
-            for maker in makers:
-                maker = str(maker)
-                while "	" in maker:
-                    maker = maker.replace("	", "")
-                if 'developer' in maker:
-                    maker = maker.split('>')
-                    maker = maker[1]
-                    maker = maker.replace('</a', '')
-                    result.update({'developer': [maker]})
-                if 'publisher' in maker:
-                    maker = maker.split('>')
-                    maker = maker[1]
-                    maker = maker.replace('</a', '')
-                    result.update({'publisher': [maker]})
-        app_release_date = soup.find_all('div', class_='date')
-        for date in app_release_date:
-            try:
-                date = str(date)
-                date = date.replace('<div class="date">', '')
-                date = date.replace('</div>', '')
-                date = date.replace(',', '')
-                date = datetime.strptime(date, '%d %b %Y')  # b - месяц словом
-                date = str(date)
-                date = date.split(' ')
-                date = date[0]
-                result.update({'steam_release_date': date})
-            except ValueError:
-                result.update({'steam_release_date': 'in the pipeline'})
-        date_today = str(datetime.today())
-        date_today = date_today.split(' ')
-        date_today = date_today[0]
-        result.update({'scan_date': [date_today]})
-        # if price have discount
-        app_release_date = soup.find_all('div', class_='discount_block game_purchase_discount')
-        for prices in app_release_date:
-            for price in prices:
-                price = str(price)
-                if '%' not in price:
-                    price = price.split('">')
-                    price = price[2]
-                    price = price.replace('</div><div class="discount_final_price', '')
-                    result.update({'price': [price]})
-        app_release_date = soup.find_all('div', class_='game_purchase_price price')
-        for price in app_release_date:
+    app_page = get(app_page_url, headers=scrap_user)
+    soup = BeautifulSoup(app_page.text, "lxml")
+    result = {}
+    result.update({'app_id': [app_id]})
+    result.update({'app_name': [app_name]})
+    app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
+    for rating in app_ratings:
+        rating = rating.text
+        rating = rating.replace("\t", "")
+        rating = rating.replace("\n", "")
+        rating = rating.replace("\r", "")
+        rating = rating.replace("- ", "")
+        if 'user reviews in the last 30 days' in rating:
+            rating = rating.replace(" user reviews in the last 30 days are positive.", "")
+            rating = rating.replace("of the ", "")
+            rating = rating.split(' ')
+            result.update({"rating_30d_percent": [rating[0]]})
+            result.update({"rating_30d_count": [rating[1]]})
+        if 'user reviews for this game are positive' in rating:
+            rating = rating.replace(" user reviews for this game are positive.", "")
+            rating = rating.replace("of the ", "")
+            rating = rating.replace(",", "")
+            rating = rating.split(' ')
+            result.update({"rating_all_time_percent": [rating[0]]})
+            result.update({"rating_all_time_count": [rating[1]]})
+    app_tags = soup.find_all('a', class_='app_tag')
+    for tags in app_tags:
+        for tag in tags:
+            tag = tag.replace("\n", "")
+            tag = tag.replace("\r", "")
+            while "	" in tag:  # This is not "space"!
+                tag = tag.replace("	", "")
+            result.update({tag: ['True']})
+            if tag == 'Free to Play':
+                result.update({'price': ['0']})
+    app_content_makers = soup.find_all('div', class_='grid_content')
+    for makers in app_content_makers:
+        for maker in makers:
+            maker = str(maker)
+            while "	" in maker:
+                maker = maker.replace("	", "")
+            if 'developer' in maker:
+                maker = maker.split('>')
+                maker = maker[1]
+                maker = maker.replace('</a', '')
+                result.update({'developer': [maker]})
+            if 'publisher' in maker:
+                maker = maker.split('>')
+                maker = maker[1]
+                maker = maker.replace('</a', '')
+                result.update({'publisher': [maker]})
+    app_release_date = soup.find_all('div', class_='date')
+    for date in app_release_date:
+        try:
+            date = str(date)
+            date = date.replace('<div class="date">', '')
+            date = date.replace('</div>', '')
+            date = date.replace(',', '')
+            date = datetime.strptime(date, '%d %b %Y')  # b - месяц словом
+            date = str(date)
+            date = date.split(' ')
+            date = date[0]
+            result.update({'steam_release_date': date})
+        except ValueError:
+            result.update({'steam_release_date': 'in the pipeline'})
+    date_today = str(datetime.today())
+    date_today = date_today.split(' ')
+    date_today = date_today[0]
+    result.update({'scan_date': [date_today]})
+    # if price have discount
+    app_release_date = soup.find_all('div', class_='discount_block game_purchase_discount')
+    for prices in app_release_date:
+        for price in prices:
             price = str(price)
-            while "	" in price:  # This is not "space"!
-                price = price.replace("	", "")
-            price = price.split('div')
-            price = price[1]
-            price = price.replace("</", "")
-            if 'data-price' in price:
-                price = price.split('>')
-                price = price[1]
-                price = price.replace('\r\n', '')
+            if '%' not in price:
+                price = price.split('">')
+                price = price[2]
+                price = price.replace('</div><div class="discount_final_price', '')
                 result.update({'price': [price]})
+    app_release_date = soup.find_all('div', class_='game_purchase_price price')
+    for price in app_release_date:
+        price = str(price)
+        while "	" in price:  # This is not "space"!
+            price = price.replace("	", "")
+        price = price.split('div')
+        price = price[1]
+        price = price.replace("</", "")
+        if 'data-price' in price:
+            price = price.split('>')
+            price = price[1]
+            price = price.replace('\r\n', '')
+            result.update({'price': [price]})
+    if len(result) != 0:
         return result
-    except exceptions.SSLError as error:
-        print(error)
-        pass
-    except exceptions.ConnectTimeout as error:
-        print(error)
-        pass
 
 
 def safe_dict_data(path_to_file, date, df):
@@ -278,7 +276,6 @@ def safe_dict_data(path_to_file, date, df):
 
 def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df):
     safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
-    print(safe_dict_data_path)
     apps_df_redy = None
     if path.isfile(safe_dict_data_path):
         safe_dict_data_file = open(safe_dict_data_path, 'r')
@@ -292,9 +289,11 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
         else:
             remove(safe_dict_data_path)
         safe_dict_data_file.close()
+        print('Start merge local_cash')
         with open(safe_dict_data_path, 'r') as safe_dict_data_file:
             for row in safe_dict_data_file:
                 row = DataFrame.from_dict(literal_eval(row.replace('\n', '')))
+                print(row)
                 apps_df_redy = my_beautiful_task_data_frame_merge(apps_df_redy, row)
     else:
         apps_df_redy = DataFrame({'app_name': []})

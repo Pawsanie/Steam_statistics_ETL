@@ -134,6 +134,7 @@ def steam_apps_parser(interested_data):
         interested_data = interested_data[~interested_data['name'].str.contains('Pack')]
         interested_data = interested_data[~interested_data['name'].str.contains('Trailer')]
         interested_data = interested_data[~interested_data['name'].str.contains('Teaser')]
+        interested_data = interested_data[~interested_data['name'].str.contains('Digital Art Book')]
         null_filter = interested_data['name'] != ""
         interested_data = interested_data[null_filter]
         interested_data = interested_data.reset_index()

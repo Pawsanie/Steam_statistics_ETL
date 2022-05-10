@@ -274,6 +274,11 @@ def safe_dict_data(path_to_file, date, df):
 
 
 def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df):
+    """
+    Корневая переменная, отвечающая за чтение локального кэша,
+    его мёрдж с распаршеными данными от скрапинга страниц приложений steam.
+    Отвечает за таймауты при get запросах к страницам приложений.
+    """
     safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
     apps_df_redy = None
     if path.isfile(safe_dict_data_path):

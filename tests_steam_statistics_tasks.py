@@ -41,7 +41,9 @@ class TestAllSteamAppsData(unittest.TestCase):
     @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
            my_beautiful_task_data_landing=my_beautiful_task_data_landing)
     def test_task(self, mock_my_beautiful_task_data_landing):
-        """Работоспособность самой AllSteamAppsData таски, без записи на диск."""
+        """
+        Работоспособность самой AllSteamAppsData таски, без записи на диск.
+        """
         AllSteamAppsData.all_steam_apps_path = Parameter(self.test_all_steam_apps_path)
         AllSteamAppsData.date_path_part = DateParameter(default=self.test_date_path_part)
         self.AllSteamAppsData = AllSteamAppsData()
@@ -60,7 +62,9 @@ class TestAllSteamAppsData(unittest.TestCase):
     @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
            my_beautiful_task_data_landing=my_beautiful_task_data_landing)
     def test_run(self, mock_my_beautiful_task_data_landing):
-        """Отдельная проверка работоспособности модуля AllSteamAppsData.run."""
+        """
+        Отдельная проверка работоспособности модуля AllSteamAppsData.run.
+        """
         AllSteamAppsData.all_steam_apps_path = Parameter(self.test_all_steam_apps_path)
         AllSteamAppsData.date_path_part = DateParameter(default=self.test_date_path_part)
         self.AllSteamAppsData = AllSteamAppsData()
@@ -89,7 +93,9 @@ class TestGetSteamAppInfo(unittest.TestCase):
     @patch('steam_statistics_luigi_tasks.safe_dict_data',
            safe_dict_data=safe_dict_data)
     def test_task(self, mock_my_beautiful_task_data_landing, mock_interested_data, mock_safe_dict_data):
-        """Работоспособность самой GetSteamAppInfo таски, без записи на диск."""
+        """
+        Работоспособность самой GetSteamAppInfo таски, без записи на диск.
+        """
         GetSteamAppInfo.get_steam_app_info_path = Parameter(self.test_get_steam_app_info_path)
         GetSteamAppInfo.date_path_part = DateParameter(default=self.test_date_path_part)
         self.GetSteamAppInfo = GetSteamAppInfo()
@@ -113,7 +119,9 @@ class TestGetSteamAppInfo(unittest.TestCase):
     @patch('steam_statistics_luigi_tasks.safe_dict_data',
            steam_apps_parser=steam_apps_parser)
     def test_run(self, mock_my_beautiful_task_data_landing, mock_steam_apps_parser, mock_safe_dict_data):
-        """Отдельная проверка работоспособности модуля GetSteamAppInfo.run."""
+        """
+        Отдельная проверка работоспособности модуля GetSteamAppInfo.run.
+        """
         GetSteamAppInfo.get_steam_app_info_path = Parameter(self.test_get_steam_app_info_path)
         GetSteamAppInfo.date_path_part = DateParameter(default=self.test_date_path_part)
         mock_steam_apps_parser.return_value = self.test_df

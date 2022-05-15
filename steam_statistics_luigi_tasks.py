@@ -281,7 +281,7 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
     """
     safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
     apps_df_redy = None
-    if path.isfile(safe_dict_data_path):
+    if path.isfile(safe_dict_data_path):  # Read local cache
         safe_dict_data_file = open(safe_dict_data_path, 'r')
         rows = safe_dict_data_file.readlines()
         rows_len = len(rows)-1
@@ -293,19 +293,20 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
         else:
             remove(safe_dict_data_path)
         safe_dict_data_file.close()
-        print('Start merge local_cash')
+        print('Start merge local_cash...')
         with open(safe_dict_data_path, 'r') as safe_dict_data_file:
-            for row in safe_dict_data_file:
-                row = DataFrame.from_dict(literal_eval(row.replace('\n', '')))
-                print(row)
-                apps_df_redy = my_beautiful_task_data_frame_merge(apps_df_redy, row)
+            data = safe_dict_data_file.read()
+            apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ',')))
+            apps_df_redy = apps_df_redy.reset_index()
+            print(apps_df_redy)
+            print('Local_cash successfully merged...')
     else:
         apps_df_redy = DataFrame({'app_name': []})
-    for index in range(len(interested_data)):
+    for index in range(len(interested_data)):  # Get app data to data frame
         time_wait = randint(3, 6)
         app_name = interested_data.iloc[index]['name']
         app_id = interested_data.iloc[index]['appid']
-        if str(app_name) not in apps_df_redy['app_name'].values:  # Have conflict with Numpy and Pandas.
+        if str(app_name) not in apps_df_redy['app_name'].values:  # Have conflict with Numpy and Pandas. Might cause errors in the future.
             sleep(time_wait)
             result = ask_app_in_steam_store(app_id, app_name)
             if result is not None:

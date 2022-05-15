@@ -6,7 +6,8 @@ get_steam_app_info_path=$HOME"/Steam_ETL/Info_about_steam_apps"
 # AppInfoCSVJoiner args:
 app_info_csv_joiner_path=$HOME"/Steam_ETL/App_info_csv_joiner_path"
 # Date:
-date_path_part=$(date +%F)
+#date_path_part=$(date +%F)  # Today
+date_path_part=$(date +%F --date "2022-05-08")  # Exemple
 
 # Start:
 python3 -B -m steam_statistics_luigi_ETL AppInfoCSVJoiner.AppInfoCSVJoiner --local-scheduler \
@@ -15,4 +16,4 @@ python3 -B -m steam_statistics_luigi_ETL AppInfoCSVJoiner.AppInfoCSVJoiner --loc
 --GetSteamAppInfo.GetSteamAppInfo-get-steam-app-info-path $get_steam_app_info_path \
 --GetSteamAppInfo.GetSteamAppInfo-date-path-part $date_path_part \
 --AppInfoCSVJoiner.AppInfoCSVJoiner-app-info-csv-joiner-path $app_info_csv_joiner_path \
---AppInfoCSVJoiner.AppInfoCSVJoiner-date-path-part $date_path_part $app_info_csv_joiner_path
+--AppInfoCSVJoiner.AppInfoCSVJoiner-date-path-part $date_path_part

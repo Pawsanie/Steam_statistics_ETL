@@ -67,6 +67,7 @@ def my_beautiful_task_path_parser(result_successor, dir_list, interested_partiti
                         {partition_file: interested_partition_path})
 
 
+
 def my_beautiful_task_data_frame_merge(data_from_files, extract_data):
     """Объеденяет переданные датафреймы в один, заполняя  NaN пустые ячейки."""
     if data_from_files is None:
@@ -340,9 +341,13 @@ def get_csv_for_join(result_successor):
     root_path = result_successor.path
     symbol_counts = len(root_path)
     root_path = root_path[:symbol_counts - 28]
-    print(root_path)
+    file_list = []
+    for dirs, folders, files in walk(root_path):
+        for file in files:
+            file_list.append(file)
     interested_data = my_beautiful_task_universal_parser_part(root_path,
-                                                              ".csv", drop_list=None)
+                                                              '.csv', drop_list=None)
+
     return interested_data
 
 
@@ -357,7 +362,6 @@ def steam_apps_data_cleaning(all_apps_data_frame):
         for column_name in all_apps_data_frame_heads:
             column_name = str(column_name)
             column_name = all_apps_data_frame.iloc[index][column_name]
-            print(column_name)
             if str(column_name) in app_which_not_game:
                 all_apps_data_frame = all_apps_data_frame.drop(all_apps_data_frame.index[index], inplace=True)
     all_apps_data_frame = all_apps_data_frame.reset_index()

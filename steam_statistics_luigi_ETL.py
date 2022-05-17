@@ -5,7 +5,7 @@ from datetime import date, datetime
 from requests import get
 import json
 from steam_statistics_luigi_tasks import my_beautiful_task_data_landing, my_beautiful_task_universal_parser_part, \
-    steam_apps_parser, parsing_steam_data, get_csv_for_join
+    steam_apps_parser, parsing_steam_data, get_csv_for_join, my_beautiful_task_data_frame_merge
 
 
 class AllSteamAppsData(Task):
@@ -77,11 +77,14 @@ class AppInfoCSVJoiner(Task):
         return LocalTarget(path.join(f"{self.app_info_csv_joiner_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
-        print('ok')
-        # result_successor = self.input()['GetSteamAppInfo']
-        # root_path = get_csv_for_join(result_successor)
-        # interested_data = my_beautiful_task_universal_parser_part(root_path,
-        #                                                           ".csv", drop_list=None)
+        result_successor = self.input()['GetSteamAppInfo']
+        interested_data = get_csv_for_join(result_successor)
+        all_apps_data_frame = None
+        for data in interested_data.values():
+            all_apps_data_frame = my_beautiful_task_data_frame_merge(all_apps_data_frame, data)
+        day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
+        my_beautiful_task_data_landing(all_apps_data_frame, day_for_landing,
+                                       self.app_info_csv_joiner_path, "AllSteamAppInfo.csv")
 
 
 if __name__ == "__main__":

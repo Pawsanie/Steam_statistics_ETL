@@ -326,8 +326,11 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
 def get_csv_for_join(result_successor):
     """
     Создаёт корневой путь для csv.
+    Затем парсит его, с целью получить все csv таблицы для объединения.
     """
-    path_to_table = str.replace(result_successor.path, '_Validate_Success', '')
-    path_to_table = path_to_table.split('/')
-    interested_data = []
+    root_path = str(result_successor.path)
+    symbol_counts = len(root_path)
+    root_path = root_path[:symbol_counts - 28]
+    interested_data = my_beautiful_task_universal_parser_part(root_path,
+                                                              ".csv", drop_list=None)
     return interested_data

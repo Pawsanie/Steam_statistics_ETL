@@ -42,11 +42,15 @@ def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_p
 
 def my_beautiful_task_path_parser(result_successor, dir_list, interested_partition, file_mask):
     """Наследование путей из result_successor."""
-    if result_successor is list or result_successor is tuple:
+    if type(result_successor) is list or type(result_successor) is tuple:
         for flag in result_successor:
-            path_to_table = str.replace(flag.path, '_Validate_Success', '')
-            dir_list.append(path_to_table)
-    if type(result_successor) is str:
+            if type(flag) is str:
+                path_to_table = str.replace(flag, '_Validate_Success', '')
+                dir_list.append(path_to_table)
+            else:
+                path_to_table = str.replace(flag.path, '_Validate_Success', '')
+                dir_list.append(path_to_table)
+    elif type(result_successor) is str:
         path_to_table = str.replace(result_successor, '_Validate_Success', '')
         dir_list.append(path_to_table)
     else:
@@ -67,7 +71,6 @@ def my_beautiful_task_path_parser(result_successor, dir_list, interested_partiti
                         {partition_file: interested_partition_path})
 
 
-
 def my_beautiful_task_data_frame_merge(data_from_files, extract_data):
     """Объеденяет переданные датафреймы в один, заполняя  NaN пустые ячейки."""
     if data_from_files is None:
@@ -77,7 +80,7 @@ def my_beautiful_task_data_frame_merge(data_from_files, extract_data):
         for column in new_point_for_merge:
             data_from_files.astype(object)[column] = NaN
         data_from_files = data_from_files.merge(extract_data, how='outer')
-        data_from_files = data_from_files.reset_index()
+        data_from_files = data_from_files.reset_index(drop=True)
     return data_from_files
 
 
@@ -142,7 +145,7 @@ def steam_apps_parser(interested_data):
         interested_data = interested_data[~interested_data['name'].str.contains('Digital Art Book')]
         null_filter = interested_data['name'] != ""
         interested_data = interested_data[null_filter]
-        interested_data = interested_data.reset_index()
+        interested_data = interested_data.reset_index(drop=True)
     return interested_data
 
 
@@ -344,10 +347,9 @@ def get_csv_for_join(result_successor):
     file_list = []
     for dirs, folders, files in walk(root_path):
         for file in files:
-            file_list.append(file)
-    interested_data = my_beautiful_task_universal_parser_part(root_path,
-                                                              '.csv', drop_list=None)
-
+            path_to_file = f'{dirs}/{file}'
+            file_list.append(path_to_file)
+    interested_data = my_beautiful_task_universal_parser_part(file_list, '.csv', drop_list=None)
     return interested_data
 
 

@@ -1,4 +1,4 @@
-from luigi import run, Task, LocalTarget, ExternalTask, DateParameter, Parameter
+from luigi import run, Task, LocalTarget, DateParameter, Parameter
 from os import path, remove
 from pandas import DataFrame  # Do not delete! (pipeline use DataFrame type between functions)
 from datetime import date
@@ -81,7 +81,7 @@ class AppInfoCSVJoiner(Task):
 
     def run(self):
         result_successor = self.input()['GetSteamAppInfo']
-        interested_data = get_csv_for_join(result_successor)  # <- Bag
+        interested_data = get_csv_for_join(result_successor)
         all_apps_data_frame = None
         for data in interested_data.values():
             all_apps_data_frame = my_beautiful_task_data_frame_merge(all_apps_data_frame, data)

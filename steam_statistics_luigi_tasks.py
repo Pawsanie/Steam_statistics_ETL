@@ -310,7 +310,7 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
         with open(safe_dict_data_path, 'r') as safe_dict_data_file:
             data = safe_dict_data_file.read()
             apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ',')))
-            apps_df_redy = apps_df_redy.reset_index()
+            apps_df_redy = apps_df_redy.reset_index(drop=True)
             print(apps_df_redy)
             print('Local_cash successfully merged...')
     else:
@@ -322,7 +322,7 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
         if str(app_name) not in apps_df_redy['app_name'].values:  # Have conflict with Numpy and Pandas. Might cause errors in the future.
             sleep(time_wait)
             result = ask_app_in_steam_store(app_id, app_name)
-            if result is not None:
+            if result is not None and len(result) != 0:
                 new_df_row = DataFrame.from_dict(result)
                 inserted_columns = ['app_id', 'app_name']
                 new_columns = ([col for col in inserted_columns if col in new_df_row]
@@ -366,5 +366,5 @@ def steam_apps_data_cleaning(all_apps_data_frame):
             column_name = all_apps_data_frame.iloc[index][column_name]
             if str(column_name) in app_which_not_game:
                 all_apps_data_frame = all_apps_data_frame.drop(all_apps_data_frame.index[index], inplace=True)
-    all_apps_data_frame = all_apps_data_frame.reset_index()
+    all_apps_data_frame = all_apps_data_frame.reset_index(drop=True)
     return all_apps_data_frame

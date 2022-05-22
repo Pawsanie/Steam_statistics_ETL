@@ -50,14 +50,12 @@ class GetSteamAppInfo(Task):
 
     def run(self):
         result_successor = self.input()['AllSteamAppsData']
-        interested_data = my_beautiful_task_universal_parser_part(result_successor,
-                                                                  ".json", drop_list=None)
+        interested_data = my_beautiful_task_universal_parser_part(result_successor, ".json", drop_list=None)
         interested_data = steam_apps_parser(interested_data)
         apps_df = None
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
         apps_df = parsing_steam_data(interested_data, self.get_steam_app_info_path, day_for_landing, apps_df)
-        my_beautiful_task_data_landing(apps_df, day_for_landing,
-                                       self.get_steam_app_info_path, "GetSteamAppInfo.csv")
+        my_beautiful_task_data_landing(apps_df, day_for_landing, self.get_steam_app_info_path, "GetSteamAppInfo.csv")
         safe_dict_data_path = f"{self.get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
         if path.isfile(safe_dict_data_path):
             remove(safe_dict_data_path)

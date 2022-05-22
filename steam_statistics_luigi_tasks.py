@@ -286,15 +286,10 @@ def safe_dict_data(path_to_file, date, df):
         safe_file.write(df)
 
 
-def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df):
-    """
-    Корневая переменная, отвечающая за чтение локального кэша,
-    его мёрдж с распаршеными данными от скрапинга страниц приложений steam.
-    Отвечает за таймауты при get запросах к страницам приложений.
-    """
-    safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
+def data_from_file_to_pd_dataframe(safe_dict_data_path):
+    """Читает локальный кэш."""
     apps_df_redy = None
-    if path.isfile(safe_dict_data_path):  # Read local cache
+    if path.isfile(safe_dict_data_path):
         safe_dict_data_file = open(safe_dict_data_path, 'r')
         rows = safe_dict_data_file.readlines()
         rows_len = len(rows)-1
@@ -303,23 +298,36 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
             safe_dict_data_file = open(safe_dict_data_path, 'w')
             for row in rows:
                 safe_dict_data_file.write(row)
+            safe_dict_data_file.close()
+            print('Start merge local_cash...')
+            with open(safe_dict_data_path, 'r') as safe_dict_data_file:
+                data = safe_dict_data_file.read()
+                apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ',')))
+                apps_df_redy = apps_df_redy.reset_index(drop=True)
+                print(apps_df_redy)
+                print('Local_cash successfully merged...')
         else:
             remove(safe_dict_data_path)
-        safe_dict_data_file.close()
-        print('Start merge local_cash...')
-        with open(safe_dict_data_path, 'r') as safe_dict_data_file:
-            data = safe_dict_data_file.read()
-            apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ',')))
-            apps_df_redy = apps_df_redy.reset_index(drop=True)
-            print(apps_df_redy)
-            print('Local_cash successfully merged...')
+            apps_df_redy = DataFrame({'app_name': []})
     else:
         apps_df_redy = DataFrame({'app_name': []})
+    return apps_df_redy
+
+
+def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df):
+    """
+    Корневая переменная, отвечающая за чтение локального кэша,
+    его мёрдж с распаршеными данными от скрапинга страниц приложений steam.
+    Отвечает за таймауты при get запросах к страницам приложений.
+    """
+    safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
+    apps_df_redy = data_from_file_to_pd_dataframe(safe_dict_data_path)
     for index in range(len(interested_data)):  # Get app data to data frame
         time_wait = randint(3, 6)
         app_name = interested_data.iloc[index]['name']
         app_id = interested_data.iloc[index]['appid']
         if str(app_name) not in apps_df_redy['app_name'].values:  # Have conflict with Numpy and Pandas. Might cause errors in the future.
+            # Сюда /\
             sleep(time_wait)
             result = ask_app_in_steam_store(app_id, app_name)
             if result is not None and len(result) != 0:

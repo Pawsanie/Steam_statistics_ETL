@@ -167,6 +167,10 @@ def connect_retry(n):
     return function_decor
 
 
+def safe_dlc_data():
+    dlc_df = None
+
+
 @connect_retry(3)
 def ask_app_in_steam_store(app_id, app_name):
     """Скрапинг страницы приложения."""
@@ -177,6 +181,7 @@ def ask_app_in_steam_store(app_id, app_name):
     app_page = get(app_page_url, headers=scrap_user)
     soup = BeautifulSoup(app_page.text, "lxml")
     result = {}
+    result_dlc = {}
     is_it_dls = soup.find_all('h1')
     for head in is_it_dls:  # Drope DLC
         head = str(head)
@@ -271,13 +276,16 @@ def ask_app_in_steam_store(app_id, app_name):
                 date_today = date_today.split(' ')
                 date_today = date_today[0]
                 result.update({'scan_date': [date_today]})
-        return result
+        else:  # Save DLC
+            result_dlc.update({'app_id': [app_id]})
+            result_dlc.update({'app_name': [app_name]})
+        return result, result_dlc
 
 
-def safe_dict_data(path_to_file, date, df):
+def safe_dict_data(path_to_file, date, df, file_name):
     """Временное хранилище, для загрузки сырых данных."""
     path_to_file = f"{path_to_file}/{date}"
-    file_path = f"{path_to_file}/{'_safe_dict_data'}"
+    file_path = f"{path_to_file}/{file_name}"
     df = df.to_dict('records')
     df = str(df[0]) + '\n'
     if not path.exists(path_to_file):
@@ -321,23 +329,30 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
     Отвечает за таймауты при get запросах к страницам приложений.
     """
     safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
+    dlc_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_dlc_data'}"
     apps_df_redy = data_from_file_to_pd_dataframe(safe_dict_data_path)
+    dlc_df_redy = data_from_file_to_pd_dataframe(dlc_dict_data_path)
     for index in range(len(interested_data)):  # Get app data to data frame
         time_wait = randint(3, 6)
         app_name = interested_data.iloc[index]['name']
         app_id = interested_data.iloc[index]['appid']
         if str(app_name) not in apps_df_redy['app_name'].values:  # Have conflict with Numpy and Pandas. Might cause errors in the future.
-            # Сюда /\
-            sleep(time_wait)
-            result = ask_app_in_steam_store(app_id, app_name)
-            if result is not None and len(result) != 0:
-                new_df_row = DataFrame.from_dict(result)
-                inserted_columns = ['app_id', 'app_name']
-                new_columns = ([col for col in inserted_columns if col in new_df_row]
-                               + [col for col in new_df_row if col not in inserted_columns])
-                new_df_row = new_df_row[new_columns]
-                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row)
-                apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
+            if str(app_name) not in dlc_df_redy['app_name'].values:
+                sleep(time_wait)
+                result, result_dlc = ask_app_in_steam_store(app_id, app_name)
+                if result is not None and len(result) != 0:
+                    new_df_row = DataFrame.from_dict(result)
+                    inserted_columns = ['app_id', 'app_name']
+                    new_columns = ([col for col in inserted_columns if col in new_df_row]
+                                   + [col for col in new_df_row if col not in inserted_columns])
+                    new_df_row = new_df_row[new_columns]
+                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_data')
+                    apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
+                if result_dlc is not None and len(result) != 0:
+                    new_df_row = DataFrame.from_dict(result_dlc)
+                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_dlc_data')
+            else:
+                print("'" + app_name + "' is dlc and has not been processed...")
         else:
             print("'" + app_name + "' already is in _safe_dict_data...")
     apps_df = my_beautiful_task_data_frame_merge(apps_df_redy, apps_df)

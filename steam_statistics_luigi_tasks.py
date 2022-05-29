@@ -279,7 +279,8 @@ def ask_app_in_steam_store(app_id, app_name):
         else:  # Save DLC
             result_dlc.update({'app_id': [app_id]})
             result_dlc.update({'app_name': [app_name]})
-        return result, result_dlc
+    result_list = [result, result_dlc]
+    return result_list
 
 
 def safe_dict_data(path_to_file, date, df, file_name):
@@ -322,7 +323,7 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path):
     return apps_df_redy
 
 
-def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df):
+def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df, dlc_df):
     """
     Корневая переменная, отвечающая за чтение локального кэша,
     его мёрдж с распаршеными данными от скрапинга страниц приложений steam.
@@ -339,7 +340,9 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
         if str(app_name) not in apps_df_redy['app_name'].values:  # Have conflict with Numpy and Pandas. Might cause errors in the future.
             if str(app_name) not in dlc_df_redy['app_name'].values:
                 sleep(time_wait)
-                result, result_dlc = ask_app_in_steam_store(app_id, app_name)
+                result_list = ask_app_in_steam_store(app_id, app_name)
+                result = result_list[0]
+                result_dlc = result_list[1]
                 if result is not None and len(result) != 0:
                     new_df_row = DataFrame.from_dict(result)
                     inserted_columns = ['app_id', 'app_name']
@@ -348,15 +351,18 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
                     new_df_row = new_df_row[new_columns]
                     safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_data')
                     apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
-                if result_dlc is not None and len(result) != 0:
+                if result_dlc is not None and len(result_dlc) != 0:
                     new_df_row = DataFrame.from_dict(result_dlc)
                     safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_dlc_data')
+                    dlc_df = my_beautiful_task_data_frame_merge(dlc_df, new_df_row)
             else:
                 print("'" + app_name + "' is dlc and has not been processed...")
         else:
             print("'" + app_name + "' already is in _safe_dict_data...")
     apps_df = my_beautiful_task_data_frame_merge(apps_df_redy, apps_df)
-    return apps_df
+    dlc_df = my_beautiful_task_data_frame_merge(dlc_df_redy, dlc_df)
+    apps_and_dlc_df_list = [apps_df, dlc_df]
+    return apps_and_dlc_df_list
 
 
 def get_csv_for_join(result_successor):

@@ -29,7 +29,7 @@ class AllSteamAppsData(Task):
             partition_path = f"{self.all_steam_apps_path}"
             day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
             my_beautiful_task_data_landing(steam_apps_list, day_for_landing,
-                                           partition_path, "AllSteamAppsData.json")
+                                           partition_path, "All_Steam_Apps_Data.json")
 
 
 class GetSteamAppInfo(Task):
@@ -53,12 +53,20 @@ class GetSteamAppInfo(Task):
         interested_data = my_beautiful_task_universal_parser_part(result_successor, ".json", drop_list=None)
         interested_data = steam_apps_parser(interested_data)
         apps_df = None
+        dlc_df = None
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
-        apps_df = parsing_steam_data(interested_data, self.get_steam_app_info_path, day_for_landing, apps_df)
-        my_beautiful_task_data_landing(apps_df, day_for_landing, self.get_steam_app_info_path, "GetSteamAppInfo.csv")
+        apps_and_dlc_df_list = parsing_steam_data(interested_data, self.get_steam_app_info_path,
+                                                  day_for_landing, apps_df, dlc_df)
+        apps_df = apps_and_dlc_df_list[0]
+        dlc_df = apps_and_dlc_df_list[1]
+        my_beautiful_task_data_landing(apps_df, day_for_landing, self.get_steam_app_info_path, "Get_Steam_App_Info.csv")
+        my_beautiful_task_data_landing(dlc_df, day_for_landing, self.get_steam_app_info_path, "Get_Steam_DLC_Info.csv")
         safe_dict_data_path = f"{self.get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
         if path.isfile(safe_dict_data_path):
             remove(safe_dict_data_path)
+        safe_dict_dlc_data_path = f"{self.get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_dlc_data'}"
+        if path.isfile(safe_dict_dlc_data_path):
+            remove(safe_dict_dlc_data_path)
 
 
 class AppInfoCSVJoiner(Task):
@@ -86,7 +94,7 @@ class AppInfoCSVJoiner(Task):
         all_apps_data_frame = steam_apps_data_cleaning(all_apps_data_frame)
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
         my_beautiful_task_data_landing(all_apps_data_frame, day_for_landing,
-                                       self.app_info_csv_joiner_path, "AllSteamAppInfo.csv")
+                                       self.app_info_csv_joiner_path, "All_Steam_App_Info.csv")
 
 
 if __name__ == "__main__":

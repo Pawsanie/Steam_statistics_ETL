@@ -337,7 +337,7 @@ def make_flag(partition_path, day_for_landing):
     flag.close()
 
 
-def apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path, dlc_df_save_path):  # <-Bag
+def apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path, dlc_df_save_path):
     """
     Приземляет реально существующие коллекции и проставляет флаги, для пустых.
     """
@@ -362,7 +362,7 @@ def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy):
         apps_df = []
     else:
         apps_df = my_beautiful_task_data_frame_merge(apps_df_redy, apps_df)
-    if type(dlc_df) == type(None):  # <-BAG!
+    if type(dlc_df) == type(None):
         # dlc_df.empty:
         dlc_df = []
     else:

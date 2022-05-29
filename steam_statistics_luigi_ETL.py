@@ -6,7 +6,7 @@ from requests import get
 import json
 from steam_statistics_luigi_tasks import my_beautiful_task_data_landing, my_beautiful_task_universal_parser_part, \
     steam_apps_parser, parsing_steam_data, get_csv_for_join, my_beautiful_task_data_frame_merge, \
-    steam_apps_data_cleaning
+    steam_apps_data_cleaning, safe_dlc_data
 
 
 class AllSteamAppsData(Task):
@@ -46,25 +46,29 @@ class GetSteamAppInfo(Task):
 
     def output(self):
         return LocalTarget(
-            path.join(f"{self.get_steam_app_info_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
+            path.join(
+                f"{self.get_steam_app_info_path}/{'Apps_info'}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
         result_successor = self.input()['AllSteamAppsData']
         interested_data = my_beautiful_task_universal_parser_part(result_successor, ".json", drop_list=None)
         interested_data = steam_apps_parser(interested_data)
         apps_df = None
-        dlc_df = None
+        dlc_df = safe_dlc_data(self.get_steam_app_info_path)
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
         apps_and_dlc_df_list = parsing_steam_data(interested_data, self.get_steam_app_info_path,
                                                   day_for_landing, apps_df, dlc_df)
         apps_df = apps_and_dlc_df_list[0]
         dlc_df = apps_and_dlc_df_list[1]
-        my_beautiful_task_data_landing(apps_df, day_for_landing, self.get_steam_app_info_path, "Get_Steam_App_Info.csv")
-        my_beautiful_task_data_landing(dlc_df, day_for_landing, self.get_steam_app_info_path, "Get_Steam_DLC_Info.csv")
-        safe_dict_data_path = f"{self.get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
+        apps_df_save_path = f"{self.get_steam_app_info_path}/{'Apps_info'}"
+        dlc_df_save_path = f"{self.get_steam_app_info_path}/{'DLC_info'}"
+        my_beautiful_task_data_landing(apps_df, day_for_landing, apps_df_save_path, "Get_Steam_App_Info.csv")
+        my_beautiful_task_data_landing(dlc_df, day_for_landing, dlc_df_save_path, "Get_Steam_DLC_Info.csv")
+        safe_dict_data_path = f"{self.get_steam_app_info_path}/{'Apps_info'}/{day_for_landing}/{'_safe_dict_data'}"
         if path.isfile(safe_dict_data_path):
             remove(safe_dict_data_path)
-        safe_dict_dlc_data_path = f"{self.get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_dlc_data'}"
+        safe_dict_dlc_data_path = f"{self.get_steam_app_info_path}/{'DLC_info'}/" \
+                                  f"{day_for_landing}/{'_safe_dict_dlc_data'}"
         if path.isfile(safe_dict_dlc_data_path):
             remove(safe_dict_dlc_data_path)
 

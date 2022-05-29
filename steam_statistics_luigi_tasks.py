@@ -167,10 +167,6 @@ def connect_retry(n):
     return function_decor
 
 
-def safe_dlc_data():
-    dlc_df = None
-
-
 @connect_retry(3)
 def ask_app_in_steam_store(app_id, app_name):
     """Скрапинг страницы приложения."""
@@ -283,9 +279,9 @@ def ask_app_in_steam_store(app_id, app_name):
     return result_list
 
 
-def safe_dict_data(path_to_file, date, df, file_name):
+def safe_dict_data(path_to_file, date, df, file_name, ds_name):
     """Временное хранилище, для загрузки сырых данных."""
-    path_to_file = f"{path_to_file}/{date}"
+    path_to_file = f"{path_to_file}/{ds_name}/{date}"
     file_path = f"{path_to_file}/{file_name}"
     df = df.to_dict('records')
     df = str(df[0]) + '\n'
@@ -329,15 +325,16 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
     его мёрдж с распаршеными данными от скрапинга страниц приложений steam.
     Отвечает за таймауты при get запросах к страницам приложений.
     """
-    safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_data'}"
-    dlc_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'_safe_dict_dlc_data'}"
+    safe_dict_data_path = f"{get_steam_app_info_path}/{'Apps_info'}/{day_for_landing}/{'_safe_dict_data'}"
+    dlc_dict_data_path = f"{get_steam_app_info_path}/{'DLC_info'}/{day_for_landing}/{'_safe_dict_dlc_data'}"
     apps_df_redy = data_from_file_to_pd_dataframe(safe_dict_data_path)
     dlc_df_redy = data_from_file_to_pd_dataframe(dlc_dict_data_path)
     for index in range(len(interested_data)):  # Get app data to data frame
         time_wait = randint(3, 6)
         app_name = interested_data.iloc[index]['name']
         app_id = interested_data.iloc[index]['appid']
-        if str(app_name) not in apps_df_redy['app_name'].values:  # Have conflict with Numpy and Pandas. Might cause errors in the future.
+        # 2 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
+        if str(app_name) not in apps_df_redy['app_name'].values:
             if str(app_name) not in dlc_df_redy['app_name'].values:
                 sleep(time_wait)
                 result_list = ask_app_in_steam_store(app_id, app_name)
@@ -349,11 +346,12 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
                     new_columns = ([col for col in inserted_columns if col in new_df_row]
                                    + [col for col in new_df_row if col not in inserted_columns])
                     new_df_row = new_df_row[new_columns]
-                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_data')
+                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_data', 'Apps_info')
                     apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
                 if result_dlc is not None and len(result_dlc) != 0:
                     new_df_row = DataFrame.from_dict(result_dlc)
-                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_dlc_data')
+                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
+                                   '_safe_dict_dlc_data', 'DLC_info')
                     dlc_df = my_beautiful_task_data_frame_merge(dlc_df, new_df_row)
             else:
                 print("'" + app_name + "' is dlc and has not been processed...")
@@ -386,7 +384,7 @@ def steam_apps_data_cleaning(all_apps_data_frame):
     """
     Очищает all_apps_data_frame от приложений, которые не являются играми.
     """
-    # Требует дополнения, по результатам тестирования ->
+    # 'app_which_not_game' требует дополнения, по результатам тестирования ->
     app_which_not_game = ['Animation & Modeling', 'Game Development', 'Tutorial']
     all_apps_data_frame_heads = all_apps_data_frame.head()
     for index in range(len(all_apps_data_frame)):
@@ -397,3 +395,18 @@ def steam_apps_data_cleaning(all_apps_data_frame):
                 all_apps_data_frame = all_apps_data_frame.drop(all_apps_data_frame.index[index], inplace=True)
     all_apps_data_frame = all_apps_data_frame.reset_index(drop=True)
     return all_apps_data_frame
+
+
+def safe_dlc_data(get_steam_app_info_path):
+    """Собирает данные с DLC, затем парсит их в pandas DataFrame."""
+    root_path = f"{get_steam_app_info_path}/{'DLC_info'}"
+    dlc_df = None
+    file_list = []
+    if path.exists(root_path):
+        for dirs, folders, files in walk(root_path):
+            for file in files:
+                path_to_file = f'{dirs}/{file}'
+                file_list.append(path_to_file)
+        if len(file_list) != 0:
+            dlc_df = my_beautiful_task_universal_parser_part(file_list, '.csv', drop_list=None)
+    return dlc_df

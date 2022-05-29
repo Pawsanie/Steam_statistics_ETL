@@ -86,6 +86,7 @@ def my_beautiful_task_data_frame_merge(data_from_files, extract_data):
 
 def my_beautiful_task_data_table_parser(interested_partition, drop_list, interested_data, file_mask):
     """Уневерсальное чтение данных из таблиц"""
+
     def how_to_extract(*args):  # Определение метода чтения данных для pandas.
         how_to_extract_format = None
         if file_mask == '.csv':
@@ -118,14 +119,18 @@ def my_beautiful_task_universal_parser_part(result_successor, file_mask, drop_li
     return interested_data
 
 
+def steam_aps_from_web_api_parser(interested_data):
+    """Парсит результат получаемый от Steam Web-API."""
+    all_aps_data = interested_data
+    all_aps_data = all_aps_data.get('applist')
+    all_aps_data = all_aps_data.get('apps')
+    return all_aps_data
+
+
 def steam_apps_parser(interested_data):
     """Удаляем то что не является играми, на этапе работы с сырыми данными.."""
     for value in interested_data:
-        all_aps_data = interested_data.get(value)
-        all_aps_data = all_aps_data.iloc[0]
-        all_aps_data = all_aps_data.to_dict()
-        all_aps_data = all_aps_data.get('applist')
-        interested_data = DataFrame(all_aps_data)
+        interested_data = interested_data.get(value)
         interested_data = interested_data[~interested_data['name'].str.contains('Soundtrack')]
         interested_data = interested_data[~interested_data['name'].str.contains('OST')]
         interested_data = interested_data[~interested_data['name'].str.contains('Artbook')]
@@ -154,6 +159,7 @@ def connect_retry(n):
     Декоратор отвечающий за ретраи соединений,
     в случае ошибок.
     """
+
     def function_decor(function):
         def function_for_trying(*args, **kwargs):
             try_number = 0
@@ -161,9 +167,11 @@ def connect_retry(n):
                 try:
                     return function(*args, **kwargs)
                 except:
-                    try_number = try_number+1
+                    try_number = try_number + 1
                     print('Retry... ' + str(try_number))
+
         return function_for_trying
+
     return function_decor
 
 
@@ -297,7 +305,7 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path):
     if path.isfile(safe_dict_data_path):
         safe_dict_data_file = open(safe_dict_data_path, 'r')
         rows = safe_dict_data_file.readlines()
-        rows_len = len(rows)-1
+        rows_len = len(rows) - 1
         if rows_len > 0:
             rows.pop(rows_len)
             safe_dict_data_file = open(safe_dict_data_path, 'w')
@@ -317,6 +325,51 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path):
     else:
         apps_df_redy = DataFrame({'app_name': []})
     return apps_df_redy
+
+
+def make_flag(partition_path, day_for_landing):
+    """Проставляет флаги для пустых колекций."""
+    output_path = f'{partition_path}/{day_for_landing}'
+    if not path.exists(output_path):
+        makedirs(output_path)
+    flag_path = f'{output_path}/{"_Validate_Success"}'
+    flag = open(flag_path, 'w')
+    flag.close()
+
+
+def apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path, dlc_df_save_path):  # <-Bag
+    """
+    Приземляет реально существующие коллекции и проставляет флаги, для пустых.
+    """
+    if len(apps_df) != 0:
+        my_beautiful_task_data_landing(apps_df, day_for_landing, apps_df_save_path, "Get_Steam_App_Info.csv")
+    else:
+        make_flag(apps_df_save_path, day_for_landing)
+    if len(dlc_df) != 0:
+        my_beautiful_task_data_landing(dlc_df, day_for_landing, dlc_df_save_path, "Get_Steam_DLC_Info.csv")
+    else:
+        make_flag(dlc_df_save_path, day_for_landing)
+
+
+def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy):
+    """
+    Валидатор pandas DataFrame.
+    Проверяет что коллекции приложений и DLC не пустые.
+    Мёрджит реально существующие коллекции, для приземления.
+    """
+    if type(apps_df) == type(None):
+        # apps_df.empty
+        apps_df = []
+    else:
+        apps_df = my_beautiful_task_data_frame_merge(apps_df_redy, apps_df)
+    if type(dlc_df) == type(None):  # <-BAG!
+        # dlc_df.empty:
+        dlc_df = []
+    else:
+        print(type(dlc_df))
+        dlc_df = my_beautiful_task_data_frame_merge(dlc_df_redy, dlc_df)
+    apps_and_dlc_df_list = [apps_df, dlc_df]
+    return apps_and_dlc_df_list
 
 
 def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df, dlc_df):
@@ -357,9 +410,7 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
                 print("'" + app_name + "' is dlc and has not been processed...")
         else:
             print("'" + app_name + "' already is in _safe_dict_data...")
-    apps_df = my_beautiful_task_data_frame_merge(apps_df_redy, apps_df)
-    dlc_df = my_beautiful_task_data_frame_merge(dlc_df_redy, dlc_df)
-    apps_and_dlc_df_list = [apps_df, dlc_df]
+    apps_and_dlc_df_list = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy)
     return apps_and_dlc_df_list
 
 

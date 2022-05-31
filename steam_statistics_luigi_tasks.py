@@ -169,9 +169,7 @@ def connect_retry(n):
                 except:
                     try_number = try_number + 1
                     print('Retry... ' + str(try_number))
-
         return function_for_trying
-
     return function_decor
 
 
@@ -358,15 +356,12 @@ def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy):
     Мёрджит реально существующие коллекции, для приземления.
     """
     if type(apps_df) == type(None):
-        # apps_df.empty
         apps_df = []
     else:
         apps_df = my_beautiful_task_data_frame_merge(apps_df_redy, apps_df)
     if type(dlc_df) == type(None):
-        # dlc_df.empty:
         dlc_df = []
     else:
-        print(type(dlc_df))
         dlc_df = my_beautiful_task_data_frame_merge(dlc_df_redy, dlc_df)
     apps_and_dlc_df_list = [apps_df, dlc_df]
     return apps_and_dlc_df_list
@@ -391,8 +386,7 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
             if str(app_name) not in dlc_df_redy['app_name'].values:
                 sleep(time_wait)
                 result_list = ask_app_in_steam_store(app_id, app_name)
-                result = result_list[0]
-                result_dlc = result_list[1]
+                result, result_dlc = result_list[0], result_list[1]
                 if result is not None and len(result) != 0:
                     new_df_row = DataFrame.from_dict(result)
                     inserted_columns = ['app_id', 'app_name']

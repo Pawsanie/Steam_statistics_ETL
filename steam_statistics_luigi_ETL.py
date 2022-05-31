@@ -4,9 +4,12 @@ from pandas import DataFrame  # Do not delete! (pipeline use DataFrame type betw
 from datetime import date
 from requests import get
 import json
-from steam_statistics_luigi_tasks import my_beautiful_task_data_landing, my_beautiful_task_universal_parser_part, \
-    steam_apps_parser, parsing_steam_data, get_csv_for_join, my_beautiful_task_data_frame_merge, \
-    steam_apps_data_cleaning, safe_dlc_data, steam_aps_from_web_api_parser, apps_and_dlc_df_landing
+from Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part,\
+    my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
+from AllSteamAppsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser
+from GetSteamAppInfo_steam_statistics_luigi_task import steam_apps_parser, safe_dlc_data, \
+    parsing_steam_data, apps_and_dlc_df_landing
+from AppInfoCSVJoiner_steam_statistics_luigi_task import get_csv_for_join, steam_apps_data_cleaning
 
 
 class AllSteamAppsData(Task):
@@ -35,7 +38,7 @@ class AllSteamAppsData(Task):
 
 class GetSteamAppInfo(Task):
     """
-    Парсим список приложений доступных в Steam
+    Парсим и скрапим список приложений доступных в Steam
     """
     task_namespace = 'GetSteamAppInfo'
     priority = 5000

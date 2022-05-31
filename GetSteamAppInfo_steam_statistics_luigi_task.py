@@ -1,130 +1,19 @@
-from os import walk, path, makedirs, remove
-import json
-from pandas import DataFrame, read_csv, read_json
-from numpy import NaN
-from pyarrow import Table, parquet
 from requests import get, exceptions
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from datetime import datetime
+from os import walk, path, makedirs, remove
+from pandas import DataFrame
 from random import randint
 from time import sleep
 from ast import literal_eval
-
-
-def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_path, file_mask):
-    """Приземление распаршеных данных в виде json, csv, или parquet."""
-    data_type_need = file_mask.split('.')
-    data_type_need = data_type_need[1]
-    output_path = f'{partition_path}/{day_for_landing}'
-    data_from_files = DataFrame(data_to_landing)
-    if not path.exists(output_path):
-        makedirs(output_path)
-    flag_path = f'{output_path}/{"_Validate_Success"}'
-    output_path = f'{output_path}/{file_mask}'
-    if data_type_need == 'json':
-        data_from_files = data_from_files.to_json(orient='records')
-        data_from_files = json.loads(data_from_files)
-        json_data = json.dumps(data_from_files, indent=4, ensure_ascii=False)
-        with open(output_path, 'w', encoding='utf-8') as json_file:
-            json_file.write(json_data)
-    if data_type_need == 'parquet':
-        parquet_table = Table.from_pandas(data_to_landing)
-        parquet.write_table(parquet_table, output_path, use_dictionary=False, compression=None)
-    if data_type_need == 'csv':
-        data_to_csv = data_to_landing.to_csv(index=False)
-        with open(output_path, 'w') as csv_file:
-            csv_file.write(data_to_csv)
-    flag = open(flag_path, 'w')
-    flag.close()
-    return flag_path
-
-
-def my_beautiful_task_path_parser(result_successor, dir_list, interested_partition, file_mask):
-    """Наследование путей из result_successor."""
-    if type(result_successor) is list or type(result_successor) is tuple:
-        for flag in result_successor:
-            if type(flag) is str:
-                path_to_table = str.replace(flag, '_Validate_Success', '')
-                dir_list.append(path_to_table)
-            else:
-                path_to_table = str.replace(flag.path, '_Validate_Success', '')
-                dir_list.append(path_to_table)
-    elif type(result_successor) is str:
-        path_to_table = str.replace(result_successor, '_Validate_Success', '')
-        dir_list.append(path_to_table)
-    else:
-        path_to_table = str.replace(result_successor.path, '_Validate_Success', '')
-        dir_list.append(path_to_table)
-    for parsing_dir in dir_list:
-        for dirs, folders, files in walk(parsing_dir):
-            for file in files:
-                partition_path = f'{dirs}{file}'
-                if path.isfile(partition_path) and file_mask in file:
-                    partition_path_split = partition_path.split('/')
-                    partition_file = partition_path_split[-1]
-                    partition_date = f'{partition_path_split[-4]}/{partition_path_split[-3]}' \
-                                     f'/{partition_path_split[-2]}/'
-                    partition_path = str.replace(partition_path, partition_date + partition_file, '')
-                    interested_partition_path = f'{partition_path}{partition_date}{partition_file}'
-                    interested_partition.setdefault(partition_date, {}).update(
-                        {partition_file: interested_partition_path})
-
-
-def my_beautiful_task_data_frame_merge(data_from_files, extract_data):
-    """Объеденяет переданные датафреймы в один, заполняя  NaN пустые ячейки."""
-    if data_from_files is None:
-        data_from_files = extract_data
-    else:
-        new_point_for_merge = extract_data.columns.difference(data_from_files.columns)
-        for column in new_point_for_merge:
-            data_from_files.astype(object)[column] = NaN
-        data_from_files = data_from_files.merge(extract_data, how='outer')
-        data_from_files = data_from_files.reset_index(drop=True)
-    return data_from_files
-
-
-def my_beautiful_task_data_table_parser(interested_partition, drop_list, interested_data, file_mask):
-    """Уневерсальное чтение данных из таблиц"""
-
-    def how_to_extract(*args):  # Определение метода чтения данных для pandas.
-        how_to_extract_format = None
-        if file_mask == '.csv':
-            how_to_extract_format = read_csv(*args).astype(str)
-        if file_mask == '.json':
-            how_to_extract_format = read_json(*args, dtype='int64')
-            # Json требует ручного указания типа вывода для длинных чисел
-        return how_to_extract_format
-
-    for key in interested_partition:
-        data_from_files = None
-        files = interested_partition.get(key)
-        files = files.values()
-        for file in files:  # Парсинг таблиц в сырой датафрейм
-            if drop_list is not None:
-                extract_data = how_to_extract(file).drop([drop_list], axis=1)
-            else:
-                extract_data = how_to_extract(file)
-            data_from_files = my_beautiful_task_data_frame_merge(data_from_files, extract_data)  # Слияние датафреймов
-        interested_data[key] = data_from_files
-
-
-def my_beautiful_task_universal_parser_part(result_successor, file_mask, drop_list):
-    """Запускает код после наследования путей от прошлой таски."""
-    interested_partition = {}
-    dir_list = []
-    my_beautiful_task_path_parser(result_successor, dir_list, interested_partition, file_mask)
-    interested_data = {}  # Парсинг данных из файлов по путям унаследованным от прошлой таски.
-    my_beautiful_task_data_table_parser(interested_partition, drop_list, interested_data, file_mask)
-    return interested_data
-
-
-def steam_aps_from_web_api_parser(interested_data):
-    """Парсит результат получаемый от Steam Web-API."""
-    all_aps_data = interested_data
-    all_aps_data = all_aps_data.get('applist')
-    all_aps_data = all_aps_data.get('apps')
-    return all_aps_data
+from Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
+    my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
+"""
+Contains code for luigi task 'GetSteamAppInfo'.
+'''
+Содержит код для Луиджи такски 'GetSteamAppInfo'.
+"""
 
 
 def steam_apps_parser(interested_data):
@@ -159,7 +48,6 @@ def connect_retry(n):
     Декоратор отвечающий за ретраи соединений,
     в случае ошибок.
     """
-
     def function_decor(function):
         def function_for_trying(*args, **kwargs):
             try_number = 0
@@ -406,40 +294,6 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
             print("'" + app_name + "' already is in _safe_dict_data...")
     apps_and_dlc_df_list = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy)
     return apps_and_dlc_df_list
-
-
-def get_csv_for_join(result_successor):
-    """
-    Создаёт корневой путь для csv.
-    Затем парсит его, с целью получить все csv таблицы для объединения.
-    """
-    root_path = result_successor.path
-    symbol_counts = len(root_path)
-    root_path = root_path[:symbol_counts - 28]
-    file_list = []
-    for dirs, folders, files in walk(root_path):
-        for file in files:
-            path_to_file = f'{dirs}/{file}'
-            file_list.append(path_to_file)
-    interested_data = my_beautiful_task_universal_parser_part(file_list, '.csv', drop_list=None)
-    return interested_data
-
-
-def steam_apps_data_cleaning(all_apps_data_frame):
-    """
-    Очищает all_apps_data_frame от приложений, которые не являются играми.
-    """
-    # 'app_which_not_game' требует дополнения, по результатам тестирования ->
-    app_which_not_game = ['Animation & Modeling', 'Game Development', 'Tutorial']
-    all_apps_data_frame_heads = all_apps_data_frame.head()
-    for index in range(len(all_apps_data_frame)):
-        for column_name in all_apps_data_frame_heads:
-            column_name = str(column_name)
-            column_name = all_apps_data_frame.iloc[index][column_name]
-            if str(column_name) in app_which_not_game:
-                all_apps_data_frame = all_apps_data_frame.drop(all_apps_data_frame.index[index], inplace=True)
-    all_apps_data_frame = all_apps_data_frame.reset_index(drop=True)
-    return all_apps_data_frame
 
 
 def safe_dlc_data(get_steam_app_info_path):

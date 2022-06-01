@@ -20,7 +20,7 @@ def steam_apps_parser(interested_data):
     """
     Delete what is not a game at the stage of working with raw data.
     '''
-    Удаляем то что не является играми, на этапе работы с сырыми данными.
+    Удаляет то что не является играми, на этапе работы с сырыми данными.
     """
     for value in interested_data:
         interested_data = interested_data.get(value)

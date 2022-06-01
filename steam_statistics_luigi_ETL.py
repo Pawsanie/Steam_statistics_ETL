@@ -6,7 +6,7 @@ from requests import get
 import json
 from Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part,\
     my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
-from AllSteamAppsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser
+from AllSteamAppsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser, steam_apps_validator
 from GetSteamAppInfo_steam_statistics_luigi_task import steam_apps_parser, safe_dlc_data, \
     parsing_steam_data, apps_and_dlc_df_landing
 from AppInfoCSVJoiner_steam_statistics_luigi_task import get_csv_for_join, steam_apps_data_cleaning
@@ -33,6 +33,7 @@ class AllSteamAppsData(Task):
             steam_apps_list = json.loads(steam_api_response.text)
             steam_apps_list = steam_aps_from_web_api_parser(steam_apps_list)
             partition_path = f"{self.all_steam_apps_path}"
+            steam_apps_list = steam_apps_validator(steam_apps_list, partition_path)
             day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
             my_beautiful_task_data_landing(steam_apps_list, day_for_landing,
                                            partition_path, "All_Steam_Apps_Data.json")

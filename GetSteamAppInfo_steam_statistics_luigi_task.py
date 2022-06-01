@@ -17,7 +17,11 @@ Contains code for luigi task 'GetSteamAppInfo'.
 
 
 def steam_apps_parser(interested_data):
-    """Удаляем то что не является играми, на этапе работы с сырыми данными.."""
+    """
+    Delete what is not a game at the stage of working with raw data.
+    '''
+    Удаляем то что не является играми, на этапе работы с сырыми данными.
+    """
     for value in interested_data:
         interested_data = interested_data.get(value)
         interested_data = interested_data[~interested_data['name'].str.contains('Soundtrack')]
@@ -45,8 +49,10 @@ def steam_apps_parser(interested_data):
 
 def connect_retry(n):
     """
+    Decorator responsible for retrying connections in cases of errors.
+    '''
     Декоратор отвечающий за ретраи соединений,
-    в случае ошибок.
+    в случаях ошибок.
     """
     def function_decor(function):
         def function_for_trying(*args, **kwargs):
@@ -63,7 +69,11 @@ def connect_retry(n):
 
 @connect_retry(3)
 def ask_app_in_steam_store(app_id, app_name):
-    """Скрапинг страницы приложения."""
+    """
+    Application page scraping.
+    '''
+    Скрапинг страницы приложения.
+    """
     print("\nTry to scraping: '" + app_name + "'")
     ua = UserAgent(cache=False, verify_ssl=False)
     scrap_user = {"User-Agent": str(ua.random), "Cache-Control": "no-cache", "Pragma": "no-cache"}
@@ -129,7 +139,7 @@ def ask_app_in_steam_store(app_id, app_name):
                     date = date.replace('<div class="date">', '')
                     date = date.replace('</div>', '')
                     date = date.replace(',', '')
-                    date = datetime.strptime(date, '%d %b %Y')  # b - месяц словом
+                    date = datetime.strptime(date, '%d %b %Y')  # b - month by a word
                     date = str(date)
                     date = date.split(' ')
                     date = date[0]
@@ -174,7 +184,11 @@ def ask_app_in_steam_store(app_id, app_name):
 
 
 def safe_dict_data(path_to_file, date, df, file_name, ds_name):
-    """Временное хранилище, для загрузки сырых данных."""
+    """
+    Temporary storage, for landing raw data.
+    '''
+    Временное хранилище, для загрузки сырых данных.
+    """
     path_to_file = f"{path_to_file}/{ds_name}/{date}"
     file_path = f"{path_to_file}/{file_name}"
     df = df.to_dict('records')
@@ -186,7 +200,11 @@ def safe_dict_data(path_to_file, date, df, file_name, ds_name):
 
 
 def data_from_file_to_pd_dataframe(safe_dict_data_path):
-    """Читает локальный кэш."""
+    """
+    Reads the local cache.
+    '''
+    Читает локальный кэш.
+    """
     apps_df_redy = None
     if path.isfile(safe_dict_data_path):
         safe_dict_data_file = open(safe_dict_data_path, 'r')
@@ -214,7 +232,11 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path):
 
 
 def make_flag(partition_path, day_for_landing):
-    """Проставляет флаги для пустых колекций."""
+    """
+    Maike flags for empty collections.
+    '''
+    Проставляет флаги для пустых колекций.
+    """
     output_path = f'{partition_path}/{day_for_landing}'
     if not path.exists(output_path):
         makedirs(output_path)
@@ -225,6 +247,8 @@ def make_flag(partition_path, day_for_landing):
 
 def apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path, dlc_df_save_path):
     """
+    Lands real collections and maike flags if theme empty.
+    '''
     Приземляет реально существующие коллекции и проставляет флаги, для пустых.
     """
     if len(apps_df) != 0:
@@ -239,6 +263,10 @@ def apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path,
 
 def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy):
     """
+    Pandas DataFrame validator.
+    Checks that the application and DLC collections are not empty.
+    Merge real collections to land on.
+    '''
     Валидатор pandas DataFrame.
     Проверяет что коллекции приложений и DLC не пустые.
     Мёрджит реально существующие коллекции, для приземления.
@@ -257,6 +285,10 @@ def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy):
 
 def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df, dlc_df):
     """
+    Root variable responsible for reading the local cache and
+    merge it with parsed data from scraping steam application pages.
+    Responsible for timeouts of get requests to application pages.
+    '''
     Корневая переменная, отвечающая за чтение локального кэша,
     его мёрдж с распаршеными данными от скрапинга страниц приложений steam.
     Отвечает за таймауты при get запросах к страницам приложений.
@@ -297,7 +329,11 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
 
 
 def safe_dlc_data(get_steam_app_info_path):
-    """Собирает данные с DLC, затем парсит их в pandas DataFrame."""
+    """
+    Collects data from the DLC, then parses it into a pandas DataFrame.
+    '''
+    Собирает данные с DLC, затем парсит их в pandas DataFrame.
+    """
     root_path = f"{get_steam_app_info_path}/{'DLC_info'}"
     dlc_df = None
     file_list = []

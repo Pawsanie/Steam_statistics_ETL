@@ -14,7 +14,9 @@ from AppInfoCSVJoiner_steam_statistics_luigi_task import get_csv_for_join, steam
 
 class AllSteamAppsData(Task):
     """
-    Получаем список приложений от SteamAPI
+    Gets a list of applications from the SteamAPI.
+    '''
+    Получает список приложений от SteamAPI.
     """
     task_namespace = 'AllSteamAppsData'
     priority = 200
@@ -38,7 +40,9 @@ class AllSteamAppsData(Task):
 
 class GetSteamAppInfo(Task):
     """
-    Парсим и скрапим список приложений доступных в Steam
+    Parses and scrapes the list of apps available on Steam.
+    '''
+    Парсит и скрапит список приложений доступных в Steam.
     """
     task_namespace = 'GetSteamAppInfo'
     priority = 5000
@@ -77,6 +81,8 @@ class GetSteamAppInfo(Task):
 
 class AppInfoCSVJoiner(Task):
     """
+    Merges all raw CSV tables into one masterdata.
+    '''
     Объединяет все сырые CSV таблицы в одну masterdata.
     """
     task_namespace = 'AppInfoCSVJoiner'

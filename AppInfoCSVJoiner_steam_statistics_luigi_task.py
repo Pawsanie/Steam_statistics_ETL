@@ -1,9 +1,17 @@
 from os import walk
 from Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part
+"""
+Contains code for luigi task 'AppInfoCSVJoiner'.
+'''
+Содержит код для Луиджи такски 'AppInfoCSVJoiner'.
+"""
 
 
 def get_csv_for_join(result_successor):
     """
+    Creates a root path for csv.
+    Then it parses it to get all csv tables to merge.
+    '''
     Создаёт корневой путь для csv.
     Затем парсит его, с целью получить все csv таблицы для объединения.
     """
@@ -21,6 +29,8 @@ def get_csv_for_join(result_successor):
 
 def steam_apps_data_cleaning(all_apps_data_frame):
     """
+    Clears all_apps_data_frame from apps that are not games.
+    '''
     Очищает all_apps_data_frame от приложений, которые не являются играми.
     """
     # 'apps_which_are_not_game' требует дополнения, по результатам тестирования ->

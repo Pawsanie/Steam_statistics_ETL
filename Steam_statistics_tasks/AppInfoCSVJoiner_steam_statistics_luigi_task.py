@@ -1,5 +1,5 @@
 from os import walk
-from Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part
+from .Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part
 """
 Contains code for luigi task 'AppInfoCSVJoiner'.
 '''

@@ -4,12 +4,14 @@ from pandas import DataFrame  # Do not delete! (pipeline use DataFrame type betw
 from datetime import date
 from requests import get
 import json
-from Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part,\
+from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part,\
     my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
-from AllSteamAppsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser, steam_apps_validator
-from GetSteamAppInfo_steam_statistics_luigi_task import steam_apps_parser, safe_dlc_data, \
+from Steam_statistics_tasks.AllSteamAppsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser,\
+    steam_apps_validator
+from Steam_statistics_tasks.GetSteamAppInfo_steam_statistics_luigi_task import steam_apps_parser, safe_dlc_data, \
     parsing_steam_data, apps_and_dlc_df_landing
-from AppInfoCSVJoiner_steam_statistics_luigi_task import get_csv_for_join, steam_apps_data_cleaning
+from Steam_statistics_tasks.AppInfoCSVJoiner_steam_statistics_luigi_task import get_csv_for_join,\
+    steam_apps_data_cleaning
 
 
 class AllSteamAppsData(Task):

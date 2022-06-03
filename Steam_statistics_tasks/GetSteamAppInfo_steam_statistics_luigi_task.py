@@ -7,7 +7,7 @@ from pandas import DataFrame
 from random import randint
 from time import sleep
 from ast import literal_eval
-from Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
+from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
     my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
 """
 Contains code for luigi task 'GetSteamAppInfo'.
@@ -336,6 +336,7 @@ def safe_dlc_data(get_steam_app_info_path):
     """
     root_path = f"{get_steam_app_info_path}/{'DLC_info'}"
     dlc_df = None
+    interested_data = None
     file_list = []
     if path.exists(root_path):
         for dirs, folders, files in walk(root_path):
@@ -343,5 +344,7 @@ def safe_dlc_data(get_steam_app_info_path):
                 path_to_file = f'{dirs}/{file}'
                 file_list.append(path_to_file)
         if len(file_list) != 0:
-            dlc_df = my_beautiful_task_universal_parser_part(file_list, '.csv', drop_list=None)
+            interested_data = my_beautiful_task_universal_parser_part(file_list, '.csv', drop_list=None)
+    for data in interested_data.values():
+        dlc_df = my_beautiful_task_data_frame_merge(dlc_df, data)
     return dlc_df

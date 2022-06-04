@@ -4,18 +4,20 @@ from requests import get
 import luigi.notifications
 from luigi import DateParameter, Parameter
 from datetime import date
-from os.path import expanduser
 from pandas import DataFrame
-from steam_statistics_luigi_ETL import AllSteamAppsData, GetSteamAppInfo
-from steam_statistics_luigi_tasks import *
+from steam_statistics_luigi_ETL import AllSteamAppsData, GetSteamAppInfo, AppInfoCSVJoiner
+from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import *
+from Steam_statistics_tasks.AllSteamAppsData_steam_statistics_luigi_task import steam_apps_validator
+from Steam_statistics_tasks.GetSteamAppInfo_steam_statistics_luigi_task import *
+from Steam_statistics_tasks.AppInfoCSVJoiner_steam_statistics_luigi_task import *
+
 
 luigi.notifications.DEBUG = True
-home = expanduser("~")
 
 
 def steam_server_status():
     """
-    Тест статуса сервера.
+    Server status test.
     """
     server_satus = get('http://api.steampowered.com/ISteamWebAPIUtil/GetServerInfo/v0001/')
     print('\nSteam WEB-API server satus: ' + str(server_satus))
@@ -23,14 +25,16 @@ def steam_server_status():
 
 class TestAllSteamAppsData(unittest.TestCase):
     """
-    Тест AllSteamAppsData.
+    Test AllSteamAppsData.
     """
-    #  Параметры без ошибок:
+    # Parameters without errors:
     test_all_steam_apps_path = '~/Steam_ETL/All_steam_apps'
     test_date_path_part = date(2012, 12, 15)
-    # Параметры с ошибками:
+    test_df = DataFrame.from_dict({'appid': {0: 220}, 'name': {0: 'Half-Life 2'}})
+    # Parameters with errors:
     # test_all_steam_apps_path = 1
     # test_date_path_part = '2222'
+    # test_df = 1
 
     def setUp(self):
         steam_server_status()
@@ -38,11 +42,11 @@ class TestAllSteamAppsData(unittest.TestCase):
     def tearDown(self):
         pass
 
-    @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
+    @patch('Steam_statistics_tasks.Universal_steam_statistics_luigi_task.my_beautiful_task_data_landing',
            my_beautiful_task_data_landing=my_beautiful_task_data_landing)
     def test_task(self, mock_my_beautiful_task_data_landing):
         """
-        Работоспособность самой AllSteamAppsData таски, без записи на диск.
+        The operability of the AllSteamAppsData task itself, without writing to disk.
         """
         AllSteamAppsData.all_steam_apps_path = Parameter(self.test_all_steam_apps_path)
         AllSteamAppsData.date_path_part = DateParameter(default=self.test_date_path_part)
@@ -59,14 +63,17 @@ class TestAllSteamAppsData(unittest.TestCase):
             warn = 1
         self.assertEqual(warn, 0)
 
-    @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
+    @patch('Steam_statistics_tasks.Universal_steam_statistics_luigi_task.my_beautiful_task_data_landing',
            my_beautiful_task_data_landing=my_beautiful_task_data_landing)
-    def test_run(self, mock_my_beautiful_task_data_landing):
+    @patch('steam_statistics_luigi_ETL.AllSteamAppsData.run',
+           steam_apps_list=None)
+    def test_run(self, mock_my_beautiful_task_data_landing, moc_steam_apps_validator):
         """
-        Отдельная проверка работоспособности модуля AllSteamAppsData.run.
+        Separate health check of the AllSteamAppsData.run module.
         """
         AllSteamAppsData.all_steam_apps_path = Parameter(self.test_all_steam_apps_path)
         AllSteamAppsData.date_path_part = DateParameter(default=self.test_date_path_part)
+        moc_steam_apps_validator.return_value = self.test_df
         self.AllSteamAppsData = AllSteamAppsData()
         is_there_an_error = AllSteamAppsData.run(self=self.AllSteamAppsData)
         self.assertRaises(TypeError, is_there_an_error)
@@ -74,27 +81,27 @@ class TestAllSteamAppsData(unittest.TestCase):
 
 class TestGetSteamAppInfo(unittest.TestCase):
     """
-    Тест GetSteamAppInfo.
+    Test GetSteamAppInfo.
     """
-    #  Параметры без ошибок:
+    # Parameters without errors:
     test_get_steam_app_info_path = '~/Steam_ETL/Info_about_steam_apps'
     test_date_path_part = date(2012, 12, 15)
     test_df = DataFrame.from_dict({'app_id': {0: 220}, 'app_name': {0: 'Half-Life 2'}})
-    # Параметры с ошибками:
+    # Parameters without errors:
     # test_get_steam_app_info_path = 1
     # test_date_path_part = '2222'
     # test_df = 1
     # test_df = DataFrame()
 
-    @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
+    @patch('Steam_statistics_tasks.Universal_steam_statistics_luigi_task.my_beautiful_task_data_landing',
            my_beautiful_task_data_landing=my_beautiful_task_data_landing)
     @patch('steam_statistics_luigi_ETL.GetSteamAppInfo',
            interested_data=test_df)
-    @patch('steam_statistics_luigi_tasks.safe_dict_data',
+    @patch('Steam_statistics_tasks.GetSteamAppInfo_steam_statistics_luigi_task.safe_dict_data',
            safe_dict_data=safe_dict_data)
     def test_task(self, mock_my_beautiful_task_data_landing, mock_interested_data, mock_safe_dict_data):
         """
-        Работоспособность самой GetSteamAppInfo таски, без записи на диск.
+        The operability of the GetSteamAppInfo task itself, without writing to disk.
         """
         GetSteamAppInfo.get_steam_app_info_path = Parameter(self.test_get_steam_app_info_path)
         GetSteamAppInfo.date_path_part = DateParameter(default=self.test_date_path_part)
@@ -107,20 +114,22 @@ class TestGetSteamAppInfo(unittest.TestCase):
         warn = 0
         if type(self.test_get_steam_app_info_path) is not str:
             warn = 1
-            self.assertEqual(warn, 0, '\nget_steam_app_info_path argument is not string type, it means that this is not path...')
+            self.assertEqual(
+                warn, 0, '\nget_steam_app_info_path argument is not string type, it means that this is not path...')
         if '/' not in self.test_get_steam_app_info_path:
             warn = 1
-            self.assertEqual(warn, 0, '\nget_steam_app_info_path argument have no "/" it means that this is not path...')
+            self.assertEqual(
+                warn, 0, '\nget_steam_app_info_path argument have no "/" it means that this is not path...')
 
-    @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
+    @patch('Steam_statistics_tasks.Universal_steam_statistics_luigi_task.my_beautiful_task_data_landing',
            my_beautiful_task_data_landing=my_beautiful_task_data_landing)
     @patch('steam_statistics_luigi_ETL.GetSteamAppInfo.run',
            interested_data=None)
-    @patch('steam_statistics_luigi_tasks.safe_dict_data',
+    @patch('Steam_statistics_tasks.GetSteamAppInfo_steam_statistics_luigi_task.safe_dict_data',
            steam_apps_parser=steam_apps_parser)
     def test_run(self, mock_my_beautiful_task_data_landing, mock_steam_apps_parser, mock_safe_dict_data):
         """
-        Отдельная проверка работоспособности модуля GetSteamAppInfo.run.
+        Separate health check of the GetSteamAppInfo.run module.
         """
         GetSteamAppInfo.get_steam_app_info_path = Parameter(self.test_get_steam_app_info_path)
         GetSteamAppInfo.date_path_part = DateParameter(default=self.test_date_path_part)

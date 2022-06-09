@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, mock_open
 from requests import get
 import luigi.notifications
 from luigi import DateParameter, Parameter
@@ -7,7 +7,6 @@ from datetime import date
 from pandas import DataFrame
 from steam_statistics_luigi_ETL import AllSteamAppsData, GetSteamAppInfo, AppInfoCSVJoiner
 from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import *
-from Steam_statistics_tasks.AllSteamAppsData_steam_statistics_luigi_task import steam_apps_validator
 from Steam_statistics_tasks.GetSteamAppInfo_steam_statistics_luigi_task import *
 from Steam_statistics_tasks.AppInfoCSVJoiner_steam_statistics_luigi_task import *
 
@@ -30,11 +29,9 @@ class TestAllSteamAppsData(unittest.TestCase):
     # Parameters without errors:
     test_all_steam_apps_path = '~/Steam_ETL/All_steam_apps'
     test_date_path_part = date(2012, 12, 15)
-    test_df = DataFrame.from_dict({'appid': {0: 220}, 'name': {0: 'Half-Life 2'}})
     # Parameters with errors:
     # test_all_steam_apps_path = 1
     # test_date_path_part = '2222'
-    # test_df = 1
 
     def setUp(self):
         steam_server_status()
@@ -63,17 +60,18 @@ class TestAllSteamAppsData(unittest.TestCase):
             warn = 1
         self.assertEqual(warn, 0)
 
-    @patch('Steam_statistics_tasks.Universal_steam_statistics_luigi_task.my_beautiful_task_data_landing',
+    @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
            my_beautiful_task_data_landing=my_beautiful_task_data_landing)
-    @patch('steam_statistics_luigi_ETL.AllSteamAppsData.run',
-           steam_apps_list=None)
-    def test_run(self, mock_my_beautiful_task_data_landing, moc_steam_apps_validator):
+    def test_run(self, mock_my_beautiful_task_data_landing):
         """
         Separate health check of the AllSteamAppsData.run module.
         """
         AllSteamAppsData.all_steam_apps_path = Parameter(self.test_all_steam_apps_path)
         AllSteamAppsData.date_path_part = DateParameter(default=self.test_date_path_part)
-        moc_steam_apps_validator.return_value = self.test_df
+        partition_path = AllSteamAppsData.all_steam_apps_path
+        day_for_landing = str(self.test_date_path_part)
+        mock_my_beautiful_task_data_landing.return_value = f'{partition_path}/{day_for_landing}/{"_Validate_Success"}'
+
         self.AllSteamAppsData = AllSteamAppsData()
         is_there_an_error = AllSteamAppsData.run(self=self.AllSteamAppsData)
         self.assertRaises(TypeError, is_there_an_error)
@@ -134,6 +132,7 @@ class TestGetSteamAppInfo(unittest.TestCase):
         GetSteamAppInfo.get_steam_app_info_path = Parameter(self.test_get_steam_app_info_path)
         GetSteamAppInfo.date_path_part = DateParameter(default=self.test_date_path_part)
         mock_steam_apps_parser.return_value = self.test_df
+
         self.GetSteamAppInfo = GetSteamAppInfo()
         is_there_an_error = GetSteamAppInfo.run(self=self.GetSteamAppInfo)
         self.assertRaises(TypeError, is_there_an_error)
@@ -144,6 +143,13 @@ class TestGetSteamAppInfo(unittest.TestCase):
         if len(mock_steam_apps_parser.return_value) == 0:
             warn = 1
             self.assertEqual(warn, 0, '\nlen(mock_steam_apps_parser.return_value) == 0...')
+
+
+class TestAppInfoCSVJoiner(unittest.TestCase):
+    """
+    Test AppInfoCSVJoiner.
+    """
+    pass
 
 
 if __name__ == '__main__':

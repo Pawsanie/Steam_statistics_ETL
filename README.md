@@ -30,7 +30,7 @@ pip install numpy
 pip install pyarrow
 ```
 ## Launch:
-If Your OS has a bash shell the ETL pipeline can be started using a bash script:
+If Your OS has a bash shell the ETL pipeline can be started using the bash script:
 ```bash
 ./start_steam_statistics_ETL.sh
 ```

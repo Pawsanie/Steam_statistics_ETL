@@ -1,4 +1,4 @@
-from requests import get, exceptions
+from requests import get, exceptions  # Do not delete 'exceptions'!
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -11,12 +11,10 @@ from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landin
     my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
 """
 Contains code for luigi task 'GetSteamAppInfo'.
-'''
-Содержит код для Луиджи такски 'GetSteamAppInfo'.
 """
 
 
-def steam_apps_parser(interested_data):
+def steam_apps_parser(interested_data) -> DataFrame:
     """
     Delete what is not a game at the stage of working with raw data.
     '''
@@ -47,6 +45,123 @@ def steam_apps_parser(interested_data):
     return interested_data
 
 
+def scraping_steam_product_rating(app_ratings, result) -> dict[str]:
+    """
+    Scraping steam product rating.
+    """
+    for rating in app_ratings:
+        rating = rating.text
+        rating = rating.replace("\t", "").replace("\n", "").replace("\r", "").replace("- ", "")
+        if 'user reviews in the last 30 days' in rating:
+            rating = rating.replace(" user reviews in the last 30 days are positive.", "")
+            rating = rating.replace("of the ", "")
+            rating = rating.split(' ')
+            result.update({"rating_30d_percent": [rating[0]]})
+            result.update({"rating_30d_count": [rating[1]]})
+        if 'user reviews for this game are positive' in rating:
+            rating = rating.replace(" user reviews for this game are positive.", "")
+            rating = rating.replace("of the ", "")
+            rating = rating.replace(",", "")
+            rating = rating.split(' ')
+            result.update({"rating_all_time_percent": [rating[0]]})
+            result.update({"rating_all_time_count": [rating[1]]})
+    return result
+
+
+def scraping_steam_product_tags(app_tags, result) -> dict[str]:
+    """
+    Scraping steam product tags.
+    """
+    for tags in app_tags:
+        for tag in tags:
+            tag = tag.replace("\n", "")
+            tag = tag.replace("\r", "")
+            while "	" in tag:  # This is not "space"!
+                tag = tag.replace("	", "")
+            result.update({tag: ['True']})
+            if tag == 'Free to Play':
+                result.update({'price': ['0']})
+    return result
+
+
+def scraping_steam_product_maker(app_content_makers, result) -> dict[str]:
+    """
+    Scraping steam product maker.
+    """
+    for makers in app_content_makers:
+        for maker in makers:
+            maker = str(maker)
+            while "	" in maker:
+                maker = maker.replace("	", "")
+            if 'developer' in maker:
+                maker = maker.split('>')
+                maker = maker[1]
+                maker = maker.replace('</a', '')
+                result.update({'developer': [maker]})
+            if 'publisher' in maker:
+                maker = maker.split('>')
+                maker = maker[1]
+                maker = maker.replace('</a', '')
+                result.update({'publisher': [maker]})
+    return result
+
+
+def scraping_steam_product_release_date(app_release_date, result) -> dict[str]:
+    """
+    Scraping product steam release date.
+    """
+    for date in app_release_date:
+        try:
+            date = str(date)
+            date = date.replace('<div class="date">', '')
+            date = date.replace('</div>', '')
+            date = date.replace(',', '')
+            date = datetime.strptime(date, '%d %b %Y')  # b - month by a word
+            date = str(date)
+            date = date.split(' ')
+            date = date[0]
+            result.update({'steam_release_date': date})
+        except ValueError:
+            result.update({'steam_release_date': 'in the pipeline'})
+    return result
+
+
+def scraping_steam_product_price_with_discount(app_release_date, result) -> dict[str]:
+    """
+    Scraping steam product steam price.
+    For prices with discount.
+    """
+    for prices in app_release_date:
+        for price in prices:
+            price = str(price)
+            if '%' not in price:
+                price = price.split('">')
+                price = price[2]
+                price = price.replace('</div><div class="discount_final_price', '')
+                result.update({'price': [price]})
+    return result
+
+
+def scraping_steam_product_price(app_release_date, result) -> dict[str]:
+    """
+    Scraping steam product steam price.
+    For normal prices.
+    """
+    for price in app_release_date:
+        price = str(price)
+        while "	" in price:  # This is not "space"!
+            price = price.replace("	", "")
+        price = price.split('div')
+        price = price[1]
+        price = price.replace("</", "")
+        if 'data-price' in price:
+            price = price.split('>')
+            price = price[1]
+            price = price.replace('\r\n', '')
+            result.update({'price': [price]})
+    return result
+
+
 def connect_retry(n):
     """
     Decorator responsible for retrying connections in cases of errors.
@@ -71,8 +186,6 @@ def connect_retry(n):
 def ask_app_in_steam_store(app_id, app_name):
     """
     Application page scraping.
-    '''
-    Скрапинг страницы приложения.
     """
     print("\nTry to scraping: '" + app_name + "'")
     ua = UserAgent(cache=False, verify_ssl=False)
@@ -82,93 +195,30 @@ def ask_app_in_steam_store(app_id, app_name):
     soup = BeautifulSoup(app_page.text, "lxml")
     result = {}
     result_dlc = {}
+    result_art_book = {}
+    result_ost = {}
     is_it_dls = soup.find_all('h1')
     for head in is_it_dls:  # Drope DLC
         head = str(head)
         if 'Downloadable Content' not in head:
+            # Steam product rating.
             app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
-            for rating in app_ratings:
-                rating = rating.text
-                rating = rating.replace("\t", "")
-                rating = rating.replace("\n", "")
-                rating = rating.replace("\r", "")
-                rating = rating.replace("- ", "")
-                if 'user reviews in the last 30 days' in rating:
-                    rating = rating.replace(" user reviews in the last 30 days are positive.", "")
-                    rating = rating.replace("of the ", "")
-                    rating = rating.split(' ')
-                    result.update({"rating_30d_percent": [rating[0]]})
-                    result.update({"rating_30d_count": [rating[1]]})
-                if 'user reviews for this game are positive' in rating:
-                    rating = rating.replace(" user reviews for this game are positive.", "")
-                    rating = rating.replace("of the ", "")
-                    rating = rating.replace(",", "")
-                    rating = rating.split(' ')
-                    result.update({"rating_all_time_percent": [rating[0]]})
-                    result.update({"rating_all_time_count": [rating[1]]})
+            scraping_steam_product_rating(app_ratings, result)
+            # Steam product tags.
             app_tags = soup.find_all('a', class_='app_tag')
-            for tags in app_tags:
-                for tag in tags:
-                    tag = tag.replace("\n", "")
-                    tag = tag.replace("\r", "")
-                    while "	" in tag:  # This is not "space"!
-                        tag = tag.replace("	", "")
-                    result.update({tag: ['True']})
-                    if tag == 'Free to Play':
-                        result.update({'price': ['0']})
+            scraping_steam_product_tags(app_tags, result)
+            # Steam product maker.
             app_content_makers = soup.find_all('div', class_='grid_content')
-            for makers in app_content_makers:
-                for maker in makers:
-                    maker = str(maker)
-                    while "	" in maker:
-                        maker = maker.replace("	", "")
-                    if 'developer' in maker:
-                        maker = maker.split('>')
-                        maker = maker[1]
-                        maker = maker.replace('</a', '')
-                        result.update({'developer': [maker]})
-                    if 'publisher' in maker:
-                        maker = maker.split('>')
-                        maker = maker[1]
-                        maker = maker.replace('</a', '')
-                        result.update({'publisher': [maker]})
+            scraping_steam_product_maker(app_content_makers, result)
+            # Product steam release date.
             app_release_date = soup.find_all('div', class_='date')
-            for date in app_release_date:
-                try:
-                    date = str(date)
-                    date = date.replace('<div class="date">', '')
-                    date = date.replace('</div>', '')
-                    date = date.replace(',', '')
-                    date = datetime.strptime(date, '%d %b %Y')  # b - month by a word
-                    date = str(date)
-                    date = date.split(' ')
-                    date = date[0]
-                    result.update({'steam_release_date': date})
-                except ValueError:
-                    result.update({'steam_release_date': 'in the pipeline'})
-            # if price have discount
+            scraping_steam_product_release_date(app_release_date, result)
+            # If price have discount.
             app_release_date = soup.find_all('div', class_='discount_block game_purchase_discount')
-            for prices in app_release_date:
-                for price in prices:
-                    price = str(price)
-                    if '%' not in price:
-                        price = price.split('">')
-                        price = price[2]
-                        price = price.replace('</div><div class="discount_final_price', '')
-                        result.update({'price': [price]})
+            scraping_steam_product_price_with_discount(app_release_date, result)
+            # If price have no discount.
             app_release_date = soup.find_all('div', class_='game_purchase_price price')
-            for price in app_release_date:
-                price = str(price)
-                while "	" in price:  # This is not "space"!
-                    price = price.replace("	", "")
-                price = price.split('div')
-                price = price[1]
-                price = price.replace("</", "")
-                if 'data-price' in price:
-                    price = price.split('>')
-                    price = price[1]
-                    price = price.replace('\r\n', '')
-                    result.update({'price': [price]})
+            scraping_steam_product_price(app_release_date, result)
             if len(result) != 0:
                 result.update({'app_id': [app_id]})
                 result.update({'app_name': [app_name]})
@@ -199,11 +249,9 @@ def safe_dict_data(path_to_file, date, df, file_name, ds_name):
         safe_file.write(df)
 
 
-def data_from_file_to_pd_dataframe(safe_dict_data_path):
+def data_from_file_to_pd_dataframe(safe_dict_data_path) -> DataFrame:
     """
     Reads the local cache.
-    '''
-    Читает локальный кэш.
     """
     apps_df_redy = None
     if path.isfile(safe_dict_data_path):
@@ -261,7 +309,7 @@ def apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path,
         make_flag(dlc_df_save_path, day_for_landing)
 
 
-def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy):
+def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy) -> list:
     """
     Pandas DataFrame validator.
     Checks that the application and DLC collections are not empty.
@@ -283,7 +331,7 @@ def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy):
     return apps_and_dlc_df_list
 
 
-def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df, dlc_df):
+def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df, dlc_df) -> list:
     """
     Root variable responsible for reading the local cache and
     merge it with parsed data from scraping steam application pages.
@@ -328,7 +376,7 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
     return apps_and_dlc_df_list
 
 
-def safe_dlc_data(get_steam_app_info_path):
+def safe_dlc_data(get_steam_app_info_path) -> DataFrame:
     """
     Collects data from the DLC, then parses it into a pandas DataFrame.
     '''

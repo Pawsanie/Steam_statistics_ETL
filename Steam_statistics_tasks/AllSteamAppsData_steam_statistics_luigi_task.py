@@ -24,10 +24,10 @@ def steam_aps_from_web_api_parser(interested_data):
 def steam_apps_validator(steam_apps_list, partition_path):
     """
     If the result of work 'AllSteamAppsData' already exists, checks it for duplicates
-    and saves in the last iteration only new applications available on Steam.
+    and saves in the last iteration only new product available on Steam.
     '''
     Если результат работы 'AllSteamAppsData' уже существует, то проверяет его на дубли
-    и сохраняет в последнюю итерацию лишь новые приложения доступные в Steam.
+    и сохраняет в последнюю итерацию лишь новые товары доступные в Steam.
     """
     file_list = []
     for dirs, folders, files in walk(partition_path):

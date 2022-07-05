@@ -1,21 +1,21 @@
 #!/bin/bash
-# AllSteamAppsData args:
-all_steam_apps_path=$HOME"/Steam_ETL/Data_Lake/All_steam_apps"
-# GetSteamAppInfo args:
-get_steam_app_info_path=$HOME"/Steam_ETL/Data_Lake/Info_about_steam_apps"
-# AppInfoCSVJoiner args:
-app_info_csv_joiner_path=$HOME"/Steam_ETL/Data_Warehouse/App_info_csv_joiner_path"
+# AllSteamProductsData args:
+all_steam_products_data_path=$HOME"/Steam_ETL/Data_Lake/All_steam_products_data"
+# GetSteamProductsDataInfo args:
+get_steam_products_data_info_path=$HOME"/Steam_ETL/Data_Lake/Info_about_steam_products"
+# SteamAppsInfo args:
+steam_apps_info_path=$HOME"/Steam_ETL/Data_Warehouse/Steam_apps_info"
 # Date:
 date_path_part=$(date +%F)  # Today
 #date_path_part=$(date +%F --date "YYY-MM-DD")  # Exemple
 
 # Start:
-python3 -B -m steam_statistics_luigi_ETL AppInfoCSVJoiner.AppInfoCSVJoiner --local-scheduler \
---AllSteamAppsData.AllSteamAppsData-all-steam-apps-path $all_steam_apps_path \
---AllSteamAppsData.AllSteamAppsData-date-path-part $date_path_part \
+python3 -B -m steam_statistics_luigi_ETL SteamAppsInfo.SteamAppsInfo --local-scheduler \
+--AllSteamProductsData.AllSteamProductsData-all-steam-products-data-path $all_steam_products_data_path \
+--AllSteamProductsData.AllSteamProductsData-date-path-part $date_path_part \
 \
---GetSteamAppInfo.GetSteamAppInfo-get-steam-app-info-path $get_steam_app_info_path \
---GetSteamAppInfo.GetSteamAppInfo-date-path-part $date_path_part \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-path $get_steam_products_data_info_path \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfo-date-path-part $date_path_part \
 \
---AppInfoCSVJoiner.AppInfoCSVJoiner-app-info-csv-joiner-path $app_info_csv_joiner_path \
---AppInfoCSVJoiner.AppInfoCSVJoiner-date-path-part $date_path_part
+--SteamAppsInfo.SteamAppsInfo-steam-apps-info-path $steam_apps_info_path \
+--SteamAppsInfo.SteamAppsInfo-date-path-part $date_path_part

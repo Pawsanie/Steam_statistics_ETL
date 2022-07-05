@@ -41,22 +41,24 @@ chmod +x ./start_steam_statistics_ETL.sh
 ```
 The script can also be run directly with python.
 ```bash
-python3 -B -m steam_statistics_luigi_ETL AppInfoCSVJoiner.AppInfoCSVJoiner --local-scheduler \
---AllSteamAppsData.AllSteamAppsData-all-steam-apps-path $all_steam_apps_path \
---AllSteamAppsData.AllSteamAppsData-date-path-part $date \
---GetSteamAppInfo.GetSteamAppInfo-get-steam-app-info-path $get_steam_app_info_path \
---GetSteamAppInfo.GetSteamAppInfo-date-path-part $date \
---AppInfoCSVJoiner.AppInfoCSVJoiner-app-info-csv-joiner-path $app_info_csv_joiner_path \
---AppInfoCSVJoiner.AppInfoCSVJoiner-date-path-part $date
+python3 -B -m steam_statistics_luigi_ETL SteamAppsInfo.SteamAppsInfo --local-scheduler \
+--AllSteamProductsData.AllSteamProductsData-all-steam-products-data-path $all_steam_products_data_path \
+--AllSteamProductsData.AllSteamProductsData-date-path-part $date_path_part \
+\
+--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-path $get_steam_products_data_info_path \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfo-date-path-part $date_path_part \
+\
+--SteamAppsInfo.SteamAppsInfo-steam-apps-info-path $steam_apps_info_path \
+--SteamAppsInfo.SteamAppsInfo-date-path-part $date_path_part
 ```
 The example above shows the launch of all tasks.
 
 ## Description of tasks:
-AllSteamAppsData
+AllSteamProductsData
 * Retrieves a list of applications from steam Web-API.
 * If the launch is not the first time, saves the difference with the previous launch as a result.
 
-GetSteamAppInfo
+GetSteamProductsDataInfo
 * Requests application pages received from the last task.
 * Masquerades as a new user every request and waits for a random value of seconds between 3 and 6 before a new request.
 * Scraping data on these pages.
@@ -66,7 +68,7 @@ GetSteamAppInfo
 * Reads the local cache of applications and DLC every unsuccessful instances.
 * Deletes the local cache of applications and add-ons after successful instances.
 
-AppInfoCSVJoiner
+SteamAppsInfo
 * Collects the results of all successful instances of the past task and merges them into a new file containing statistics about applications.
 
 ## Known Bugs:

@@ -13,7 +13,9 @@ date_path_part=$(date +%F)  # Today
 python3 -B -m steam_statistics_luigi_ETL AppInfoCSVJoiner.AppInfoCSVJoiner --local-scheduler \
 --AllSteamAppsData.AllSteamAppsData-all-steam-apps-path $all_steam_apps_path \
 --AllSteamAppsData.AllSteamAppsData-date-path-part $date_path_part \
+\
 --GetSteamAppInfo.GetSteamAppInfo-get-steam-app-info-path $get_steam_app_info_path \
 --GetSteamAppInfo.GetSteamAppInfo-date-path-part $date_path_part \
+\
 --AppInfoCSVJoiner.AppInfoCSVJoiner-app-info-csv-joiner-path $app_info_csv_joiner_path \
 --AppInfoCSVJoiner.AppInfoCSVJoiner-date-path-part $date_path_part

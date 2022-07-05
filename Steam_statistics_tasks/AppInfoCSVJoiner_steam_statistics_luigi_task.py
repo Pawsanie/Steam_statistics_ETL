@@ -1,13 +1,12 @@
+from pandas import DataFrame
 from os import walk
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part
 """
 Contains code for luigi task 'AppInfoCSVJoiner'.
-'''
-Содержит код для Луиджи такски 'AppInfoCSVJoiner'.
 """
 
 
-def get_csv_for_join(result_successor):
+def get_csv_for_join(result_successor) -> dict:
     """
     Creates a root path for csv.
     Then it parses it to get all csv tables to merge.
@@ -27,7 +26,7 @@ def get_csv_for_join(result_successor):
     return interested_data
 
 
-def steam_apps_data_cleaning(all_apps_data_frame):
+def steam_apps_data_cleaning(all_apps_data_frame) -> DataFrame:
     """
     Clears all_apps_data_frame from apps that are not games.
     '''

@@ -4,12 +4,10 @@ from .Universal_steam_statistics_luigi_task import my_beautiful_task_universal_p
     my_beautiful_task_data_frame_merge
 """
 Contains code for luigi task 'AllSteamAppsData'.
-'''
-Содержит код для Луиджи такски 'AllSteamAppsData'.
 """
 
 
-def steam_aps_from_web_api_parser(interested_data):
+def steam_aps_from_web_api_parser(interested_data) -> dict:
     """
     Parses the result received from the Steam Web-API.
     '''
@@ -21,7 +19,7 @@ def steam_aps_from_web_api_parser(interested_data):
     return all_aps_data
 
 
-def steam_apps_validator(steam_apps_list, partition_path):
+def steam_apps_validator(steam_apps_list, partition_path) -> DataFrame:
     """
     If the result of work 'AllSteamAppsData' already exists, checks it for duplicates
     and saves in the last iteration only new product available on Steam.

@@ -1,16 +1,13 @@
 import json
 from pandas import DataFrame, read_csv, read_json
 from os import walk, path, makedirs
-from numpy import NaN
 from pyarrow import Table, parquet
 """
 Contains, in one way or another, a universal code for all 'steam statistics pipeline'.
-'''
-Содержит, в той, или иной мере - уневерсальный код, для 'steam statistics pipeline'.
 """
 
 
-def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_path, file_mask):
+def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_path, file_mask) -> str:
     """
     Landing parsed data as json, csv, or parquet.
     '''
@@ -77,7 +74,7 @@ def my_beautiful_task_path_parser(result_successor, dir_list, interested_partiti
                         {partition_file: interested_partition_path})
 
 
-def my_beautiful_task_data_frame_merge(data_from_files, extract_data):
+def my_beautiful_task_data_frame_merge(data_from_files, extract_data) -> DataFrame:
     """
     Merges the given dataframes into one, filling NaN empty cells.
     '''
@@ -86,9 +83,7 @@ def my_beautiful_task_data_frame_merge(data_from_files, extract_data):
     if data_from_files is None:
         data_from_files = extract_data
     else:
-        new_point_for_merge = extract_data.columns.difference(data_from_files.columns)
-        for column in new_point_for_merge:
-            data_from_files.astype(object)[column] = NaN
+        extract_data = extract_data.astype(object)
         data_from_files = data_from_files.merge(extract_data, how='outer')
         data_from_files = data_from_files.reset_index(drop=True)
     return data_from_files
@@ -122,15 +117,15 @@ def my_beautiful_task_data_table_parser(interested_partition, drop_list, interes
         interested_data[key] = data_from_files
 
 
-def my_beautiful_task_universal_parser_part(result_successor, file_mask, drop_list):
+def my_beautiful_task_universal_parser_part(result_successor, file_mask, drop_list) -> dict:
     """
     Runs code after inheriting paths from the previous task.
     '''
     Запускает код после наследования путей от прошлой таски.
     """
-    interested_partition = {}
-    dir_list = []
+    interested_partition, dir_list = {}, []
     my_beautiful_task_path_parser(result_successor, dir_list, interested_partition, file_mask)
+
     interested_data = {}  # Парсинг данных из файлов по путям унаследованным от прошлой таски.
     my_beautiful_task_data_table_parser(interested_partition, drop_list, interested_data, file_mask)
     return interested_data

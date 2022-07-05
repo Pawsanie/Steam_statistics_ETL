@@ -6,102 +6,99 @@ from requests import get
 import json
 from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part,\
     my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
-from Steam_statistics_tasks.AllSteamAppsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser,\
+from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser,\
     steam_apps_validator
-from Steam_statistics_tasks.GetSteamAppInfo_steam_statistics_luigi_task import steam_apps_parser, safe_dlc_data, \
-    parsing_steam_data, apps_and_dlc_df_landing
-from Steam_statistics_tasks.AppInfoCSVJoiner_steam_statistics_luigi_task import get_csv_for_join,\
+from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import steam_apps_parser, \
+    safe_dlc_data, parsing_steam_data, apps_and_dlc_df_landing
+from Steam_statistics_tasks.SteamAppsInfo_steam_statistics_luigi_task import get_csv_for_join,\
     steam_apps_data_cleaning
 
 
-class AllSteamAppsData(Task):
+class AllSteamProductsData(Task):
     """
-    Gets a list of applications from the SteamAPI.
-    '''
-    Получает список приложений от SteamAPI.
+    Gets a list of products from the SteamAPI.
     """
-    task_namespace = 'AllSteamAppsData'
+    task_namespace = 'AllSteamProductsData'
     priority = 200
-    all_steam_apps_path = Parameter(significant=True, description='Root path for gets all aps from steam')
+    all_steam_products_data_path = Parameter(significant=True, description='Root path for gets all products from steam')
     date_path_part = DateParameter(default=date.today(), description='Date for root path')
 
     def output(self):
         return LocalTarget(
-            path.join(f"{self.all_steam_apps_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
+            path.join(f"{self.all_steam_products_data_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
-        if path.exists(f"{self.all_steam_apps_path}{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}") is False:
+        if path.exists(f"{self.all_steam_products_data_path}{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}") is False:
             steam_api_response = get('http://api.steampowered.com/ISteamApps/GetAppList/v2')
             steam_apps_list = json.loads(steam_api_response.text)
             steam_apps_list = steam_aps_from_web_api_parser(steam_apps_list)
-            partition_path = f"{self.all_steam_apps_path}"
+            partition_path = f"{self.all_steam_products_data_path}"
             steam_apps_list = steam_apps_validator(steam_apps_list, partition_path)
             day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
             my_beautiful_task_data_landing(steam_apps_list, day_for_landing,
-                                           partition_path, "All_Steam_Apps_Data.json")
+                                           partition_path, "AllSteamProductsData.json")
 
 
-class GetSteamAppInfo(Task):
+class GetSteamProductsDataInfo(Task):
     """
-    Parses and scrapes the list of apps available on Steam.
-    '''
-    Парсит и скрапит список приложений доступных в Steam.
+    Parses and scrapes the list of products available on Steam.
     """
-    task_namespace = 'GetSteamAppInfo'
+    task_namespace = 'GetSteamProductsDataInfo'
     priority = 5000
-    get_steam_app_info_path = Parameter(significant=True, description='Root path for gets info about steam apps')
+    get_steam_products_data_info_path = Parameter(significant=True, description='Root path for gets info about steam products')
     date_path_part = DateParameter(default=date.today(), description='Date for root path')
 
     def requires(self):
-        return {'AllSteamAppsData': AllSteamAppsData()}
+        return {'AllSteamProductsData': AllSteamProductsData()}
 
     def output(self):
         return LocalTarget(
             path.join(
-                f"{self.get_steam_app_info_path}/{'Apps_info'}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
+                f"{self.get_steam_products_data_info_path}/{'Apps_info'}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
-        result_successor = self.input()['AllSteamAppsData']
+        result_successor = self.input()['AllSteamProductsData']
         interested_data = my_beautiful_task_universal_parser_part(result_successor, ".json", drop_list=None)
         interested_data = steam_apps_parser(interested_data)
         apps_df = None
-        dlc_df = safe_dlc_data(self.get_steam_app_info_path)
+        dlc_df = safe_dlc_data(self.get_steam_products_data_info_path)
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
-        apps_and_dlc_df_list = parsing_steam_data(interested_data, self.get_steam_app_info_path,
+        apps_and_dlc_df_list = parsing_steam_data(interested_data, self.get_steam_products_data_info_path,
                                                   day_for_landing, apps_df, dlc_df)
         apps_df, dlc_df = apps_and_dlc_df_list[0], apps_and_dlc_df_list[1]
-        apps_df_save_path = f"{self.get_steam_app_info_path}/{'Apps_info'}"
-        dlc_df_save_path = f"{self.get_steam_app_info_path}/{'DLC_info'}"
+        apps_df_save_path = f"{self.get_steam_products_data_info_path}/{'Apps_info'}"
+        dlc_df_save_path = f"{self.get_steam_products_data_info_path}/{'DLC_info'}"
         apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path, dlc_df_save_path)
-        safe_dict_data_path = f"{self.get_steam_app_info_path}/{'Apps_info'}/{day_for_landing}/{'_safe_dict_data'}"
+        safe_dict_data_path = f"{self.get_steam_products_data_info_path}/{'Apps_info'}/" \
+                              f"{day_for_landing}/{'_safe_dict_data'}"
         if path.isfile(safe_dict_data_path):
             remove(safe_dict_data_path)
-        safe_dict_dlc_data_path = f"{self.get_steam_app_info_path}/{'DLC_info'}/" \
+        safe_dict_dlc_data_path = f"{self.get_steam_products_data_info_path}/{'DLC_info'}/" \
                                   f"{day_for_landing}/{'_safe_dict_dlc_data'}"
         if path.isfile(safe_dict_dlc_data_path):
             remove(safe_dict_dlc_data_path)
 
 
-class AppInfoCSVJoiner(Task):
+class SteamAppsInfo(Task):
     """
-    Merges all raw CSV tables into one masterdata.
+    Merges all raw CSV tables into one MasterData.
     '''
-    Объединяет все сырые CSV таблицы в одну masterdata.
+    Объединяет все сырые CSV таблицы в одну MasterData.
     """
-    task_namespace = 'AppInfoCSVJoiner'
+    task_namespace = 'SteamAppsInfo'
     priority = 100
-    app_info_csv_joiner_path = Parameter(significant=True, description='Path to join all GetSteamAppInfo.csv')
+    steam_apps_info_path = Parameter(significant=True, description='Path to join all GetSteamProductsDataInfo .csv')
     date_path_part = DateParameter(default=date.today(), description='Date for root path')
 
     def requires(self):
-        return {'GetSteamAppInfo': GetSteamAppInfo()}
+        return {'GetSteamProductsDataInfo': GetSteamProductsDataInfo()}
 
     def output(self):
         return LocalTarget(
-            path.join(f"{self.app_info_csv_joiner_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
+            path.join(f"{self.steam_apps_info_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
-        result_successor = self.input()['GetSteamAppInfo']
+        result_successor = self.input()['GetSteamProductsDataInfo']
         interested_data = get_csv_for_join(result_successor)
         all_apps_data_frame = None
         for data in interested_data.values():
@@ -109,7 +106,7 @@ class AppInfoCSVJoiner(Task):
         all_apps_data_frame = steam_apps_data_cleaning(all_apps_data_frame)
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
         my_beautiful_task_data_landing(all_apps_data_frame, day_for_landing,
-                                       self.app_info_csv_joiner_path, "All_Steam_App_Info.csv")
+                                       self.steam_apps_info_path, "SteamAppsInfo.csv")
 
 
 if __name__ == "__main__":

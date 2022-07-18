@@ -41,7 +41,7 @@ def my_beautiful_task_data_landing(data_to_landing: dict or DataFrame, day_for_l
 
 
 def my_beautiful_task_path_parser(result_successor: list or tuple or str, dir_list: list,
-                                  interested_partition: dict, file_mask: str):
+                                  interested_partition: dict[str], file_mask: str):
     """
     Inheritance of paths from result_successor.
     '''
@@ -91,8 +91,8 @@ def my_beautiful_task_data_frame_merge(data_from_files: DataFrame or None, extra
     return data_from_files
 
 
-def my_beautiful_task_data_table_parser(interested_partition: dict, drop_list: list or None,
-                                        interested_data, file_mask: str):
+def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame], drop_list: list or None,
+                                        interested_data: dict[DataFrame], file_mask: str):
     """
     Universal reading of data from tables.
     '''
@@ -121,7 +121,7 @@ def my_beautiful_task_data_table_parser(interested_partition: dict, drop_list: l
 
 
 def my_beautiful_task_universal_parser_part(result_successor: list or tuple or str,
-                                            file_mask: str, drop_list: list or None) -> dict:
+                                            file_mask: str, drop_list: list or None) -> dict[DataFrame]:
     """
     Runs code after inheriting paths from the previous task.
     '''

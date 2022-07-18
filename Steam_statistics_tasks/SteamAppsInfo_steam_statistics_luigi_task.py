@@ -6,7 +6,7 @@ Contains code for luigi task 'AppInfoCSVJoiner'.
 """
 
 
-def get_csv_for_join(result_successor) -> dict:
+def get_csv_for_join(result_successor) -> dict[DataFrame]:
     """
     Creates a root path for csv.
     Then it parses it to get all csv tables to merge.

@@ -14,7 +14,7 @@ Contains code for luigi task 'GetSteamAppInfo'.
 """
 
 
-def steam_apps_parser(interested_data) -> DataFrame:
+def steam_apps_parser(interested_data: dict) -> DataFrame:
     """
     Delete what is not a game at the stage of working with raw data.
     '''
@@ -45,9 +45,11 @@ def steam_apps_parser(interested_data) -> DataFrame:
     return interested_data
 
 
-def scraping_steam_product_rating(app_ratings, result) -> dict[str]:
+def scraping_steam_product_rating(app_ratings, result: dict) -> dict[str]:
     """
     Scraping steam product rating.
+    -----
+    app_ratings - BeautifulSoup object.
     """
     for rating in app_ratings:
         rating = rating.text
@@ -68,9 +70,11 @@ def scraping_steam_product_rating(app_ratings, result) -> dict[str]:
     return result
 
 
-def scraping_steam_product_tags(app_tags, result) -> dict[str]:
+def scraping_steam_product_tags(app_tags, result: dict) -> dict[str]:
     """
     Scraping steam product tags.
+    -----
+    app_tags - BeautifulSoup object.
     """
     for tags in app_tags:
         for tag in tags:
@@ -84,9 +88,11 @@ def scraping_steam_product_tags(app_tags, result) -> dict[str]:
     return result
 
 
-def scraping_steam_product_maker(app_content_makers, result) -> dict[str]:
+def scraping_steam_product_maker(app_content_makers, result: dict) -> dict[str]:
     """
     Scraping steam product maker.
+    -----
+    app_content_makers - BeautifulSoup object.
     """
     for makers in app_content_makers:
         for maker in makers:
@@ -106,9 +112,11 @@ def scraping_steam_product_maker(app_content_makers, result) -> dict[str]:
     return result
 
 
-def scraping_steam_product_release_date(app_release_date, result) -> dict[str]:
+def scraping_steam_product_release_date(app_release_date, result: dict) -> dict[str]:
     """
     Scraping product steam release date.
+    -----
+    app_release_date - BeautifulSoup object.
     """
     for date in app_release_date:
         try:
@@ -126,10 +134,12 @@ def scraping_steam_product_release_date(app_release_date, result) -> dict[str]:
     return result
 
 
-def scraping_steam_product_price_with_discount(app_release_date, result) -> dict[str]:
+def scraping_steam_product_price_with_discount(app_release_date, result: dict) -> dict[str]:
     """
     Scraping steam product steam price.
     For prices with discount.
+    -----
+    app_release_date - BeautifulSoup object.
     """
     for prices in app_release_date:
         for price in prices:
@@ -142,10 +152,12 @@ def scraping_steam_product_price_with_discount(app_release_date, result) -> dict
     return result
 
 
-def scraping_steam_product_price(app_release_date, result) -> dict[str]:
+def scraping_steam_product_price(app_release_date, result: dict) -> dict[str]:
     """
     Scraping steam product steam price.
     For normal prices.
+    -----
+    app_release_date - BeautifulSoup object.
     """
     for price in app_release_date:
         price = str(price)
@@ -162,12 +174,9 @@ def scraping_steam_product_price(app_release_date, result) -> dict[str]:
     return result
 
 
-def connect_retry(n):
+def connect_retry(n: int):
     """
     Decorator responsible for retrying connections in cases of errors.
-    '''
-    Декоратор отвечающий за ретраи соединений,
-    в случаях ошибок.
     """
     def function_decor(function):
         def function_for_trying(*args, **kwargs):
@@ -183,7 +192,7 @@ def connect_retry(n):
 
 
 @connect_retry(3)
-def ask_app_in_steam_store(app_id, app_name):
+def ask_app_in_steam_store(app_id: str, app_name: str):
     """
     Application page scraping.
     """
@@ -233,7 +242,7 @@ def ask_app_in_steam_store(app_id, app_name):
     return result_list
 
 
-def safe_dict_data(path_to_file, date, df, file_name, ds_name):
+def safe_dict_data(path_to_file: str, date: str, df: DataFrame, file_name: str, ds_name: str):
     """
     Temporary storage, for landing raw data.
     '''
@@ -249,7 +258,7 @@ def safe_dict_data(path_to_file, date, df, file_name, ds_name):
         safe_file.write(df)
 
 
-def data_from_file_to_pd_dataframe(safe_dict_data_path) -> DataFrame:
+def data_from_file_to_pd_dataframe(safe_dict_data_path: str) -> DataFrame:
     """
     Reads the local cache.
     """
@@ -279,7 +288,7 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path) -> DataFrame:
     return apps_df_redy
 
 
-def make_flag(partition_path, day_for_landing):
+def make_flag(partition_path: str, day_for_landing: str):
     """
     Maike flags for empty collections.
     '''
@@ -293,7 +302,8 @@ def make_flag(partition_path, day_for_landing):
     flag.close()
 
 
-def apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path, dlc_df_save_path):
+def apps_and_dlc_df_landing(apps_df: DataFrame, dlc_df: DataFrame, day_for_landing: str,
+                            apps_df_save_path: str, dlc_df_save_path: str):
     """
     Lands real collections and maike flags if theme empty.
     '''
@@ -309,7 +319,8 @@ def apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path,
         make_flag(dlc_df_save_path, day_for_landing)
 
 
-def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy) -> list:
+def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
+                                dlc_df: DataFrame, dlc_df_redy: DataFrame) -> list[DataFrame]:
     """
     Pandas DataFrame validator.
     Checks that the application and DLC collections are not empty.
@@ -331,7 +342,8 @@ def apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy) -> l
     return apps_and_dlc_df_list
 
 
-def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing, apps_df, dlc_df) -> list:
+def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str, day_for_landing: str,
+                       apps_df: DataFrame or None, dlc_df: DataFrame) -> list[DataFrame]:
     """
     Root variable responsible for reading the local cache and
     merge it with parsed data from scraping steam application pages.
@@ -376,7 +388,7 @@ def parsing_steam_data(interested_data, get_steam_app_info_path, day_for_landing
     return apps_and_dlc_df_list
 
 
-def safe_dlc_data(get_steam_app_info_path) -> DataFrame:
+def safe_dlc_data(get_steam_app_info_path: str) -> DataFrame:
     """
     Collects data from the DLC, then parses it into a pandas DataFrame.
     '''

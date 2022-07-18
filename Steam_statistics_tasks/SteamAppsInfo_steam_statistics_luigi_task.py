@@ -26,7 +26,7 @@ def get_csv_for_join(result_successor) -> dict:
     return interested_data
 
 
-def steam_apps_data_cleaning(all_apps_data_frame) -> DataFrame:
+def steam_apps_data_cleaning(all_apps_data_frame: DataFrame) -> DataFrame:
     """
     Clears all_apps_data_frame from apps that are not games.
     '''

@@ -7,7 +7,8 @@ Contains, in one way or another, a universal code for all 'steam statistics pipe
 """
 
 
-def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_path, file_mask) -> str:
+def my_beautiful_task_data_landing(data_to_landing: dict or DataFrame, day_for_landing: str,
+                                   partition_path: str, file_mask: str) -> str:
     """
     Landing parsed data as json, csv, or parquet.
     '''
@@ -39,7 +40,8 @@ def my_beautiful_task_data_landing(data_to_landing, day_for_landing, partition_p
     return flag_path
 
 
-def my_beautiful_task_path_parser(result_successor, dir_list, interested_partition, file_mask):
+def my_beautiful_task_path_parser(result_successor: list or tuple or str, dir_list: list,
+                                  interested_partition: dict, file_mask: str):
     """
     Inheritance of paths from result_successor.
     '''
@@ -74,7 +76,7 @@ def my_beautiful_task_path_parser(result_successor, dir_list, interested_partiti
                         {partition_file: interested_partition_path})
 
 
-def my_beautiful_task_data_frame_merge(data_from_files, extract_data) -> DataFrame:
+def my_beautiful_task_data_frame_merge(data_from_files: DataFrame or None, extract_data: DataFrame) -> DataFrame:
     """
     Merges the given dataframes into one, filling NaN empty cells.
     '''
@@ -89,7 +91,8 @@ def my_beautiful_task_data_frame_merge(data_from_files, extract_data) -> DataFra
     return data_from_files
 
 
-def my_beautiful_task_data_table_parser(interested_partition, drop_list, interested_data, file_mask):
+def my_beautiful_task_data_table_parser(interested_partition: dict, drop_list: list or None,
+                                        interested_data, file_mask: str):
     """
     Universal reading of data from tables.
     '''
@@ -117,7 +120,8 @@ def my_beautiful_task_data_table_parser(interested_partition, drop_list, interes
         interested_data[key] = data_from_files
 
 
-def my_beautiful_task_universal_parser_part(result_successor, file_mask, drop_list) -> dict:
+def my_beautiful_task_universal_parser_part(result_successor: list or tuple or str,
+                                            file_mask: str, drop_list: list or None) -> dict:
     """
     Runs code after inheriting paths from the previous task.
     '''

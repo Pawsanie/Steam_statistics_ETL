@@ -7,7 +7,7 @@ Contains code for luigi task 'AllSteamAppsData'.
 """
 
 
-def steam_aps_from_web_api_parser(interested_data: dict) -> dict:
+def steam_aps_from_web_api_parser(interested_data: dict[str]) -> dict[str]:
     """
     Parses the result received from the Steam Web-API.
     '''
@@ -19,7 +19,7 @@ def steam_aps_from_web_api_parser(interested_data: dict) -> dict:
     return all_aps_data
 
 
-def steam_apps_validator(steam_apps_list: dict, partition_path: str) -> DataFrame:
+def steam_apps_validator(steam_apps_list: dict[str], partition_path: str) -> DataFrame:
     """
     If the result of work 'AllSteamAppsData' already exists, checks it for duplicates
     and saves in the last iteration only new product available on Steam.

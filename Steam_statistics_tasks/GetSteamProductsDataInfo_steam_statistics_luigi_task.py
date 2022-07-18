@@ -14,7 +14,7 @@ Contains code for luigi task 'GetSteamAppInfo'.
 """
 
 
-def steam_apps_parser(interested_data: dict) -> DataFrame:
+def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:
     """
     Delete what is not a game at the stage of working with raw data.
     '''

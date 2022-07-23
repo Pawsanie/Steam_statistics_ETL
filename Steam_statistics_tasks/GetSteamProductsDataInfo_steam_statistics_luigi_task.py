@@ -1,4 +1,4 @@
-from requests import get, exceptions  # Do not delete 'exceptions'!
+from requests import get, exceptions
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -7,6 +7,7 @@ from pandas import DataFrame
 from random import randint
 from time import sleep
 from ast import literal_eval
+import logging
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
     my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
 """
@@ -184,19 +185,19 @@ def connect_retry(n: int):
             while try_number < n:
                 try:
                     return function(*args, **kwargs)
-                except:
+                except exceptions as connect_error:
                     try_number = try_number + 1
-                    print('Retry... ' + str(try_number))
+                    logging.error('Connect Retry... ' + str(try_number) + '\n' + connect_error)
         return function_for_trying
     return function_decor
 
 
 @connect_retry(3)
-def ask_app_in_steam_store(app_id: str, app_name: str):
+def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
     """
     Application page scraping.
     """
-    print("\nTry to scraping: '" + app_name + "'")
+    logging.info("Try to scraping: '" + app_name + "'")
     ua = UserAgent(cache=False, verify_ssl=False)
     scrap_user = {"User-Agent": str(ua.random), "Cache-Control": "no-cache", "Pragma": "no-cache"}
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
@@ -273,13 +274,12 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path: str) -> DataFrame:
             for row in rows:
                 safe_dict_data_file.write(row)
             safe_dict_data_file.close()
-            print('Start merge local_cash...')
+            logging.info('Start merge local_cash...')
             with open(safe_dict_data_path, 'r') as safe_dict_data_file:
                 data = safe_dict_data_file.read()
                 apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ',')))
                 apps_df_redy = apps_df_redy.reset_index(drop=True)
-                print(apps_df_redy)
-                print('Local_cash successfully merged...')
+                logging.info(apps_df_redy + '\nLocal_cash successfully merged...')
         else:
             remove(safe_dict_data_path)
             apps_df_redy = DataFrame({'app_name': []})
@@ -381,9 +381,9 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
                                    '_safe_dict_dlc_data', 'DLC_info')
                     dlc_df = my_beautiful_task_data_frame_merge(dlc_df, new_df_row)
             else:
-                print("'" + app_name + "' is dlc and has not been processed...")
+                logging.info("'" + app_name + "' is dlc and has not been processed...")
         else:
-            print("'" + app_name + "' already is in _safe_dict_data...")
+            logging.info("'" + app_name + "' already is in _safe_dict_data...")
     apps_and_dlc_df_list = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy)
     return apps_and_dlc_df_list
 

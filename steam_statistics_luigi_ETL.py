@@ -4,6 +4,7 @@ from pandas import DataFrame  # Do not delete! (pipeline use DataFrame type betw
 from datetime import date
 from requests import get
 import json
+from Steam_statistics_tasks.Logging_Config import logging_config
 from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part,\
     my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
 from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser,\
@@ -28,7 +29,8 @@ class AllSteamProductsData(Task):
             path.join(f"{self.all_steam_products_data_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
-        if path.exists(f"{self.all_steam_products_data_path}{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}") is False:
+        if path.exists(f"{self.all_steam_products_data_path}"
+                       f"{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}") is False:
             steam_api_response = get('http://api.steampowered.com/ISteamApps/GetAppList/v2')
             steam_apps_list = json.loads(steam_api_response.text)
             steam_apps_list = steam_aps_from_web_api_parser(steam_apps_list)
@@ -45,8 +47,12 @@ class GetSteamProductsDataInfo(Task):
     """
     task_namespace = 'GetSteamProductsDataInfo'
     priority = 5000
-    get_steam_products_data_info_path = Parameter(significant=True, description='Root path for gets info about steam products')
+    get_steam_products_data_info_path = Parameter(significant=True,
+                                                  description='Root path for gets info about steam products')
     date_path_part = DateParameter(default=date.today(), description='Date for root path')
+    get_steam_products_data_info_logfile_path = Parameter(default="steam_products_data_info.log",
+                                                          description='Path for ".log" file')
+    get_steam_products_data_info_loglevel = Parameter(default=30, description='Log Level')
 
     def requires(self):
         return {'AllSteamProductsData': AllSteamProductsData()}
@@ -57,6 +63,7 @@ class GetSteamProductsDataInfo(Task):
                 f"{self.get_steam_products_data_info_path}/{'Apps_info'}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
+        logging_config(self.get_steam_products_data_info_logfile_path, int(self.get_steam_products_data_info_loglevel))
         result_successor = self.input()['AllSteamProductsData']
         interested_data = my_beautiful_task_universal_parser_part(result_successor, ".json", drop_list=None)
         interested_data = steam_apps_parser(interested_data)

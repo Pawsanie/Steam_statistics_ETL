@@ -279,7 +279,7 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path: str) -> DataFrame:
                 data = safe_dict_data_file.read()
                 apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ',')))
                 apps_df_redy = apps_df_redy.reset_index(drop=True)
-                logging.info(apps_df_redy + '\nLocal_cash successfully merged...')
+                logging.info(str(apps_df_redy) + '\nLocal_cash successfully merged...')
         else:
             remove(safe_dict_data_path)
             apps_df_redy = DataFrame({'app_name': []})
@@ -345,7 +345,7 @@ def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
 def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str, day_for_landing: str,
                        apps_df: DataFrame or None, dlc_df: DataFrame) -> list[DataFrame]:
     """
-    Root variable responsible for reading the local cache and
+    Root function responsible for reading the local cache and
     merge it with parsed data from scraping steam application pages.
     Responsible for timeouts of get requests to application pages.
     '''

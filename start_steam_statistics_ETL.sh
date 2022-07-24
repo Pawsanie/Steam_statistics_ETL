@@ -4,7 +4,7 @@ all_steam_products_data_path=$HOME"/Steam_ETL/Data_Lake/All_steam_products_data"
 # GetSteamProductsDataInfo args:
 get_steam_products_data_info_path=$HOME"/Steam_ETL/Data_Lake/Info_about_steam_products"
 get_steam_products_data_info_logfile_path=$HOME"/Steam_ETL/Logs/steam_products_data_info.log"
-get_steam_products_data_info_loglevel=30
+get_steam_products_data_info_loglevel=40
 # SteamAppsInfo args:
 steam_apps_info_path=$HOME"/Steam_ETL/Data_Warehouse/Steam_apps_info"
 # Date:

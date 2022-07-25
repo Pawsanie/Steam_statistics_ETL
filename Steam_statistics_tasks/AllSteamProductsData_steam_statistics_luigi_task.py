@@ -1,5 +1,7 @@
 from os import walk
+
 from pandas import DataFrame, concat
+
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part, \
     my_beautiful_task_data_frame_merge
 """

@@ -1,6 +1,7 @@
 import json
-from pandas import DataFrame, read_csv, read_json
 from os import walk, path, makedirs
+
+from pandas import DataFrame, read_csv, read_json
 from pyarrow import Table, parquet
 """
 Contains, in one way or another, a universal code for all 'steam statistics pipeline'.

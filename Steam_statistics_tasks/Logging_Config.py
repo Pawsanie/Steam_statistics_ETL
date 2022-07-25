@@ -1,4 +1,7 @@
 import logging
+"""
+Logging configuration.
+"""
 
 
 def logging_config(log_path: str, log_level: int) -> 'logging.basicConfig':

@@ -195,21 +195,15 @@ def connect_retry(n: int):
     return function_decor
 
 
-def make_fake_user():
-    tempfile.gettempdir()
-    # fake_useragent_0.1.11.json
-    ua = UserAgent(cache=False, verify_ssl=False)
-    scrap_user = {"User-Agent": str(ua.random), "Cache-Control": "no-cache", "Pragma": "no-cache"}
-    return scrap_user
-
-
 @connect_retry(3)
 def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
     """
     Application page scraping.
     """
     logging.info("Try to scraping: '" + app_name + "'")
-    scrap_user = make_fake_user()
+    # fake_user = UserAgent(cache=False, verify_ssl=False).random  # UserAgent bag shiting in logs. Wait new version.
+    fake_user = UserAgent().random
+    scrap_user = {"User-Agent": fake_user, "Cache-Control": "no-cache", "Pragma": "no-cache"}
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
     app_page = get(app_page_url, headers=scrap_user)
     soup = BeautifulSoup(app_page.text, "lxml")

@@ -1,13 +1,15 @@
-from requests import get, exceptions
-from fake_useragent import UserAgent
-from bs4 import BeautifulSoup
 from datetime import datetime
 from os import walk, path, makedirs, remove
-from pandas import DataFrame
 from random import randint
 from time import sleep
 from ast import literal_eval
 import logging
+
+from pandas import DataFrame
+from fake_useragent import UserAgent
+from bs4 import BeautifulSoup
+from requests import get, exceptions
+
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
     my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
 """

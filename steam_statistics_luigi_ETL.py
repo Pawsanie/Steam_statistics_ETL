@@ -1,9 +1,11 @@
-from luigi import run, Task, LocalTarget, DateParameter, Parameter
 from os import path, remove
-from pandas import DataFrame  # Do not delete! (pipeline use DataFrame type between functions)
 from datetime import date
-from requests import get
 import json
+
+from requests import get
+from luigi import run, Task, LocalTarget, DateParameter, Parameter
+from pandas import DataFrame  # Do not delete! (pipeline use DataFrame type between functions)
+
 from Steam_statistics_tasks.Logging_Config import logging_config
 from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part,\
     my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
@@ -13,6 +15,9 @@ from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task
     safe_dlc_data, parsing_steam_data, apps_and_dlc_df_landing
 from Steam_statistics_tasks.SteamAppsInfo_steam_statistics_luigi_task import get_csv_for_join,\
     steam_apps_data_cleaning
+"""
+Steam statistics Luigi ETL.
+"""
 
 
 class AllSteamProductsData(Task):

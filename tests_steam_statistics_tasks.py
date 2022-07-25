@@ -1,14 +1,19 @@
 import unittest
 from unittest.mock import patch, Mock
+from datetime import date
+
+from pandas import DataFrame
 from requests import get
 import luigi.notifications
 from luigi import DateParameter, Parameter
-from datetime import date
-from pandas import DataFrame
-from steam_statistics_luigi_ETL import AllSteamAppsData, GetSteamAppInfo, AppInfoCSVJoiner
+
+from steam_statistics_luigi_ETL import AllSteamProductsData, GetSteamProductsDataInfo, SteamAppsInfo
 from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import *
-from Steam_statistics_tasks.GetSteamAppInfo_steam_statistics_luigi_task import *
-from Steam_statistics_tasks.AppInfoCSVJoiner_steam_statistics_luigi_task import *
+from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import *
+from Steam_statistics_tasks.SteamAppsInfo_steam_statistics_luigi_task import *
+"""
+Steam statistics Luigi ETL unit tests.
+"""
 
 
 luigi.notifications.DEBUG = True
@@ -22,7 +27,7 @@ def steam_server_status():
     print('\nSteam WEB-API server satus: ' + str(server_satus))
 
 
-class TestAllSteamAppsData(unittest.TestCase):
+class TestAllSteamProductsData(unittest.TestCase):
     """
     Test AllSteamAppsData.
     """
@@ -45,13 +50,13 @@ class TestAllSteamAppsData(unittest.TestCase):
         """
         The operability of the AllSteamAppsData task itself, without writing to disk.
         """
-        AllSteamAppsData.all_steam_apps_path = Parameter(self.test_all_steam_apps_path)
-        AllSteamAppsData.date_path_part = DateParameter(default=self.test_date_path_part)
-        self.AllSteamAppsData = AllSteamAppsData()
-        partition_path = AllSteamAppsData.all_steam_apps_path
+        AllSteamProductsData.all_steam_apps_path = Parameter(self.test_all_steam_apps_path)
+        AllSteamProductsData.date_path_part = DateParameter(default=self.test_date_path_part)
+        self.AllSteamAppsData = AllSteamProductsData()
+        partition_path = AllSteamProductsData.all_steam_apps_path
         day_for_landing = str(self.test_date_path_part)
         mock_my_beautiful_task_data_landing.return_value = f'{partition_path}/{day_for_landing}/{"_Validate_Success"}'
-        is_there_an_error = AllSteamAppsData().set_status_message
+        is_there_an_error = AllSteamProductsData().set_status_message
         self.assertEqual(is_there_an_error, None)
         warn = 0
         if type(self.test_all_steam_apps_path) is not str:
@@ -66,14 +71,14 @@ class TestAllSteamAppsData(unittest.TestCase):
         """
         Separate health check of the AllSteamAppsData.run module.
         """
-        AllSteamAppsData.all_steam_apps_path = Parameter(self.test_all_steam_apps_path)
-        AllSteamAppsData.date_path_part = DateParameter(default=self.test_date_path_part)
-        self.AllSteamAppsData = AllSteamAppsData()
-        is_there_an_error = AllSteamAppsData.run(self=self.AllSteamAppsData)
+        AllSteamProductsData.all_steam_apps_path = Parameter(self.test_all_steam_apps_path)
+        AllSteamProductsData.date_path_part = DateParameter(default=self.test_date_path_part)
+        self.AllSteamAppsData = AllSteamProductsData()
+        is_there_an_error = AllSteamProductsData.run(self=self.AllSteamAppsData)
         self.assertRaises(TypeError, is_there_an_error)
 
 
-class TestGetSteamAppInfo(unittest.TestCase):
+class TestGetSteamProductsDataInfo(unittest.TestCase):
     """
     Test GetSteamAppInfo.
     """
@@ -97,13 +102,13 @@ class TestGetSteamAppInfo(unittest.TestCase):
         """
         The operability of the GetSteamAppInfo task itself, without writing to disk.
         """
-        GetSteamAppInfo.get_steam_app_info_path = Parameter(self.test_get_steam_app_info_path)
-        GetSteamAppInfo.date_path_part = DateParameter(default=self.test_date_path_part)
-        self.GetSteamAppInfo = GetSteamAppInfo()
-        partition_path = GetSteamAppInfo.get_steam_app_info_path
+        GetSteamProductsDataInfo.get_steam_app_info_path = Parameter(self.test_get_steam_app_info_path)
+        GetSteamProductsDataInfo.date_path_part = DateParameter(default=self.test_date_path_part)
+        self.GetSteamAppInfo = GetSteamProductsDataInfo()
+        partition_path = GetSteamProductsDataInfo.get_steam_app_info_path
         day_for_landing = str(self.test_date_path_part)
         mock_my_beautiful_task_data_landing.return_value = f'{partition_path}/{day_for_landing}/{"_Validate_Success"}'
-        is_there_an_error = GetSteamAppInfo().set_status_message
+        is_there_an_error = GetSteamProductsDataInfo().set_status_message
         self.assertEqual(is_there_an_error, None)
         warn = 0
         if type(self.test_get_steam_app_info_path) is not str:
@@ -123,11 +128,11 @@ class TestGetSteamAppInfo(unittest.TestCase):
         """
         Separate health check of the GetSteamAppInfo.run module.
         """
-        GetSteamAppInfo.get_steam_app_info_path = Parameter(self.test_get_steam_app_info_path)
-        GetSteamAppInfo.date_path_part = DateParameter(default=self.test_date_path_part)
+        GetSteamProductsDataInfo.get_steam_app_info_path = Parameter(self.test_get_steam_app_info_path)
+        GetSteamProductsDataInfo.date_path_part = DateParameter(default=self.test_date_path_part)
 
-        self.GetSteamAppInfo = GetSteamAppInfo()
-        is_there_an_error = GetSteamAppInfo.run(self=self.GetSteamAppInfo)
+        self.GetSteamAppInfo = GetSteamProductsDataInfo()
+        is_there_an_error = GetSteamProductsDataInfo.run(self=self.GetSteamAppInfo)
         self.assertRaises(TypeError, is_there_an_error)
         # warn = 0
         # if type(mock_steam_apps_parser.return_value) is not DataFrame:
@@ -138,7 +143,7 @@ class TestGetSteamAppInfo(unittest.TestCase):
         #     self.assertEqual(warn, 0, '\nlen(mock_steam_apps_parser.return_value) == 0...')
 
 
-# class TestAppInfoCSVJoiner(unittest.TestCase):
+# class TestSteamAppsInfo(unittest.TestCase):
 #     """
 #     Test AppInfoCSVJoiner.
 #     """

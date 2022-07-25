@@ -4,6 +4,7 @@ from random import randint
 from time import sleep
 from ast import literal_eval
 import logging
+import tempfile
 
 from pandas import DataFrame
 from fake_useragent import UserAgent
@@ -194,14 +195,21 @@ def connect_retry(n: int):
     return function_decor
 
 
+def make_fake_user():
+    tempfile.gettempdir()
+    # fake_useragent_0.1.11.json
+    ua = UserAgent(cache=False, verify_ssl=False)
+    scrap_user = {"User-Agent": str(ua.random), "Cache-Control": "no-cache", "Pragma": "no-cache"}
+    return scrap_user
+
+
 @connect_retry(3)
 def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
     """
     Application page scraping.
     """
     logging.info("Try to scraping: '" + app_name + "'")
-    ua = UserAgent(cache=False, verify_ssl=False)
-    scrap_user = {"User-Agent": str(ua.random), "Cache-Control": "no-cache", "Pragma": "no-cache"}
+    scrap_user = make_fake_user()
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
     app_page = get(app_page_url, headers=scrap_user)
     soup = BeautifulSoup(app_page.text, "lxml")
@@ -345,13 +353,13 @@ def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
 
 
 def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str, day_for_landing: str,
-                       apps_df: DataFrame or None, dlc_df: DataFrame) -> list[DataFrame]:
+                       apps_df: DataFrame or None, dlc_df: DataFrame or None) -> list[DataFrame]:
     """
     Root function responsible for reading the local cache and
     merge it with parsed data from scraping steam application pages.
     Responsible for timeouts of get requests to application pages.
     '''
-    Корневая переменная, отвечающая за чтение локального кэша,
+    Корневая функция, отвечающая за чтение локального кэша,
     его мёрдж с распаршеными данными от скрапинга страниц приложений steam.
     Отвечает за таймауты при get запросах к страницам приложений.
     """
@@ -369,28 +377,45 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
                 sleep(time_wait)
                 result_list = ask_app_in_steam_store(app_id, app_name)
                 result, result_dlc = result_list[0], result_list[1]
+                # App scraping succsessfully.
                 if result is not None and len(result) != 0:
                     new_df_row = DataFrame.from_dict(result)
-                    inserted_columns = ['app_id', 'app_name']
+                    inserted_columns = ['app_id', 'app_name', 'developer', 'rating_all_time_percent',
+                                        'rating_all_time_count', 'rating_30d_percent', 'rating_30d_count',
+                                        'publisher', 'price', 'steam_release_date']
                     new_columns = ([col for col in inserted_columns if col in new_df_row]
                                    + [col for col in new_df_row if col not in inserted_columns])
                     new_df_row = new_df_row[new_columns]
                     safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_data', 'Apps_info')
                     apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
+                    logging.info("'" + app_name + "' scraping succsessfully completed.")
+                # App scrapping failed.
+                else:
+                    new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
+                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
+                                   '_safe_dict_dlc_data', 'Apps_not_for_this_region')
+                    logging.info("'" + app_name + "' app is not available in this region...")
+                # DLC scraping succsessfully.
                 if result_dlc is not None and len(result_dlc) != 0:
                     new_df_row = DataFrame.from_dict(result_dlc)
                     safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
                                    '_safe_dict_dlc_data', 'DLC_info')
                     dlc_df = my_beautiful_task_data_frame_merge(dlc_df, new_df_row)
+                # DLC scrapping failed.
+                else:
+                    new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
+                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
+                                   '_safe_dict_dlc_data', 'DLC_not_for_this_region')
+                    logging.info("'" + app_name + "' DLC is not available in this region...")
             else:
-                logging.info("'" + app_name + "' is dlc and has not been processed...")
+                logging.info("'" + app_name + "' is DLC and has not been processed...")
         else:
             logging.info("'" + app_name + "' already is in _safe_dict_data...")
     apps_and_dlc_df_list = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy)
     return apps_and_dlc_df_list
 
 
-def safe_dlc_data(get_steam_app_info_path: str) -> DataFrame:
+def safe_dlc_data(get_steam_app_info_path: str) -> DataFrame or None:
     """
     Collects data from the DLC, then parses it into a pandas DataFrame.
     '''
@@ -407,6 +432,9 @@ def safe_dlc_data(get_steam_app_info_path: str) -> DataFrame:
                 file_list.append(path_to_file)
         if len(file_list) != 0:
             interested_data = my_beautiful_task_universal_parser_part(file_list, '.csv', drop_list=None)
-    for data in interested_data.values():
-        dlc_df = my_beautiful_task_data_frame_merge(dlc_df, data)
+    if interested_data is not None:
+        for data in interested_data.values():
+            dlc_df = my_beautiful_task_data_frame_merge(dlc_df, data)
+    else:
+        dlc_df = None
     return dlc_df

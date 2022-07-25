@@ -73,7 +73,8 @@ class GetSteamProductsDataInfo(Task):
         interested_data = my_beautiful_task_universal_parser_part(result_successor, ".json", drop_list=None)
         interested_data = steam_apps_parser(interested_data)
         apps_df = None
-        dlc_df = safe_dlc_data(self.get_steam_products_data_info_path)
+        dlc_df = None
+        # dlc_df = safe_dlc_data(self.get_steam_products_data_info_path)
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
         apps_and_dlc_df_list = parsing_steam_data(interested_data, self.get_steam_products_data_info_path,
                                                   day_for_landing, apps_df, dlc_df)

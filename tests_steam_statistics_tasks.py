@@ -12,10 +12,10 @@ from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task imp
 from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import *
 from Steam_statistics_tasks.SteamAppsInfo_steam_statistics_luigi_task import *
 from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import *
+
 """
 Steam statistics Luigi ETL unit tests.
 """
-
 
 luigi.notifications.DEBUG = True
 
@@ -44,27 +44,25 @@ class TestAllSteamProductsData(unittest.TestCase):
     steam_server_status()
 
     def setUp(self):
-        pass
+        AllSteamProductsData.all_steam_products_data_path = Parameter(self.test_all_steam_apps_path)
+        AllSteamProductsData.date_path_part = DateParameter(default=self.test_date_path_part)
+        self.AllSteamAppsData = AllSteamProductsData()
 
     def tearDown(self):
         pass
 
     @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
            return_value=None)
-    def test_task(self, mock_my_beautiful_task_data_landing):
+    def test_AllSteamProductsData_task(self, mock_my_beautiful_task_data_landing):
         """
         The operability of the AllSteamAppsData task itself, without writing to disk.
         """
-        AllSteamProductsData.all_steam_products_data_path = Parameter(self.test_all_steam_apps_path)
-        AllSteamProductsData.date_path_part = DateParameter(default=self.test_date_path_part)
-        self.AllSteamAppsData = AllSteamProductsData()
         partition_path = AllSteamProductsData.all_steam_products_data_path
         day_for_landing = str(self.test_date_path_part)
         mock_my_beautiful_task_data_landing.return_value = f'{partition_path}/{day_for_landing}/{"_Validate_Success"}'
 
         is_there_an_error = AllSteamProductsData().set_status_message
         self.assertEqual(is_there_an_error, None)
-
         warn = 0
         if type(self.test_all_steam_apps_path) is not str:
             warn = 1
@@ -74,13 +72,10 @@ class TestAllSteamProductsData(unittest.TestCase):
 
     @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
            return_value=None)
-    def test_run(self, mock_my_beautiful_task_data_landing):
+    def test_AllSteamProductsData_run(self, mock_my_beautiful_task_data_landing):
         """
         Separate health check of the AllSteamAppsData.run module.
         """
-        AllSteamProductsData.all_steam_products_data_path = Parameter(self.test_all_steam_apps_path)
-        AllSteamProductsData.date_path_part = DateParameter(default=self.test_date_path_part)
-        self.AllSteamAppsData = AllSteamProductsData()
         is_there_an_error = AllSteamProductsData.run(self=self.AllSteamAppsData)
         self.assertRaises(TypeError, is_there_an_error)
 
@@ -100,6 +95,17 @@ class TestGetSteamProductsDataInfo(unittest.TestCase):
     # test_df = 1
     # test_df = DataFrame()
 
+    def setUp(self):
+        GetSteamProductsDataInfo.get_steam_products_data_info_path = Parameter(default='/dev/null')
+        GetSteamProductsDataInfo.date_path_part = DateParameter(default=self.test_date_path_part)
+        GetSteamProductsDataInfo.get_steam_products_data_info_loglevel = Parameter(default="0")
+        GetSteamProductsDataInfo.get_steam_products_data_info_logfile_path = Parameter(default='/dev/null')
+        GetSteamProductsDataInfo.apps_df_save_path = '/dev/null'
+        GetSteamProductsDataInfo.dlc_df_save_path = '/dev/null'
+        GetSteamProductsDataInfo.safe_dict_data_path = '/dev/null'
+        GetSteamProductsDataInfo.safe_dict_dlc_data_path = '/dev/null'
+        self.GetSteamAppInfo = GetSteamProductsDataInfo()
+
     @patch('Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task.safe_dlc_data',
            return_value=test_df)
     @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
@@ -108,23 +114,17 @@ class TestGetSteamProductsDataInfo(unittest.TestCase):
            interested_data=test_df)
     @patch('Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task.safe_dict_data',
            return_value=None)
-    def test_task(self, mock_safe_dict_data, mock_interested_data,
-                  mock_my_beautiful_task_data_landing, mock_safe_dlc_data):
+    def test_GetSteamProductsDataInfo_task(self, mock_safe_dict_data, mock_interested_data,
+                                           mock_my_beautiful_task_data_landing, mock_safe_dlc_data):
         """
         The operability of the GetSteamAppInfo task itself, without writing to disk.
         """
-        GetSteamProductsDataInfo.get_steam_products_data_info_path = Parameter(self.test_get_steam_app_info_path)
-        GetSteamProductsDataInfo.date_path_part = DateParameter(default=self.test_date_path_part)
-        GetSteamProductsDataInfo.get_steam_products_data_info_loglevel = Parameter(default="0")
-        self.GetSteamAppInfo = GetSteamProductsDataInfo()
         partition_path = GetSteamProductsDataInfo.get_steam_products_data_info_path
         day_for_landing = str(self.test_date_path_part)
         mock_my_beautiful_task_data_landing.return_value = f'{partition_path}/{day_for_landing}/{"_Validate_Success"}'
 
         is_there_an_error = GetSteamProductsDataInfo().set_status_message
         self.assertEqual(is_there_an_error, None)
-
-        warn = 0
         if type(self.test_get_steam_app_info_path) is not str:
             warn = 1
             self.assertEqual(
@@ -134,29 +134,21 @@ class TestGetSteamProductsDataInfo(unittest.TestCase):
             self.assertEqual(
                 warn, 0, '\nget_steam_app_info_path argument have no "/" it means that this is not path...')
 
-    @patch('Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task.safe_dlc_data',
-           return_value=test_df)
-    @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
+    @patch('Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task.make_flag',
+           flag_path='/dev/null')
+    @patch('Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task.make_flag',
+           output_path='/dev/null')
+    @patch('Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task.safe_dict_data',
            return_value=None)
     @patch('steam_statistics_luigi_ETL.GetSteamProductsDataInfo',
            interested_data=test_df)
-    @patch('Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task.safe_dict_data',
-           return_value=test_df)
-    def test_run(self, mock_safe_dict_data, mock_interested_data,
-                 mock_my_beautiful_task_data_landing, mock_safe_dlc_data):
+    def test_GetSteamProductsDataInfo_run(self, mock_interested_data, mock_safe_dict_data,
+                                          mock_output_path, mock_flag_path):
         """
         Separate health check of the GetSteamAppInfo.run module.
         """
-        GetSteamProductsDataInfo.get_steam_products_data_info_path = Parameter(self.test_get_steam_app_info_path)
-        GetSteamProductsDataInfo.date_path_part = DateParameter(default=self.test_date_path_part)
-        GetSteamProductsDataInfo.get_steam_products_data_info_loglevel = Parameter(default="0")
-        GetSteamProductsDataInfo.get_steam_products_data_info_logfile_path = Parameter(default='/dev/null')
-        self.GetSteamAppInfo = GetSteamProductsDataInfo()
-
         is_there_an_error = GetSteamProductsDataInfo.run(self=self.GetSteamAppInfo)
         self.assertRaises(TypeError, is_there_an_error)
-
-        # warn = 0
         if type(self.test_df) is not DataFrame:
             warn = 1
             self.assertEqual(warn, 0, f"'\nmock_interested_data.return_value is not Pandas.DataFrame(data)...'")
@@ -182,7 +174,7 @@ class TestSteamAppsInfo(unittest.TestCase):
 
     @patch('steam_statistics_luigi_ETL.my_beautiful_task_data_landing',
            return_value=None)
-    def test_task(self, mock_my_beautiful_task_data_landing):
+    def test_SteamAppsInfo_task(self, mock_my_beautiful_task_data_landing):
         """
         The operability of the GetSteamAppInfo task itself, without writing to disk.
         """
@@ -195,8 +187,6 @@ class TestSteamAppsInfo(unittest.TestCase):
 
         is_there_an_error = SteamAppsInfo().set_status_message
         self.assertEqual(is_there_an_error, None)
-
-        warn = 0
         if type(self.test_get_steam_app_info_path) is not str:
             warn = 1
             self.assertEqual(

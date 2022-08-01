@@ -12,8 +12,6 @@ def my_beautiful_task_data_landing(data_to_landing: dict or DataFrame, day_for_l
                                    partition_path: str, file_mask: str) -> str:
     """
     Landing parsed data as json, csv, or parquet.
-    '''
-    Приземление распаршеных данных в виде json, csv, или parquet.
     """
     data_type_need = file_mask.split('.')
     data_type_need = data_type_need[1]
@@ -96,10 +94,8 @@ def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame], d
                                         interested_data: dict[DataFrame], file_mask: str):
     """
     Universal reading of data from tables.
-    '''
-    Универсальное чтение данных из таблиц
     """
-    def how_to_extract(*args):  # Определение метода чтения данных для pandas.
+    def how_to_extract(*args): # Definging a pandas read method.
         how_to_extract_format = None
         if file_mask == '.csv':
             how_to_extract_format = read_csv(*args).astype(str)
@@ -117,7 +113,8 @@ def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame], d
                 extract_data = how_to_extract(file).drop([drop_list], axis=1)
             else:
                 extract_data = how_to_extract(file)
-            data_from_files = my_beautiful_task_data_frame_merge(data_from_files, extract_data)  # Слияние датафреймов
+            # Merging Pandas DataFrames
+            data_from_files = my_beautiful_task_data_frame_merge(data_from_files, extract_data)
         interested_data[key] = data_from_files
 
 

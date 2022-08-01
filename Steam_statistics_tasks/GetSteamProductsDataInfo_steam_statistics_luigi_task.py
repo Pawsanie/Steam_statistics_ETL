@@ -4,7 +4,6 @@ from random import randint
 from time import sleep
 from ast import literal_eval
 import logging
-import tempfile
 
 from pandas import DataFrame
 from fake_useragent import UserAgent
@@ -32,7 +31,6 @@ def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:
         interested_data = interested_data[~interested_data['name'].str.contains('Texture')]
         interested_data = interested_data[~interested_data['name'].str.contains('Demo')]
         interested_data = interested_data[~interested_data['name'].str.contains('Playtest')]
-        interested_data = interested_data[~interested_data['name'].str.contains('DLC')]
         interested_data = interested_data[~interested_data['name'].str.contains('test2')]
         interested_data = interested_data[~interested_data['name'].str.contains('test3')]
         interested_data = interested_data[~interested_data['name'].str.contains('Pieterw')]
@@ -49,11 +47,9 @@ def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:
     return interested_data
 
 
-def scraping_steam_product_rating(app_ratings, result: dict) -> dict[str]:
+def scraping_steam_product_rating(app_ratings: BeautifulSoup.find_all, result: dict) -> dict[str]:
     """
     Scraping steam product rating.
-    -----
-    app_ratings - BeautifulSoup object.
     """
     for rating in app_ratings:
         rating = rating.text
@@ -74,11 +70,9 @@ def scraping_steam_product_rating(app_ratings, result: dict) -> dict[str]:
     return result
 
 
-def scraping_steam_product_tags(app_tags, result: dict) -> dict[str]:
+def scraping_steam_product_tags(app_tags: BeautifulSoup.find_all, result: dict) -> dict[str]:
     """
     Scraping steam product tags.
-    -----
-    app_tags - BeautifulSoup object.
     """
     for tags in app_tags:
         for tag in tags:
@@ -92,11 +86,9 @@ def scraping_steam_product_tags(app_tags, result: dict) -> dict[str]:
     return result
 
 
-def scraping_steam_product_maker(app_content_makers, result: dict) -> dict[str]:
+def scraping_steam_product_maker(app_content_makers: BeautifulSoup.find_all, result: dict) -> dict[str]:
     """
     Scraping steam product maker.
-    -----
-    app_content_makers - BeautifulSoup object.
     """
     for makers in app_content_makers:
         for maker in makers:
@@ -116,11 +108,9 @@ def scraping_steam_product_maker(app_content_makers, result: dict) -> dict[str]:
     return result
 
 
-def scraping_steam_product_release_date(app_release_date, result: dict) -> dict[str]:
+def scraping_steam_product_release_date(app_release_date: BeautifulSoup.find_all, result: dict) -> dict[str]:
     """
     Scraping product steam release date.
-    -----
-    app_release_date - BeautifulSoup object.
     """
     for date in app_release_date:
         try:
@@ -138,12 +128,10 @@ def scraping_steam_product_release_date(app_release_date, result: dict) -> dict[
     return result
 
 
-def scraping_steam_product_price_with_discount(app_release_date, result: dict) -> dict[str]:
+def scraping_steam_product_price_with_discount(app_release_date: BeautifulSoup.find_all, result: dict) -> dict[str]:
     """
     Scraping steam product steam price.
     For prices with discount.
-    -----
-    app_release_date - BeautifulSoup object.
     """
     for prices in app_release_date:
         for price in prices:
@@ -156,12 +144,10 @@ def scraping_steam_product_price_with_discount(app_release_date, result: dict) -
     return result
 
 
-def scraping_steam_product_price(app_release_date, result: dict) -> dict[str]:
+def scraping_steam_product_price(app_release_date: BeautifulSoup.find_all, result: dict) -> dict[str]:
     """
     Scraping steam product steam price.
     For normal prices.
-    -----
-    app_release_date - BeautifulSoup object.
     """
     for price in app_release_date:
         price = str(price)
@@ -195,13 +181,45 @@ def connect_retry(n: int):
     return function_decor
 
 
+def scraping_steam_product(app_id: str, app_name: str, soup: 'BeautifulSoup["lxml"]', result: dict) -> dict[str]:
+    """
+    Scraping conveyor.
+    """
+    # Steam product rating.
+    app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
+    scraping_steam_product_rating(app_ratings, result)
+    # Steam product tags.
+    app_tags = soup.find_all('a', class_='app_tag')
+    scraping_steam_product_tags(app_tags, result)
+    # Steam product maker.
+    app_content_makers = soup.find_all('div', class_='grid_content')
+    scraping_steam_product_maker(app_content_makers, result)
+    # Product steam release date.
+    app_release_date = soup.find_all('div', class_='date')
+    scraping_steam_product_release_date(app_release_date, result)
+    # If price have discount.
+    app_release_date = soup.find_all('div', class_='discount_block game_purchase_discount')
+    scraping_steam_product_price_with_discount(app_release_date, result)
+    # If price have no discount.
+    app_release_date = soup.find_all('div', class_='game_purchase_price price')
+    scraping_steam_product_price(app_release_date, result)
+    if len(result) != 0:
+        result.update({'app_id': [app_id]})
+        result.update({'app_name': [app_name]})
+        date_today = str(datetime.today())
+        date_today = date_today.split(' ')
+        date_today = date_today[0]
+        result.update({'scan_date': [date_today]})
+    return result
+
+
 @connect_retry(3)
 def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
     """
     Application page scraping.
     """
     logging.info("Try to scraping: '" + app_name + "'")
-    # fake_user = UserAgent(cache=False, verify_ssl=False).random  # UserAgent bag shiting in logs. Wait new version.
+    # fake_user = UserAgent(cache=False, verify_ssl=False).random  # UserAgent bag spam in logs. Wait new version.
     fake_user = UserAgent().random
     scrap_user = {"User-Agent": fake_user, "Cache-Control": "no-cache", "Pragma": "no-cache"}
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
@@ -209,40 +227,13 @@ def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
     soup = BeautifulSoup(app_page.text, "lxml")
     result = {}
     result_dlc = {}
-    result_art_book = {}
-    result_ost = {}
     is_it_dls = soup.find_all('h1')
     for head in is_it_dls:  # Drope DLC
         head = str(head)
         if 'Downloadable Content' not in head:
-            # Steam product rating.
-            app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
-            scraping_steam_product_rating(app_ratings, result)
-            # Steam product tags.
-            app_tags = soup.find_all('a', class_='app_tag')
-            scraping_steam_product_tags(app_tags, result)
-            # Steam product maker.
-            app_content_makers = soup.find_all('div', class_='grid_content')
-            scraping_steam_product_maker(app_content_makers, result)
-            # Product steam release date.
-            app_release_date = soup.find_all('div', class_='date')
-            scraping_steam_product_release_date(app_release_date, result)
-            # If price have discount.
-            app_release_date = soup.find_all('div', class_='discount_block game_purchase_discount')
-            scraping_steam_product_price_with_discount(app_release_date, result)
-            # If price have no discount.
-            app_release_date = soup.find_all('div', class_='game_purchase_price price')
-            scraping_steam_product_price(app_release_date, result)
-            if len(result) != 0:
-                result.update({'app_id': [app_id]})
-                result.update({'app_name': [app_name]})
-                date_today = str(datetime.today())
-                date_today = date_today.split(' ')
-                date_today = date_today[0]
-                result.update({'scan_date': [date_today]})
+            scraping_steam_product(app_id, app_name, soup, result)
         else:  # Save DLC
-            result_dlc.update({'app_id': [app_id]})
-            result_dlc.update({'app_name': [app_name]})
+            scraping_steam_product(app_id, app_name, soup, result_dlc)
     result_list = [result, result_dlc]
     return result_list
 
@@ -295,8 +286,6 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path: str) -> DataFrame:
 def make_flag(partition_path: str, day_for_landing: str):
     """
     Maike flags for empty collections.
-    '''
-    Проставляет флаги для пустых колекций.
     """
     output_path = f'{partition_path}/{day_for_landing}'
     if not path.exists(output_path):
@@ -310,8 +299,6 @@ def apps_and_dlc_df_landing(apps_df: DataFrame, dlc_df: DataFrame, day_for_landi
                             apps_df_save_path: str, dlc_df_save_path: str):
     """
     Lands real collections and maike flags if theme empty.
-    '''
-    Приземляет реально существующие коллекции и проставляет флаги, для пустых.
     """
     if len(apps_df) != 0:
         my_beautiful_task_data_landing(apps_df, day_for_landing, apps_df_save_path, "Get_Steam_App_Info.csv")
@@ -329,10 +316,6 @@ def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
     Pandas DataFrame validator.
     Checks that the application and DLC collections are not empty.
     Merge real collections to land on.
-    '''
-    Валидатор pandas DataFrame.
-    Проверяет что коллекции приложений и DLC не пустые.
-    Мёрджит реально существующие коллекции, для приземления.
     """
     if type(apps_df) == type(None):
         apps_df = []
@@ -344,6 +327,20 @@ def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
         dlc_df = my_beautiful_task_data_frame_merge(dlc_df_redy, dlc_df)
     apps_and_dlc_df_list = [apps_df, dlc_df]
     return apps_and_dlc_df_list
+
+
+def result_column_sort(result: dict) -> DataFrame:
+    """
+    Sort columns and mayke DF from apps or DLC dict.
+    """
+    new_df_row = DataFrame.from_dict(result)
+    inserted_columns = ['app_id', 'app_name', 'developer', 'rating_all_time_percent',
+                        'rating_all_time_count', 'rating_30d_percent', 'rating_30d_count',
+                        'publisher', 'price', 'steam_release_date']
+    new_columns = ([col for col in inserted_columns if col in new_df_row]
+                   + [col for col in new_df_row if col not in inserted_columns])
+    new_df_row = new_df_row[new_columns]
+    return new_df_row
 
 
 def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str, day_for_landing: str,
@@ -373,13 +370,7 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
                 result, result_dlc = result_list[0], result_list[1]
                 # App scraping succsessfully.
                 if result is not None and len(result) != 0:
-                    new_df_row = DataFrame.from_dict(result)
-                    inserted_columns = ['app_id', 'app_name', 'developer', 'rating_all_time_percent',
-                                        'rating_all_time_count', 'rating_30d_percent', 'rating_30d_count',
-                                        'publisher', 'price', 'steam_release_date']
-                    new_columns = ([col for col in inserted_columns if col in new_df_row]
-                                   + [col for col in new_df_row if col not in inserted_columns])
-                    new_df_row = new_df_row[new_columns]
+                    new_df_row = result_column_sort(result)
                     safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_data', 'Apps_info')
                     apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
                     logging.info("'" + app_name + "' scraping succsessfully completed.")
@@ -391,7 +382,7 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
                     logging.info("'" + app_name + "' app is not available in this region...")
                 # DLC scraping succsessfully.
                 if result_dlc is not None and len(result_dlc) != 0:
-                    new_df_row = DataFrame.from_dict(result_dlc)
+                    new_df_row = result_column_sort(result_dlc)
                     safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
                                    '_safe_dict_dlc_data', 'DLC_info')
                     dlc_df = my_beautiful_task_data_frame_merge(dlc_df, new_df_row)
@@ -412,8 +403,6 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
 def safe_dlc_data(get_steam_app_info_path: str) -> DataFrame or None:
     """
     Collects data from the DLC, then parses it into a pandas DataFrame.
-    '''
-    Собирает данные с DLC, затем парсит их в pandas DataFrame.
     """
     root_path = f"{get_steam_app_info_path}/{'DLC_info'}"
     dlc_df = None

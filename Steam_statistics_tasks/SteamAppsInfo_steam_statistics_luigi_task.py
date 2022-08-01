@@ -31,8 +31,6 @@ def get_csv_for_join(result_successor) -> dict[DataFrame]:
 def steam_apps_data_cleaning(all_apps_data_frame: DataFrame) -> DataFrame:
     """
     Clears all_apps_data_frame from apps that are not games.
-    '''
-    Очищает all_apps_data_frame от приложений, которые не являются играми.
     """
     # 'apps_which_are_not_game' требует дополнения, по результатам тестирования ->
     apps_which_are_not_game = ['Animation & Modeling', 'Game Development', 'Tutorial']

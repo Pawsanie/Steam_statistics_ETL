@@ -85,7 +85,10 @@ def scraping_steam_product_tags(app_tags: BeautifulSoup.find_all, result: dict) 
             app_tag_dict.get('tags').append(tag)
             if tag == 'Free to Play':
                 result.update({'price': ['0']})
-    result.update({'tags': [str(app_tag_dict)]})
+    if len(app_tag_dict.get('tags')) > 0:
+        result.update({'tags': [str(app_tag_dict)]})
+    else:
+        result.update({'tags': ''})
     return result
 
 
@@ -124,7 +127,7 @@ def scraping_steam_product_release_date(app_release_date: BeautifulSoup.find_all
             date = date[0]
             result.update({'steam_release_date': [date]})
         except ValueError:
-            result.update({'steam_release_date': ['in the pipeline']})
+            result.update({'steam_release_date': ['in_the_pipeline']})
     return result
 
 

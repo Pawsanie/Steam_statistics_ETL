@@ -54,19 +54,21 @@ def scraping_steam_product_rating(app_ratings: BeautifulSoup.find_all, result: d
     for rating in app_ratings:
         rating = rating.text
         rating = rating.replace("\t", "").replace("\n", "").replace("\r", "").replace("- ", "")
+
         if 'user reviews in the last 30 days' in rating:
-            rating = rating.replace(" user reviews in the last 30 days are positive.", "")
-            rating = rating.replace("of the ", "")
-            rating = rating.split(' ')
-            result.update({"rating_30d_percent": [rating[0]]})
-            result.update({"rating_30d_count": [rating[1]]})
+            rating = rating.replace(" user reviews in the last 30 days are positive.", "") \
+                            .replace("of the ", "") \
+                            .split(' ')
+            result.update({"rating_30d_percent": [rating[0]],
+                           "rating_30d_count": [rating[1]]})
+
         if 'user reviews for this game are positive' in rating:
-            rating = rating.replace(" user reviews for this game are positive.", "")
-            rating = rating.replace("of the ", "")
-            rating = rating.replace(",", "")
-            rating = rating.split(' ')
-            result.update({"rating_all_time_percent": [rating[0]]})
-            result.update({"rating_all_time_count": [rating[1]]})
+            rating = rating.replace(" user reviews for this game are positive.", "") \
+                            .replace("of the ", "") \
+                            .replace(",", "") \
+                            .split(' ')
+            result.update({"rating_all_time_percent": [rating[0]],
+                           "rating_all_time_count": [rating[1]]})
     return result
 
 
@@ -76,8 +78,7 @@ def scraping_steam_product_tags(app_tags: BeautifulSoup.find_all, result: dict) 
     """
     for tags in app_tags:
         for tag in tags:
-            tag = tag.replace("\n", "")
-            tag = tag.replace("\r", "")
+            tag = tag.replace("\n", "").replace("\r", "")
             while "	" in tag:  # This is not "space"!
                 tag = tag.replace("	", "")
             result.update({tag: ['True']})
@@ -97,13 +98,11 @@ def scraping_steam_product_maker(app_content_makers: BeautifulSoup.find_all, res
                 maker = maker.replace("	", "")
             if 'developer' in maker:
                 maker = maker.split('>')
-                maker = maker[1]
-                maker = maker.replace('</a', '')
+                maker = maker[1].replace('</a', '')
                 result.update({'developer': [maker]})
             if 'publisher' in maker:
                 maker = maker.split('>')
-                maker = maker[1]
-                maker = maker.replace('</a', '')
+                maker = maker[1].replace('</a', '')
                 result.update({'publisher': [maker]})
     return result
 
@@ -115,12 +114,11 @@ def scraping_steam_product_release_date(app_release_date: BeautifulSoup.find_all
     for date in app_release_date:
         try:
             date = str(date)
-            date = date.replace('<div class="date">', '')
-            date = date.replace('</div>', '')
-            date = date.replace(',', '')
+            date = date.replace('<div class="date">', '')\
+                       .replace('</div>', '')\
+                       .replace(',', '')
             date = datetime.strptime(date, '%d %b %Y')  # b - month by a word
-            date = str(date)
-            date = date.split(' ')
+            date = str(date).split(' ')
             date = date[0]
             result.update({'steam_release_date': date})
         except ValueError:
@@ -138,8 +136,7 @@ def scraping_steam_product_price_with_discount(app_release_date: BeautifulSoup.f
             price = str(price)
             if '%' not in price:
                 price = price.split('">')
-                price = price[2]
-                price = price.replace('</div><div class="discount_final_price', '')
+                price = price[2].replace('</div><div class="discount_final_price', '')
                 result.update({'price': [price]})
     return result
 
@@ -154,12 +151,10 @@ def scraping_steam_product_price(app_release_date: BeautifulSoup.find_all, resul
         while "	" in price:  # This is not "space"!
             price = price.replace("	", "")
         price = price.split('div')
-        price = price[1]
-        price = price.replace("</", "")
+        price = price[1].replace("</", "")
         if 'data-price' in price:
             price = price.split('>')
-            price = price[1]
-            price = price.replace('\r\n', '')
+            price = price[1].replace('\r\n', '')
             result.update({'price': [price]})
     return result
 
@@ -175,7 +170,7 @@ def connect_retry(n: int):
                 try:
                     return function(*args, **kwargs)
                 except exceptions as connect_error:
-                    try_number = try_number + 1
+                    try_number += 1
                     logging.error('Connect Retry... ' + str(try_number) + '\n' + connect_error)
         return function_for_trying
     return function_decor
@@ -206,8 +201,7 @@ def scraping_steam_product(app_id: str, app_name: str, soup: 'BeautifulSoup["lxm
     if len(result) != 0:
         result.update({'app_id': [app_id]})
         result.update({'app_name': [app_name]})
-        date_today = str(datetime.today())
-        date_today = date_today.split(' ')
+        date_today = str(datetime.today()).split(' ')
         date_today = date_today[0]
         result.update({'scan_date': [date_today]})
     return result
@@ -225,8 +219,8 @@ def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
     app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
     app_page = get(app_page_url, headers=scrap_user)
     soup = BeautifulSoup(app_page.text, "lxml")
-    result = {}
-    result_dlc = {}
+    result, result_dlc = {}, {}
+
     is_it_dls = soup.find_all('h1')
     for head in is_it_dls:  # Drope DLC
         head = str(head)

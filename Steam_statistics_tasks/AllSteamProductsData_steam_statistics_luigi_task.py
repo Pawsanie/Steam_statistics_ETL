@@ -12,8 +12,6 @@ Contains code for luigi task 'AllSteamAppsData'.
 def steam_aps_from_web_api_parser(interested_data: dict[str]) -> dict[str]:
     """
     Parses the result received from the Steam Web-API.
-    '''
-    Парсит результат получаемый от Steam Web-API.
     """
     all_aps_data = interested_data
     all_aps_data = all_aps_data.get('applist') \
@@ -32,14 +30,16 @@ def steam_apps_validator(steam_apps_list: dict[str], partition_path: str) -> Dat
     file_list = []
     for dirs, folders, files in walk(partition_path):
         for file in files:
-            path_to_file = f'{dirs}/{file}'
-            file_list.append(path_to_file)
+            if '_Validate_Success' in file:
+                path_to_file = f'{dirs}/{file}'
+                file_list.append(path_to_file)
     if len(file_list) != 0:
         interested_data = my_beautiful_task_universal_parser_part(file_list, '.json', drop_list=None)
         all_apps_parsing_data = None
         for data in interested_data.values():
             all_apps_parsing_data = my_beautiful_task_data_frame_merge(all_apps_parsing_data, data)
         new_steam_apps_list = DataFrame(steam_apps_list)
+
         interested_apps = concat([all_apps_parsing_data, new_steam_apps_list]) \
             .drop_duplicates(keep=False) \
             .reset_index(drop=True)

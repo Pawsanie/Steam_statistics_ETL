@@ -287,7 +287,8 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path: str) -> DataFrame:
             logging.info('Start merge local_cash...')
             with open(safe_dict_data_path, 'r') as safe_dict_data_file:
                 data = safe_dict_data_file.read()
-                apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ','))).reset_index(drop=True)
+                apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ',')))
+                apps_df_redy.reset_index(drop=True)
                 logging.info(str(apps_df_redy) + '\nLocal_cash successfully merged...')
         else:
             remove(safe_dict_data_path)
@@ -351,8 +352,33 @@ def result_column_sort(interest_dict: dict) -> DataFrame:
     inserted_columns = ['app_id', 'app_name', 'developer', 'rating_all_time_percent',
                         'rating_all_time_count', 'rating_30d_percent', 'rating_30d_count',
                         'publisher', 'price', 'steam_release_date', 'tags', 'scan_date']
-    new_df_row.reindex(columns=inserted_columns)
+    row_data_frame_head = new_df_row.head()
+    for column_name in inserted_columns:
+        if column_name not in row_data_frame_head:
+            new_df_row[column_name] = ''
+    new_df_row = new_df_row[inserted_columns]
     return new_df_row
+
+
+def steam_product_scraping_validator(scraping_result: dict[str], get_steam_app_info_path: str, day_for_landing: str,
+                                     product_data_frame: DataFrame, app_id: str, app_name: str, safe_name: str,
+                                     catalogue_name: str, product_not_for_region_catalog: str, log_masege: str):
+    """
+    Validate scraping status of steam product then safe a result.
+    """
+    # Steam product scraping succsessfully.
+    if scraping_result is not None and len(scraping_result) != 0:
+        new_df_row = result_column_sort(scraping_result)
+        safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, safe_name, catalogue_name)
+        product_data_frame = my_beautiful_task_data_frame_merge(product_data_frame, new_df_row)
+        logging.info("'" + app_name + "' scraping succsessfully completed.")
+    # Steam product scrapping failed.
+    else:
+        new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
+        safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
+                       safe_name, product_not_for_region_catalog)
+        logging.info("'" + app_name + "' " + log_masege)
+    return product_data_frame
 
 
 def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str, day_for_landing: str,
@@ -371,7 +397,7 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     apps_df_redy = data_from_file_to_pd_dataframe(safe_dict_data_path)
     dlc_df_redy = data_from_file_to_pd_dataframe(dlc_dict_data_path)
     for index in range(len(interested_data)):  # Get app data to data frame
-        time_wait = randint(3, 6)
+        time_wait = randint(1, 3)
         app_name = interested_data.iloc[index]['name']
         app_id = interested_data.iloc[index]['appid']
         # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
@@ -379,32 +405,20 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
             sleep(time_wait)
             result_list = ask_app_in_steam_store(app_id, app_name)
             result, result_dlc = result_list[0], result_list[1]
-            # App scraping succsessfully.
-            if result is not None and len(result) != 0:
-                new_df_row = result_column_sort(result)
-                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_data', 'Apps_info')
-                apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
-                logging.info("'" + app_name + "' scraping succsessfully completed.")
-            # App scrapping failed.
-            else:
-                new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
-                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
-                               '_safe_dict_dlc_data', 'Apps_not_for_this_region')
-                logging.info("'" + app_name + "' app is not available in this region...")
-            # DLC scraping succsessfully.
-            if result_dlc is not None and len(result_dlc) != 0:
-                new_df_row = result_column_sort(result_dlc)
-                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
-                               '_safe_dict_dlc_data', 'DLC_info')
-                dlc_df = my_beautiful_task_data_frame_merge(dlc_df, new_df_row)
-            # DLC scrapping failed.
-            else:
-                new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
-                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
-                               '_safe_dict_dlc_data', 'DLC_not_for_this_region')
-                logging.info("'" + app_name + "' DLC is not available in this region...")
+            # App scraping result validate.
+            apps_df = steam_product_scraping_validator(result, get_steam_app_info_path,
+                                                       day_for_landing, apps_df, app_id, app_name,
+                                                       '_safe_dict_data', 'Apps_info',
+                                                       'Apps_not_for_this_region',
+                                                       'app is not available in this region...')
+            # DLC scraping result validate.
+            dlc_df = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
+                                                      day_for_landing, apps_df, app_id, app_name,
+                                                      '_safe_dict_dlc_data', 'DLC_info',
+                                                      'DLC_not_for_this_region',
+                                                      'DLC is not available in this region...')
         else:
-            logging.info("'" + app_name + "' already is in _safe_dict_data...")
+            logging.info("'" + app_name + "' already is in _safe_*_data...")
     apps_and_dlc_df_list = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy)
     return apps_and_dlc_df_list
 

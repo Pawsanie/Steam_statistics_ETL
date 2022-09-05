@@ -76,14 +76,16 @@ def scraping_steam_product_tags(app_tags: BeautifulSoup.find_all, result: dict) 
     """
     Scraping steam product tags.
     """
+    app_tag_dict = {'tags': []}
     for tags in app_tags:
         for tag in tags:
             tag = tag.replace("\n", "").replace("\r", "")
             while "	" in tag:  # This is not "space"!
                 tag = tag.replace("	", "")
-            result.update({tag: ['True']})
+            app_tag_dict.get('tags').append(tag)
             if tag == 'Free to Play':
                 result.update({'price': ['0']})
+    result.update({'tags': [str(app_tag_dict)]})
     return result
 
 
@@ -120,9 +122,9 @@ def scraping_steam_product_release_date(app_release_date: BeautifulSoup.find_all
             date = datetime.strptime(date, '%d %b %Y')  # b - month by a word
             date = str(date).split(' ')
             date = date[0]
-            result.update({'steam_release_date': date})
+            result.update({'steam_release_date': [date]})
         except ValueError:
-            result.update({'steam_release_date': 'in the pipeline'})
+            result.update({'steam_release_date': ['in the pipeline']})
     return result
 
 
@@ -159,14 +161,29 @@ def scraping_steam_product_price(app_release_date: BeautifulSoup.find_all, resul
     return result
 
 
-def connect_retry(n: int):
+def scraping_is_available_in_steam(notice: BeautifulSoup.find_all, result: dict) -> dict[str]:
+    """
+    Check that the application or DLC is available for purchase in Steam.
+    """
+    no_available_in_steam = 'is no longer available for sale on Steam.'
+    available_notice = str(notice).replace('</div>', '')
+    while "	" in available_notice:  # This is not "space"!
+        available_notice = available_notice.replace("	", "")
+    available_notice = available_notice.split('\n')
+    for data in available_notice:
+        if no_available_in_steam in data:
+            result.update({'price': ['not_available_in_steam_now']})
+    return result
+
+
+def connect_retry(maximum_iterations: int):
     """
     Decorator responsible for retrying connections in cases of errors.
     """
     def function_decor(function):
         def function_for_trying(*args, **kwargs):
             try_number = 0
-            while try_number < n:
+            while try_number < maximum_iterations:
                 try:
                     return function(*args, **kwargs)
                 except exceptions as connect_error:
@@ -176,35 +193,38 @@ def connect_retry(n: int):
     return function_decor
 
 
-def scraping_steam_product(app_id: str, app_name: str, soup: 'BeautifulSoup["lxml"]', result: dict) -> dict[str]:
+def scraping_steam_product(app_id: str, app_name: str, soup: 'BeautifulSoup["lxml"]', result_dict: dict) -> dict[str]:
     """
     Scraping conveyor.
     """
     # Steam product rating.
     app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
-    scraping_steam_product_rating(app_ratings, result)
-    # Steam product tags.
-    app_tags = soup.find_all('a', class_='app_tag')
-    scraping_steam_product_tags(app_tags, result)
+    scraping_steam_product_rating(app_ratings, result_dict)
     # Steam product maker.
     app_content_makers = soup.find_all('div', class_='grid_content')
-    scraping_steam_product_maker(app_content_makers, result)
+    scraping_steam_product_maker(app_content_makers, result_dict)
     # Product steam release date.
     app_release_date = soup.find_all('div', class_='date')
-    scraping_steam_product_release_date(app_release_date, result)
+    scraping_steam_product_release_date(app_release_date, result_dict)
     # If price have discount.
     app_release_date = soup.find_all('div', class_='discount_block game_purchase_discount')
-    scraping_steam_product_price_with_discount(app_release_date, result)
+    scraping_steam_product_price_with_discount(app_release_date, result_dict)
     # If price have no discount.
     app_release_date = soup.find_all('div', class_='game_purchase_price price')
-    scraping_steam_product_price(app_release_date, result)
-    if len(result) != 0:
-        result.update({'app_id': [app_id]})
-        result.update({'app_name': [app_name]})
+    scraping_steam_product_price(app_release_date, result_dict)
+    # Steam product tags.
+    app_tags = soup.find_all('a', class_='app_tag')
+    scraping_steam_product_tags(app_tags, result_dict)
+    # Is steam product available?
+    notice = soup.find_all('div', class_='notice_box_content')
+    scraping_is_available_in_steam(notice, result_dict)
+    if len(result_dict) != 0:
+        result_dict.update({'app_id': [app_id]})
+        result_dict.update({'app_name': [app_name]})
         date_today = str(datetime.today()).split(' ')
         date_today = date_today[0]
-        result.update({'scan_date': [date_today]})
-    return result
+        result_dict.update({'scan_date': [date_today]})
+    return result_dict
 
 
 @connect_retry(3)
@@ -221,13 +241,14 @@ def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
     soup = BeautifulSoup(app_page.text, "lxml")
     result, result_dlc = {}, {}
 
-    is_it_dls = soup.find_all('h1')
-    for head in is_it_dls:  # Drope DLC
-        head = str(head)
-        if 'Downloadable Content' not in head:
-            scraping_steam_product(app_id, app_name, soup, result)
-        else:  # Save DLC
-            scraping_steam_product(app_id, app_name, soup, result_dlc)
+    is_it_dls, interest_heads = soup.find_all('h1'), []
+    for head in is_it_dls:
+        interest_heads.append(str(head).replace('<h1>', '').replace('</h1>', ''))
+    if 'Downloadable Content' not in interest_heads:  # Drope DLC
+        scraping_steam_product(app_id, app_name, soup, result)
+    else:  # Save DLC
+        scraping_steam_product(app_id, app_name, soup, result_dlc)
+
     result_list = [result, result_dlc]
     return result_list
 
@@ -266,8 +287,7 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path: str) -> DataFrame:
             logging.info('Start merge local_cash...')
             with open(safe_dict_data_path, 'r') as safe_dict_data_file:
                 data = safe_dict_data_file.read()
-                apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ',')))
-                apps_df_redy = apps_df_redy.reset_index(drop=True)
+                apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ','))).reset_index(drop=True)
                 logging.info(str(apps_df_redy) + '\nLocal_cash successfully merged...')
         else:
             remove(safe_dict_data_path)
@@ -323,17 +343,15 @@ def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
     return apps_and_dlc_df_list
 
 
-def result_column_sort(result: dict) -> DataFrame:
+def result_column_sort(interest_dict: dict) -> DataFrame:
     """
     Sort columns and mayke DF from apps or DLC dict.
     """
-    new_df_row = DataFrame.from_dict(result)
+    new_df_row = DataFrame.from_dict(interest_dict)
     inserted_columns = ['app_id', 'app_name', 'developer', 'rating_all_time_percent',
                         'rating_all_time_count', 'rating_30d_percent', 'rating_30d_count',
-                        'publisher', 'price', 'steam_release_date']
-    new_columns = ([col for col in inserted_columns if col in new_df_row]
-                   + [col for col in new_df_row if col not in inserted_columns])
-    new_df_row = new_df_row[new_columns]
+                        'publisher', 'price', 'steam_release_date', 'tags', 'scan_date']
+    new_df_row.reindex(columns=inserted_columns)
     return new_df_row
 
 
@@ -356,38 +374,35 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
         time_wait = randint(3, 6)
         app_name = interested_data.iloc[index]['name']
         app_id = interested_data.iloc[index]['appid']
-        # 2 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
-        if str(app_name) not in apps_df_redy['app_name'].values:
-            if str(app_name) not in dlc_df_redy['app_name'].values:
-                sleep(time_wait)
-                result_list = ask_app_in_steam_store(app_id, app_name)
-                result, result_dlc = result_list[0], result_list[1]
-                # App scraping succsessfully.
-                if result is not None and len(result) != 0:
-                    new_df_row = result_column_sort(result)
-                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_data', 'Apps_info')
-                    apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
-                    logging.info("'" + app_name + "' scraping succsessfully completed.")
-                # App scrapping failed.
-                else:
-                    new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
-                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
-                                   '_safe_dict_dlc_data', 'Apps_not_for_this_region')
-                    logging.info("'" + app_name + "' app is not available in this region...")
-                # DLC scraping succsessfully.
-                if result_dlc is not None and len(result_dlc) != 0:
-                    new_df_row = result_column_sort(result_dlc)
-                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
-                                   '_safe_dict_dlc_data', 'DLC_info')
-                    dlc_df = my_beautiful_task_data_frame_merge(dlc_df, new_df_row)
-                # DLC scrapping failed.
-                else:
-                    new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
-                    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
-                                   '_safe_dict_dlc_data', 'DLC_not_for_this_region')
-                    logging.info("'" + app_name + "' DLC is not available in this region...")
+        # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
+        if str(app_name) not in apps_df_redy['app_name'].values and str(app_name) not in dlc_df_redy['app_name'].values:
+            sleep(time_wait)
+            result_list = ask_app_in_steam_store(app_id, app_name)
+            result, result_dlc = result_list[0], result_list[1]
+            # App scraping succsessfully.
+            if result is not None and len(result) != 0:
+                new_df_row = result_column_sort(result)
+                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, '_safe_dict_data', 'Apps_info')
+                apps_df = my_beautiful_task_data_frame_merge(apps_df, new_df_row)
+                logging.info("'" + app_name + "' scraping succsessfully completed.")
+            # App scrapping failed.
             else:
-                logging.info("'" + app_name + "' is DLC and has not been processed...")
+                new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
+                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
+                               '_safe_dict_dlc_data', 'Apps_not_for_this_region')
+                logging.info("'" + app_name + "' app is not available in this region...")
+            # DLC scraping succsessfully.
+            if result_dlc is not None and len(result_dlc) != 0:
+                new_df_row = result_column_sort(result_dlc)
+                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
+                               '_safe_dict_dlc_data', 'DLC_info')
+                dlc_df = my_beautiful_task_data_frame_merge(dlc_df, new_df_row)
+            # DLC scrapping failed.
+            else:
+                new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
+                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
+                               '_safe_dict_dlc_data', 'DLC_not_for_this_region')
+                logging.info("'" + app_name + "' DLC is not available in this region...")
         else:
             logging.info("'" + app_name + "' already is in _safe_dict_data...")
     apps_and_dlc_df_list = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy)

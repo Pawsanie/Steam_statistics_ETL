@@ -71,8 +71,8 @@ def my_beautiful_task_path_parser(result_successor: list or tuple or str, dir_li
                                      f'/{partition_path_split[-2]}/'
                     partition_path = str.replace(partition_path, partition_date + partition_file, '')
                     interested_partition_path = f'{partition_path}{partition_date}{partition_file}'
-                    interested_partition.setdefault(partition_date, {}).update(
-                        {partition_file: interested_partition_path})
+                    interested_partition.setdefault(partition_date, {})\
+                                        .update({partition_file: interested_partition_path})
 
 
 def my_beautiful_task_data_frame_merge(data_from_files: DataFrame or None, extract_data: DataFrame) -> DataFrame:
@@ -95,7 +95,7 @@ def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame], d
     """
     Universal reading of data from tables.
     """
-    def how_to_extract(*args): # Definging a pandas read method.
+    def how_to_extract(*args):  # Definging a pandas read method.
         how_to_extract_format = None
         if file_mask == '.csv':
             how_to_extract_format = read_csv(*args).astype(str)
@@ -106,8 +106,8 @@ def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame], d
 
     for key in interested_partition:
         data_from_files = None
-        files = interested_partition.get(key)
-        files = files.values()
+        files = interested_partition.get(key) \
+                                    .values()
         for file in files:  # Парсинг таблиц в сырой датафрейм
             if drop_list is not None:
                 extract_data = how_to_extract(file).drop([drop_list], axis=1)

@@ -16,10 +16,11 @@ def get_csv_for_join(result_successor) -> dict[DataFrame]:
     Создаёт корневой путь для csv.
     Затем парсит его, с целью получить все csv таблицы для объединения.
     """
-    root_path = result_successor.path
-    symbol_counts = len(root_path)
-    root_path = root_path[:symbol_counts - 28]
-    file_list = []
+    result_path = result_successor.path
+    cut_off_path = result_path.split('/')
+    cut_off_path = f"{cut_off_path[-4]}/{cut_off_path[-3]}/{cut_off_path[-2]}/{cut_off_path[-1]}"
+    root_path, file_list = result_path.replace(cut_off_path, ''), []
+
     for dirs, folders, files in walk(root_path):
         for file in files:
             path_to_file = f'{dirs}/{file}'

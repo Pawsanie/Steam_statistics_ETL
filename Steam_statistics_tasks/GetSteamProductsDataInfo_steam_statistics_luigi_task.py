@@ -365,7 +365,8 @@ def result_column_sort(interest_dict: dict) -> DataFrame:
 
 def steam_product_scraping_validator(scraping_result: dict[str], get_steam_app_info_path: str, day_for_landing: str,
                                      product_data_frame: DataFrame, app_id: str, app_name: str, safe_name: str,
-                                     catalogue_name: str, product_not_for_region_catalog: str, log_masege: str):
+                                     catalogue_name: str, product_not_for_region_catalog: str,
+                                     not_available_log_masege: str):
     """
     Validate scraping status of steam product then safe a result.
     """
@@ -380,7 +381,7 @@ def steam_product_scraping_validator(scraping_result: dict[str], get_steam_app_i
         new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
         safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
                        safe_name, product_not_for_region_catalog)
-        logging.info("'" + app_name + "' " + log_masege)
+        logging.info("'" + app_name + "' " + not_available_log_masege)
     return product_data_frame
 
 
@@ -409,17 +410,19 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
             result_list = ask_app_in_steam_store(app_id, app_name)
             result, result_dlc = result_list[0], result_list[1]
             # App scraping result validate.
-            apps_df = steam_product_scraping_validator(result, get_steam_app_info_path,
-                                                       day_for_landing, apps_df, app_id, app_name,
-                                                       '_safe_dict_data', 'Apps_info',
-                                                       'Apps_not_for_this_region',
-                                                       'app is not available in this region...')
+            if len(result) != 0:
+                apps_df = steam_product_scraping_validator(result, get_steam_app_info_path,
+                                                           day_for_landing, apps_df, app_id, app_name,
+                                                           '_safe_dict_data', 'Apps_info',
+                                                           'Apps_not_for_this_region',
+                                                           'app is not available in this region...')
             # DLC scraping result validate.
-            dlc_df = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
-                                                      day_for_landing, apps_df, app_id, app_name,
-                                                      '_safe_dict_dlc_data', 'DLC_info',
-                                                      'DLC_not_for_this_region',
-                                                      'DLC is not available in this region...')
+            if len(result_dlc) != 0:
+                dlc_df = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
+                                                          day_for_landing, dlc_df, app_id, app_name,
+                                                          '_safe_dict_dlc_data', 'DLC_info',
+                                                          'DLC_not_for_this_region',
+                                                          'DLC is not available in this region...')
         else:
             logging.info("'" + app_name + "' already is in _safe_*_data...")
     apps_and_dlc_df_list = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy)

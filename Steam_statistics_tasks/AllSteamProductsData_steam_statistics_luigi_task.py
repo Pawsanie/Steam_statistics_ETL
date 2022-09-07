@@ -41,7 +41,7 @@ def steam_apps_validator(steam_apps_list: dict[str], partition_path: str) -> Dat
         new_steam_apps_list = DataFrame(steam_apps_list)
 
         interested_apps = concat([all_apps_parsing_data, new_steam_apps_list]) \
-            .drop_duplicates(keep=False) \
+            .drop_duplicates(subset=['appid'], keep=False) \
             .reset_index(drop=True)
     else:
         interested_apps = steam_apps_list

@@ -12,14 +12,14 @@ date_path_part=$(date +%F)  # Today
 #date_path_part=$(date +%F --date "YYY-MM-DD")  # Exemple
 
 # Start:
-python3 -B -m steam_statistics_luigi_ETL AllSteamProductsData.AllSteamProductsData --local-scheduler \
+python3 -B -m steam_statistics_luigi_ETL SteamAppsInfo.SteamAppsInfo --local-scheduler \
 --AllSteamProductsData.AllSteamProductsData-all-steam-products-data-path $all_steam_products_data_path \
---AllSteamProductsData.AllSteamProductsData-date-path-part $date_path_part #\
-#\
-#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-path $get_steam_products_data_info_path \
-#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-date-path-part $date_path_part \
-#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-logfile-path $get_steam_products_data_info_logfile_path \
-#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-loglevel $get_steam_products_data_info_loglevel #\
-#\
-#--SteamAppsInfo.SteamAppsInfo-steam-apps-info-path $steam_apps_info_path \
-#--SteamAppsInfo.SteamAppsInfo-date-path-part $date_path_part
+--AllSteamProductsData.AllSteamProductsData-date-path-part $date_path_part \
+\
+--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-path $get_steam_products_data_info_path \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfo-date-path-part $date_path_part \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-logfile-path $get_steam_products_data_info_logfile_path \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-loglevel $get_steam_products_data_info_loglevel \
+\
+--SteamAppsInfo.SteamAppsInfo-steam-apps-info-path $steam_apps_info_path \
+--SteamAppsInfo.SteamAppsInfo-date-path-part $date_path_part

@@ -4,6 +4,7 @@ import json
 
 from requests import get
 from luigi import run, Task, LocalTarget, DateParameter, Parameter
+from luigi.mock import MockTarget
 from pandas import DataFrame  # Do not delete! (pipeline use DataFrame type between functions)
 
 from Steam_statistics_tasks.Logging_Config import logging_config
@@ -63,9 +64,10 @@ class GetSteamProductsDataInfo(Task):
         return {'AllSteamProductsData': AllSteamProductsData()}
 
     def output(self):
-        return LocalTarget(
-            path.join(
-                f"{self.get_steam_products_data_info_path}/{'Apps_info'}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
+        return MockTarget("GetSteamProductsDataInfo")
+        # return LocalTarget(
+        #     path.join(
+        #         f"{self.get_steam_products_data_info_path}/{'Apps_info'}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
         logging_config(self.get_steam_products_data_info_logfile_path, int(self.get_steam_products_data_info_loglevel))
@@ -90,6 +92,9 @@ class GetSteamProductsDataInfo(Task):
                                   f"{day_for_landing}/{'_safe_dict_dlc_data'}"
         if path.isfile(safe_dict_dlc_data_path):
             remove(safe_dict_dlc_data_path)
+
+    def complete(self):
+        return self.output().exists()
 
 
 class SteamAppsInfo(Task):

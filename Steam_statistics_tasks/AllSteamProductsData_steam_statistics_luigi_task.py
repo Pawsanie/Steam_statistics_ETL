@@ -1,9 +1,11 @@
 from os import walk
 
 from pandas import DataFrame, concat
+from numpy import where
 
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part, \
     my_beautiful_task_data_frame_merge
+
 """
 Contains code for luigi task 'AllSteamAppsData'.
 """
@@ -15,7 +17,7 @@ def steam_aps_from_web_api_parser(interested_data: dict[str]) -> dict[str]:
     """
     all_aps_data = interested_data
     all_aps_data = all_aps_data.get('applist') \
-                               .get('apps')
+        .get('apps')
     return all_aps_data
 
 
@@ -40,9 +42,8 @@ def steam_apps_validator(steam_apps_list: dict[str], partition_path: str) -> Dat
             all_apps_parsing_data = my_beautiful_task_data_frame_merge(all_apps_parsing_data, data)
         new_steam_apps_list = DataFrame(steam_apps_list)
 
-        interested_apps = concat([all_apps_parsing_data, new_steam_apps_list]) \
-            .drop_duplicates(subset=['appid'], keep=False) \
-            .reset_index(drop=True)
+        interested_apps = new_steam_apps_list[~new_steam_apps_list['name']
+                                              .isin(all_apps_parsing_data['name'])].reset_index(drop=True)
     else:
         interested_apps = steam_apps_list
     return interested_apps

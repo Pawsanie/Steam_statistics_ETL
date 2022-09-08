@@ -262,7 +262,7 @@ def safe_dict_data(path_to_file: str, date: str, df: DataFrame, file_name: str, 
     '''
     Временное хранилище, для загрузки сырых данных.
     """
-    path_to_file = f"{path_to_file}/{ds_name}/{date}"
+    path_to_file = f"{path_to_file}/{date}/{ds_name}"
     file_path = f"{path_to_file}/{file_name}"
     df = df.to_dict('records')
     df = str(df[0]) + '\n'
@@ -309,8 +309,8 @@ def make_flag(partition_path: str, day_for_landing: str):
     if not path.exists(output_path):
         makedirs(output_path)
     flag_path = f'{output_path}/{"_Validate_Success"}'
-    flag = open(flag_path, 'w')
-    flag.close()
+    with open(flag_path, 'w'):
+        pass
 
 
 def apps_and_dlc_df_landing(apps_df: DataFrame, dlc_df: DataFrame, day_for_landing: str,
@@ -319,11 +319,11 @@ def apps_and_dlc_df_landing(apps_df: DataFrame, dlc_df: DataFrame, day_for_landi
     Lands real collections and maike flags if theme empty.
     """
     if len(apps_df) != 0:
-        my_beautiful_task_data_landing(apps_df, day_for_landing, apps_df_save_path, "Get_Steam_App_Info.csv")
+        my_beautiful_task_data_landing(apps_df, f"{apps_df_save_path}/{day_for_landing}", "Get_Steam_App_Info.csv")
     else:
         make_flag(apps_df_save_path, day_for_landing)
     if len(dlc_df) != 0:
-        my_beautiful_task_data_landing(dlc_df, day_for_landing, dlc_df_save_path, "Get_Steam_DLC_Info.csv")
+        my_beautiful_task_data_landing(dlc_df, f"{dlc_df_save_path}/{day_for_landing}", "Get_Steam_DLC_Info.csv")
     else:
         make_flag(dlc_df_save_path, day_for_landing)
 
@@ -429,24 +429,17 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     return apps_and_dlc_df_list
 
 
-def safe_dlc_data(get_steam_app_info_path: str) -> DataFrame or None:
+def delete_temporary_safe_file(self, product: str, save_file: str):
     """
-    Collects data from the DLC, then parses it into a pandas DataFrame.
+    Delete temporary file for task.
     """
-    root_path = f"{get_steam_app_info_path}/{'DLC_info'}"
-    dlc_df = None
-    interested_data = None
-    file_list = []
-    if path.exists(root_path):
-        for dirs, folders, files in walk(root_path):
-            for file in files:
-                path_to_file = f'{dirs}/{file}'
-                file_list.append(path_to_file)
-        if len(file_list) != 0:
-            interested_data = my_beautiful_task_universal_parser_part(file_list, '.csv', drop_list=None)
-    if interested_data is not None:
-        for data in interested_data.values():
-            dlc_df = my_beautiful_task_data_frame_merge(dlc_df, data)
-    else:
-        dlc_df = None
-    return dlc_df
+    file_path = product_save_file_path(self, product, save_file)
+    if path.isfile(file_path):
+        remove(file_path)
+
+
+def product_save_file_path(self, product: str, save_file: str) -> str:
+    """
+    Path generator.
+    """
+    return f"{self.get_steam_products_data_info_path}/{self.date_path_part:%Y/%m/%d}/{product}/{save_file}"

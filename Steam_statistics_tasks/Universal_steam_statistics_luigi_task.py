@@ -8,14 +8,13 @@ Contains, in one way or another, a universal code for all 'steam statistics pipe
 """
 
 
-def my_beautiful_task_data_landing(data_to_landing: dict or DataFrame, day_for_landing: str,
-                                   partition_path: str, file_mask: str) -> str:
+def my_beautiful_task_data_landing(data_to_landing: dict or DataFrame,
+                                   output_path: str, file_mask: str) -> str:
     """
     Landing parsed data as json, csv, or parquet.
     """
     data_type_need = file_mask.split('.')
     data_type_need = data_type_need[1]
-    output_path = f'{partition_path}/{day_for_landing}'
     data_from_files = DataFrame(data_to_landing)
     if not path.exists(output_path):
         makedirs(output_path)
@@ -34,8 +33,8 @@ def my_beautiful_task_data_landing(data_to_landing: dict or DataFrame, day_for_l
         data_to_csv = data_to_landing.to_csv(index=False)
         with open(output_path, 'w') as csv_file:
             csv_file.write(data_to_csv)
-    flag = open(flag_path, 'w')
-    flag.close()
+    with open(flag_path, 'w'):
+        pass
     return flag_path
 
 
@@ -90,7 +89,7 @@ def my_beautiful_task_data_frame_merge(data_from_files: DataFrame or None, extra
     return data_from_files
 
 
-def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame], drop_list: list or None,
+def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame],
                                         interested_data: dict[DataFrame], file_mask: str):
     """
     Universal reading of data from tables.
@@ -109,17 +108,14 @@ def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame], d
         files = interested_partition.get(key) \
                                     .values()
         for file in files:  # Парсинг таблиц в сырой датафрейм
-            if drop_list is not None:
-                extract_data = how_to_extract(file).drop([drop_list], axis=1)
-            else:
-                extract_data = how_to_extract(file)
+            extract_data = how_to_extract(file)
             # Merging Pandas DataFrames
             data_from_files = my_beautiful_task_data_frame_merge(data_from_files, extract_data)
         interested_data[key] = data_from_files
 
 
 def my_beautiful_task_universal_parser_part(result_successor: list or tuple or str,
-                                            file_mask: str, drop_list: list or None) -> dict[DataFrame]:
+                                            file_mask: str) -> dict[DataFrame]:
     """
     Runs code after inheriting paths from the previous task.
     '''
@@ -129,5 +125,5 @@ def my_beautiful_task_universal_parser_part(result_successor: list or tuple or s
     my_beautiful_task_path_parser(result_successor, dir_list, interested_partition, file_mask)
 
     interested_data = {}  # Парсинг данных из файлов по путям унаследованным от прошлой таски.
-    my_beautiful_task_data_table_parser(interested_partition, drop_list, interested_data, file_mask)
+    my_beautiful_task_data_table_parser(interested_partition, interested_data, file_mask)
     return interested_data

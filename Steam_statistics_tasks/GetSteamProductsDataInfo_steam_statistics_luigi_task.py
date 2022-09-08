@@ -301,11 +301,11 @@ def data_from_file_to_pd_dataframe(safe_dict_data_path: str) -> DataFrame:
     return apps_df_redy
 
 
-def make_flag(partition_path: str, day_for_landing: str):
+def make_flag(partition_path: str):
     """
     Maike flags for empty collections.
     """
-    output_path = f'{partition_path}/{day_for_landing}'
+    output_path = f'{partition_path}'
     if not path.exists(output_path):
         makedirs(output_path)
     flag_path = f'{output_path}/{"_Validate_Success"}'
@@ -313,19 +313,19 @@ def make_flag(partition_path: str, day_for_landing: str):
         pass
 
 
-def apps_and_dlc_df_landing(apps_df: DataFrame, dlc_df: DataFrame, day_for_landing: str,
+def apps_and_dlc_df_landing(apps_df: DataFrame, dlc_df: DataFrame,
                             apps_df_save_path: str, dlc_df_save_path: str):
     """
     Lands real collections and maike flags if theme empty.
     """
     if len(apps_df) != 0:
-        my_beautiful_task_data_landing(apps_df, f"{apps_df_save_path}/{day_for_landing}", "Get_Steam_App_Info.csv")
+        my_beautiful_task_data_landing(apps_df, apps_df_save_path, "Get_Steam_App_Info.csv")
     else:
-        make_flag(apps_df_save_path, day_for_landing)
+        make_flag(apps_df_save_path)
     if len(dlc_df) != 0:
-        my_beautiful_task_data_landing(dlc_df, f"{dlc_df_save_path}/{day_for_landing}", "Get_Steam_DLC_Info.csv")
+        my_beautiful_task_data_landing(dlc_df, dlc_df_save_path, "Get_Steam_DLC_Info.csv")
     else:
-        make_flag(dlc_df_save_path, day_for_landing)
+        make_flag(dlc_df_save_path)
 
 
 def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,

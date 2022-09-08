@@ -1,4 +1,4 @@
-from os import path, remove
+from os import path
 from datetime import date
 import json
 
@@ -79,17 +79,15 @@ class GetSteamProductsDataInfo(Task):
         apps_df, dlc_df = apps_and_dlc_df_list[0], apps_and_dlc_df_list[1]
         apps_df_save_path, dlc_df_save_path = product_save_file_path(self, 'Apps_info', ''), \
                                               product_save_file_path(self, 'DLC_info', '')
-        apps_and_dlc_df_landing(apps_df, dlc_df, day_for_landing, apps_df_save_path, dlc_df_save_path)
+        apps_and_dlc_df_landing(apps_df, dlc_df, apps_df_save_path, dlc_df_save_path)
         delete_temporary_safe_file(self, 'Apps_info', '_safe_dict_data')
         delete_temporary_safe_file(self, 'DLC_info', '_safe_dict_dlc_data')
-        make_flag(self.get_steam_products_data_info_path, day_for_landing)
+        make_flag(f"{self.get_steam_products_data_info_path}/{day_for_landing}")
 
 
 class SteamAppsInfo(Task):
     """
     Merges all raw CSV tables into one MasterData.
-    '''
-    Объединяет все сырые CSV таблицы в одну MasterData.
     """
     task_namespace = 'SteamAppsInfo'
     priority = 100
@@ -111,8 +109,9 @@ class SteamAppsInfo(Task):
             all_apps_data_frame = my_beautiful_task_data_frame_merge(all_apps_data_frame, data)
         all_apps_data_frame = steam_apps_data_cleaning(all_apps_data_frame)
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
-        my_beautiful_task_data_landing(all_apps_data_frame, day_for_landing,
-                                       self.steam_apps_info_path, "SteamAppsInfo.csv")
+        my_beautiful_task_data_landing(all_apps_data_frame, f"{self.steam_apps_info_path}/{day_for_landing}",
+                                       "SteamAppsInfo.csv")
+        print(f"{self.steam_apps_info_path}/{day_for_landing}")
 
 
 if __name__ == "__main__":

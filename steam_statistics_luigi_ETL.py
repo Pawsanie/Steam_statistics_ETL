@@ -103,7 +103,7 @@ class SteamAppsInfo(Task):
 
     def run(self):
         result_successor = self.input()['GetSteamProductsDataInfo']
-        interested_data = get_csv_for_join(result_successor)
+        interested_data = get_csv_for_join(result_successor, 'Apps_info')
         all_apps_data_frame = None
         for data in interested_data.values():
             all_apps_data_frame = my_beautiful_task_data_frame_merge(all_apps_data_frame, data)
@@ -111,7 +111,6 @@ class SteamAppsInfo(Task):
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
         my_beautiful_task_data_landing(all_apps_data_frame, f"{self.steam_apps_info_path}/{day_for_landing}",
                                        "SteamAppsInfo.csv")
-        print(f"{self.steam_apps_info_path}/{day_for_landing}")
 
 
 if __name__ == "__main__":

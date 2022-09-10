@@ -12,7 +12,7 @@ date_path_part=$(date +%F)  # Today
 #date_path_part=$(date +%F --date "YYY-MM-DD")  # Exemple
 
 # Start:
-python3 -B -m steam_statistics_luigi_ETL GetSteamProductsDataInfo.GetSteamProductsDataInfo --local-scheduler \
+python3 -B -m steam_statistics_luigi_ETL SteamAppsInfo.SteamAppsInfo --local-scheduler \
 --AllSteamProductsData.AllSteamProductsData-all-steam-products-data-path $all_steam_products_data_path \
 --AllSteamProductsData.AllSteamProductsData-date-path-part $date_path_part \
 \

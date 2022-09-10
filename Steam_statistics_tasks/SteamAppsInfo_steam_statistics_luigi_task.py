@@ -8,7 +8,7 @@ Contains code for luigi task 'AppInfoCSVJoiner'.
 """
 
 
-def get_csv_for_join(result_successor) -> dict[DataFrame]:
+def get_csv_for_join(result_successor, catalog: str) -> dict[DataFrame]:
     """
     Creates a root path for csv.
     Then it parses it to get all csv tables to merge.
@@ -17,11 +17,11 @@ def get_csv_for_join(result_successor) -> dict[DataFrame]:
     cut_off_path = result_path.split('/')
     cut_off_path = f"{cut_off_path[-4]}/{cut_off_path[-3]}/{cut_off_path[-2]}/{cut_off_path[-1]}"
     root_path, file_list = result_path.replace(cut_off_path, ''), []
-
     for dirs, folders, files in walk(root_path):
-        for file in files:
-            path_to_file = f'{dirs}/{file}'
-            file_list.append(path_to_file)
+        if catalog in dirs:
+            for file in files:
+                path_to_file = f'{dirs}/{file}'
+                file_list.append(path_to_file)
     interested_data = my_beautiful_task_universal_parser_part(file_list, '.csv')
     return interested_data
 

@@ -12,9 +12,6 @@ def get_csv_for_join(result_successor) -> dict[DataFrame]:
     """
     Creates a root path for csv.
     Then it parses it to get all csv tables to merge.
-    '''
-    Создаёт корневой путь для csv.
-    Затем парсит его, с целью получить все csv таблицы для объединения.
     """
     result_path = result_successor.path
     cut_off_path = result_path.split('/')
@@ -25,7 +22,7 @@ def get_csv_for_join(result_successor) -> dict[DataFrame]:
         for file in files:
             path_to_file = f'{dirs}/{file}'
             file_list.append(path_to_file)
-    interested_data = my_beautiful_task_universal_parser_part(file_list, '.csv', drop_list=None)
+    interested_data = my_beautiful_task_universal_parser_part(file_list, '.csv')
     return interested_data
 
 

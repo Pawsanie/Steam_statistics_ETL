@@ -42,7 +42,7 @@ class AllSteamProductsData(Task):
             partition_path = f"{self.all_steam_products_data_path}"
             steam_apps_list = steam_apps_validator(steam_apps_list, partition_path)
             day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
-            my_beautiful_task_data_landing(steam_apps_list, f"{partition_path}{day_for_landing}",
+            my_beautiful_task_data_landing(steam_apps_list, f"{partition_path}/{day_for_landing}",
                                            "AllSteamProductsData.json")
 
 

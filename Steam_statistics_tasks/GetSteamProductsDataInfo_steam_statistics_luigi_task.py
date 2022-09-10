@@ -1,5 +1,5 @@
 from datetime import datetime
-from os import walk, path, makedirs, remove
+from os import path, makedirs, remove
 from random import randint
 from time import sleep
 from ast import literal_eval
@@ -20,8 +20,6 @@ Contains code for luigi task 'GetSteamAppInfo'.
 def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:
     """
     Delete what is not a game at the stage of working with raw data.
-    '''
-    Удаляет то что не является играми, на этапе работы с сырыми данными.
     """
     for value in interested_data:
         interested_data = interested_data.get(value)
@@ -259,8 +257,6 @@ def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
 def safe_dict_data(path_to_file: str, date: str, df: DataFrame, file_name: str, ds_name: str):
     """
     Temporary storage, for landing raw data.
-    '''
-    Временное хранилище, для загрузки сырых данных.
     """
     path_to_file = f"{path_to_file}/{date}/{ds_name}"
     file_path = f"{path_to_file}/{file_name}"
@@ -391,10 +387,6 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     Root function responsible for reading the local cache and
     merge it with parsed data from scraping steam application pages.
     Responsible for timeouts of get requests to application pages.
-    '''
-    Корневая функция, отвечающая за чтение локального кэша,
-    его мёрдж с распаршеными данными от скрапинга страниц приложений steam.
-    Отвечает за таймауты при get запросах к страницам приложений.
     """
     safe_dict_data_path = f"{get_steam_app_info_path}/{'Apps_info'}/{day_for_landing}/{'_safe_dict_data'}"
     dlc_dict_data_path = f"{get_steam_app_info_path}/{'DLC_info'}/{day_for_landing}/{'_safe_dict_dlc_data'}"

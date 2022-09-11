@@ -1,5 +1,5 @@
 from datetime import datetime
-from os import walk, path, makedirs, remove
+from os import path, makedirs, remove
 from random import randint
 from time import sleep
 from ast import literal_eval
@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from requests import get, exceptions
 
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
-    my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
+    my_beautiful_task_data_frame_merge
 """
 Contains code for luigi task 'GetSteamAppInfo'.
 """
@@ -20,31 +20,18 @@ Contains code for luigi task 'GetSteamAppInfo'.
 def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:
     """
     Delete what is not a game at the stage of working with raw data.
-    '''
-    Удаляет то что не является играми, на этапе работы с сырыми данными.
     """
+    is_not_application_list = ['Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest'
+                               'test2', 'test3', 'Pieterw', 'Closed Beta', 'Open Beta', 'RPG Maker',
+                               'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus']
+    is_not_application_str, result_df = '|'.join(is_not_application_list), None
     for value in interested_data:
         interested_data = interested_data.get(value)
-        interested_data = interested_data[~interested_data['name'].str.contains('Soundtrack')]
-        interested_data = interested_data[~interested_data['name'].str.contains('OST')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Artbook')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Texture')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Demo')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Playtest')]
-        interested_data = interested_data[~interested_data['name'].str.contains('test2')]
-        interested_data = interested_data[~interested_data['name'].str.contains('test3')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Pieterw')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Closed Beta')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Open Beta')]
-        interested_data = interested_data[~interested_data['name'].str.contains('RPG Maker')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Pack')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Trailer')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Teaser')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Digital Art Book')]
+        interested_data = interested_data[~interested_data['name'].str.contains(
+            is_not_application_str, regex=True)]
         null_filter = interested_data['name'] != ""
-        interested_data = interested_data[null_filter]
-        interested_data = interested_data.reset_index(drop=True)
-    return interested_data
+        result_df = my_beautiful_task_data_frame_merge(result_df, interested_data[null_filter])
+    return result_df.reset_index(drop=True)
 
 
 def scraping_steam_product_rating(app_ratings: BeautifulSoup.find_all, result: dict) -> dict[str]:
@@ -259,8 +246,6 @@ def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
 def safe_dict_data(path_to_file: str, date: str, df: DataFrame, file_name: str, ds_name: str):
     """
     Temporary storage, for landing raw data.
-    '''
-    Временное хранилище, для загрузки сырых данных.
     """
     path_to_file = f"{path_to_file}/{date}/{ds_name}"
     file_path = f"{path_to_file}/{file_name}"
@@ -391,10 +376,6 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     Root function responsible for reading the local cache and
     merge it with parsed data from scraping steam application pages.
     Responsible for timeouts of get requests to application pages.
-    '''
-    Корневая функция, отвечающая за чтение локального кэша,
-    его мёрдж с распаршеными данными от скрапинга страниц приложений steam.
-    Отвечает за таймауты при get запросах к страницам приложений.
     """
     safe_dict_data_path = f"{get_steam_app_info_path}/{'Apps_info'}/{day_for_landing}/{'_safe_dict_data'}"
     dlc_dict_data_path = f"{get_steam_app_info_path}/{'DLC_info'}/{day_for_landing}/{'_safe_dict_dlc_data'}"

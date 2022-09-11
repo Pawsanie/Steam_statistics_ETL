@@ -42,8 +42,6 @@ def my_beautiful_task_path_parser(result_successor: list or tuple or str, dir_li
                                   interested_partition: dict[str], file_mask: str):
     """
     Inheritance of paths from result_successor.
-    '''
-    Наследование путей из result_successor.
     """
     if type(result_successor) is list or type(result_successor) is tuple:
         for flag in result_successor:
@@ -77,8 +75,6 @@ def my_beautiful_task_path_parser(result_successor: list or tuple or str, dir_li
 def my_beautiful_task_data_frame_merge(data_from_files: DataFrame or None, extract_data: DataFrame) -> DataFrame:
     """
     Merges the given dataframes into one, filling NaN empty cells.
-    '''
-    Объединяет переданные датафреймы в один, заполняя  NaN пустые ячейки.
     """
     if data_from_files is None:
         data_from_files = extract_data
@@ -100,14 +96,14 @@ def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame],
             how_to_extract_format = read_csv(*args).astype(str)
         if file_mask == '.json':
             how_to_extract_format = read_json(*args, dtype='int64')
-            # Json требует ручного указания типа вывода для длинных чисел
+            # ^ Json must have requrires for manual specification for long numbers.
         return how_to_extract_format
 
     for key in interested_partition:
         data_from_files = None
         files = interested_partition.get(key) \
                                     .values()
-        for file in files:  # Парсинг таблиц в сырой датафрейм
+        for file in files:  # Parsing tables in to raw DataFrame.
             extract_data = how_to_extract(file)
             # Merging Pandas DataFrames
             data_from_files = my_beautiful_task_data_frame_merge(data_from_files, extract_data)
@@ -118,8 +114,6 @@ def my_beautiful_task_universal_parser_part(result_successor: list or tuple or s
                                             file_mask: str) -> dict[DataFrame]:
     """
     Runs code after inheriting paths from the previous task.
-    '''
-    Запускает код после наследования путей от прошлой таски.
     """
     interested_partition, dir_list = {}, []
     my_beautiful_task_path_parser(result_successor, dir_list, interested_partition, file_mask)

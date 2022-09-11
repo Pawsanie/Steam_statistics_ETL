@@ -1,7 +1,6 @@
 from os import walk
 
-from pandas import DataFrame, concat
-from numpy import where
+from pandas import DataFrame
 
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part, \
     my_beautiful_task_data_frame_merge
@@ -36,7 +35,7 @@ def steam_apps_validator(steam_apps_list: dict[str], partition_path: str) -> Dat
                 path_to_file = f'{dirs}/{file}'
                 file_list.append(path_to_file)
     if len(file_list) != 0:
-        interested_data = my_beautiful_task_universal_parser_part(file_list, '.json', drop_list=None)
+        interested_data = my_beautiful_task_universal_parser_part(file_list, '.json')
         all_apps_parsing_data = None
         for data in interested_data.values():
             all_apps_parsing_data = my_beautiful_task_data_frame_merge(all_apps_parsing_data, data)

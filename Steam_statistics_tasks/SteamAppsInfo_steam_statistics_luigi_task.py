@@ -30,14 +30,9 @@ def steam_apps_data_cleaning(all_apps_data_frame: DataFrame) -> DataFrame:
     """
     Clears all_apps_data_frame from apps that are not games.
     """
-    # 'apps_which_are_not_game' требует дополнения, по результатам тестирования ->
+    # 'apps_which_are_not_game_list' требует дополнения, по результатам тестирования ->
     apps_which_are_not_game = ['Animation & Modeling', 'Game Development', 'Tutorial']
-    all_apps_data_frame_heads = all_apps_data_frame.head()
-    for index in range(len(all_apps_data_frame)):
-        for column_name in all_apps_data_frame_heads:
-            column_name = str(column_name)
-            column_name = all_apps_data_frame.iloc[index][column_name]
-            if str(column_name) in apps_which_are_not_game:
-                all_apps_data_frame = all_apps_data_frame.drop(all_apps_data_frame.index[index], inplace=True)
-    all_apps_data_frame = all_apps_data_frame.reset_index(drop=True)
+    apps_which_are_not_game_str = '|'.join(apps_which_are_not_game)
+    all_apps_data_frame = all_apps_data_frame[~all_apps_data_frame['tags'].str.contains(
+        apps_which_are_not_game_str, regex=True)].reset_index(drop=True)
     return all_apps_data_frame

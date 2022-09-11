@@ -21,28 +21,17 @@ def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:
     """
     Delete what is not a game at the stage of working with raw data.
     """
+    is_not_application_list = ['Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest'
+                               'test2', 'test3', 'Pieterw', 'Closed Beta', 'Open Beta', 'RPG Maker',
+                               'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus']
+    is_not_application_str, result_df = '|'.join(is_not_application_list), None
     for value in interested_data:
         interested_data = interested_data.get(value)
-        interested_data = interested_data[~interested_data['name'].str.contains('Soundtrack')]
-        interested_data = interested_data[~interested_data['name'].str.contains('OST')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Artbook')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Texture')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Demo')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Playtest')]
-        interested_data = interested_data[~interested_data['name'].str.contains('test2')]
-        interested_data = interested_data[~interested_data['name'].str.contains('test3')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Pieterw')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Closed Beta')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Open Beta')]
-        interested_data = interested_data[~interested_data['name'].str.contains('RPG Maker')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Pack')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Trailer')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Teaser')]
-        interested_data = interested_data[~interested_data['name'].str.contains('Digital Art Book')]
+        interested_data = interested_data[~interested_data['name'].str.contains(
+            is_not_application_str, regex=True)]
         null_filter = interested_data['name'] != ""
-        interested_data = interested_data[null_filter]
-        interested_data = interested_data.reset_index(drop=True)
-    return interested_data
+        result_df = my_beautiful_task_data_frame_merge(result_df, interested_data[null_filter])
+    return result_df.reset_index(drop=True)
 
 
 def scraping_steam_product_rating(app_ratings: BeautifulSoup.find_all, result: dict) -> dict[str]:

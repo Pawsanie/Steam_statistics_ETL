@@ -59,19 +59,33 @@ The example above shows the launch of all tasks.
 AllSteamProductsData
 * Retrieves a list of applications from steam Web-API.
 * If the launch is not the first time, saves the difference with the previous launch as a result.
-
+****
 GetSteamProductsDataInfo
 * Requests application pages received from the last task.
 * Masquerades as a new user every request and waits for a random value of seconds between 3 and 6 before a new request.
 * Scraping data on these pages.
 * Filters out everything that is not applications and additions to them.
-* Sifts DLC and saves them in a separate file registry so as not to request further.
+* Sifts DLC and saves them to a separate file from applications.
+* Separately saves applications and add-ons that are not available to the request in this region.
 * Saves each request to a local cache, in case the pipeline crashes.
 * Reads the local cache of applications and DLC every unsuccessful instances.
 * Deletes the local cache of applications and add-ons after successful instances.
 
+Result features:
+* Some apps require registration to scrape. Information about them cannot be collected.<br/>
+All columns in the row about this application will be empty, except for the 'id' and 'name'.
+* The fields of the 'rating_30d_percent' and 'rating_30d_count' columns can be empty if no one has left a review in the last 30 days.
+* 'not_available_in_steam_now' is set in the 'price' column value if the app is no longer available in the Steam store.<br/>
+Usually this situation is adjacent to the previous point.
+* Some apps and DLCs may be missing tags. Most often this applies to various OSTs, 
+in which case the cell will be empty.
+* If the release of the application, or DLS has not yet occurred, then the cells of the steam_release_date column will be marked "in the pipelane".
+
+****
+
 SteamAppsInfo
 * Collects the results of all successful instances of the past task and merges them into a new file containing statistics about applications.
+* Fills in the empty cells 'nan'.
 
 ## Known Bugs:
 * Applications that do not have a price receive as a value not 0, but literally emptiness.

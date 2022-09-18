@@ -79,7 +79,7 @@ All columns in the row about this application will be empty, except for the 'id'
 Usually this situation is adjacent to the previous point.
 * Some apps and DLCs may be missing tags. Most often this applies to various OSTs, 
 in which case the cell will be empty.
-* If the release of the application, or DLS has not yet occurred, then the cells of the steam_release_date column will be marked "in the pipelane".
+* If the release of the application, or DLC has not yet occurred, then the cells of the steam_release_date column will be marked "in the pipelane".
 
 ****
 

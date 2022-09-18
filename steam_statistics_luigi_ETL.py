@@ -7,14 +7,15 @@ from luigi import run, Task, LocalTarget, DateParameter, Parameter
 from pandas import DataFrame  # Do not delete! (pipeline use DataFrame type between functions)
 
 from Steam_statistics_tasks.Logging_Config import logging_config
-from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part,\
-     my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
-from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser,\
-     steam_apps_validator
+from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part, \
+    my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
+from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser, \
+    steam_apps_validator
 from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import steam_apps_parser, \
-     parsing_steam_data, apps_and_dlc_df_landing, delete_temporary_safe_file, make_flag, product_save_file_path
-from Steam_statistics_tasks.SteamAppsInfo_steam_statistics_luigi_task import get_csv_for_join,\
-     steam_apps_data_cleaning
+    parsing_steam_data, apps_and_dlc_df_landing, delete_temporary_safe_file, make_flag, product_save_file_path
+from Steam_statistics_tasks.SteamAppsInfo_steam_statistics_luigi_task import get_csv_for_join, \
+    steam_apps_data_cleaning
+
 """
 Steam statistics Luigi ETL.
 """
@@ -72,16 +73,27 @@ class GetSteamProductsDataInfo(Task):
         result_successor = self.input()['AllSteamProductsData']
         interested_data = my_beautiful_task_universal_parser_part(result_successor, ".json")
         interested_data = steam_apps_parser(interested_data)
-        apps_df, dlc_df = None, None
+        apps_df, dlc_df, unsuitable_region_apps_df, unsuitable_region_dlc_df = None, None, None, None
         day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
         apps_and_dlc_df_list = parsing_steam_data(interested_data, self.get_steam_products_data_info_path,
-                                                  day_for_landing, apps_df, dlc_df)
-        apps_df, dlc_df = apps_and_dlc_df_list[0], apps_and_dlc_df_list[1]
-        apps_df_save_path, dlc_df_save_path = product_save_file_path(self, 'Apps_info', ''), \
-                                              product_save_file_path(self, 'DLC_info', '')
-        apps_and_dlc_df_landing(apps_df, dlc_df, apps_df_save_path, dlc_df_save_path)
-        delete_temporary_safe_file(self, 'Apps_info', '_safe_dict_data')
+                                                  day_for_landing, apps_df, dlc_df,
+                                                  unsuitable_region_apps_df, unsuitable_region_dlc_df)
+        apps_df, dlc_df, unsuitable_region_apps_df, unsuitable_region_dlc_df = \
+            apps_and_dlc_df_list[0], apps_and_dlc_df_list[1], apps_and_dlc_df_list[2], apps_and_dlc_df_list[3]
+        apps_df_save_path, dlc_df_save_path, unsuitable_region_apps_df_path, unsuitable_region_dlc_df_path = \
+            product_save_file_path(self, 'Apps_info', ''), \
+            product_save_file_path(self, 'DLC_info', ''), \
+            product_save_file_path(self, 'Apps_not_for_this_region_info', ''), \
+            product_save_file_path(self, 'DLC_not_for_this_region_info', '')
+
+        apps_and_dlc_df_landing(apps_df, dlc_df, apps_df_save_path, dlc_df_save_path,
+                                unsuitable_region_apps_df, unsuitable_region_apps_df_path,
+                                unsuitable_region_dlc_df, unsuitable_region_dlc_df_path)
+        delete_temporary_safe_file(self, 'Apps_info', '_safe_dict_apps_data')
         delete_temporary_safe_file(self, 'DLC_info', '_safe_dict_dlc_data')
+        delete_temporary_safe_file(self, 'Apps_not_for_this_region_info', '_safe_dict_apps_data')
+        delete_temporary_safe_file(self, 'DLC_not_for_this_region_info', '_safe_dict_dlc_data')
+
         make_flag(f"{self.get_steam_products_data_info_path}/{day_for_landing}")
 
 

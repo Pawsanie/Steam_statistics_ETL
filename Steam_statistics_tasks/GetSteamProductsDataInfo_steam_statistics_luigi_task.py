@@ -297,17 +297,16 @@ def make_flag(partition_path: str):
         pass
 
 
-def apps_and_dlc_df_landing(apps_df: DataFrame, dlc_df: DataFrame,
-                            apps_df_save_path: str, dlc_df_save_path: str,
-                            unsuitable_region_apps_df: DataFrame, unsuitable_region_apps_df_path: str,
-                            unsuitable_region_dlc_df: DataFrame, unsuitable_region_dlc_df_path: str,):
+def apps_and_dlc_df_landing(apps_df: DataFrame, apps_df_save_path: str,
+                            dlc_df: DataFrame, dlc_df_save_path: str,
+                            unsuitable_region_products_df: DataFrame, unsuitable_region_products_df_path: str):
     """
     Lands real collections and maike flags if theme empty.
     """
     data_for_landing = {"Steam_Apps_Info.csv": [apps_df, apps_df_save_path],
                         "Steam_DLC_Info.csv": [dlc_df, dlc_df_save_path],
-                        "Unsuitable_region_Apps_Info.csv": [unsuitable_region_apps_df, unsuitable_region_apps_df_path],
-                        "Unsuitable_region_DLC_Info.csv": [unsuitable_region_dlc_df, unsuitable_region_dlc_df_path]}
+                        "Unsuitable_region_Products_Info.csv": [unsuitable_region_products_df,
+                                                                unsuitable_region_products_df_path]}
     for key in data_for_landing:
         if len(data_for_landing.get(key)[0]) != 0:
             my_beautiful_task_data_landing(data_for_landing.get(key)[0], data_for_landing.get(key)[1], key)
@@ -317,11 +316,8 @@ def apps_and_dlc_df_landing(apps_df: DataFrame, dlc_df: DataFrame,
 
 def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
                                 dlc_df: DataFrame, dlc_df_redy: DataFrame,
-                                unsuitable_region_apps_df: DataFrame,
-                                unsuitable_region_apps_df_redy: DataFrame,
-                                unsuitable_region_dlc_df: DataFrame,
-                                unsuitable_region_dlc_df_redy: DataFrame
-                                ) -> list[DataFrame]:
+                                unsuitable_region_products_df: DataFrame,
+                                unsuitable_region_products_df_redy: DataFrame) -> list[DataFrame]:
     """
     Pandas DataFrame validator.
     Checks that the application and DLC collections are not empty.
@@ -329,8 +325,8 @@ def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
     """
     data_for_validation = {"Steam_Apps_Info": [apps_df, apps_df_redy],
                            "Steam_DLC_Info": [dlc_df, dlc_df_redy],
-                           "Unsuitable_region_Apps_Info": [unsuitable_region_apps_df, unsuitable_region_apps_df_redy],
-                           "Unsuitable_region_DLC_Info": [unsuitable_region_dlc_df, unsuitable_region_dlc_df_redy]}
+                           "Unsuitable_region_Products_Info": [unsuitable_region_products_df,
+                                                               unsuitable_region_products_df_redy]}
     apps_and_dlc_df_list = []
     for key in data_for_validation:
         if type(data_for_validation.get(key)[0]) == type(None):
@@ -357,36 +353,24 @@ def result_column_sort(interest_dict: dict) -> DataFrame:
     return new_df_row
 
 
-def steam_product_scraping_validator(scraping_result: dict[str], get_steam_app_info_path: str, day_for_landing: str,
-                                     product_data_frame: DataFrame, app_id: str, app_name: str, safe_name: str,
-                                     catalogue_name: str, product_not_for_region_catalog: str,
-                                     not_available_log_masege: str, not_available_product_df: DataFrame
-                                     ) -> list[DataFrame]:
+def steam_product_scraping_validator(scraping_result: dict[str], get_steam_product_info_path: str, day_for_landing: str,
+                                     product_data_frame: DataFrame, app_name: str, safe_name: str,
+                                     catalogue_name: str
+                                     ) -> DataFrame:
     """
     Validate scraping status of steam product then safe a result.
     """
-    # Steam product scraping succsessfully.
     if scraping_result is not None and len(scraping_result) != 0:
         new_df_row = result_column_sort(scraping_result)
-        safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row, safe_name, catalogue_name)
+        safe_dict_data(get_steam_product_info_path, day_for_landing, new_df_row, safe_name, catalogue_name)
         product_data_frame = my_beautiful_task_data_frame_merge(product_data_frame, new_df_row)
-        # not_available_product_df = None
         logging.info("'" + app_name + "' scraping succsessfully completed.")
-    # Steam product scrapping failed.
-    else:
-        new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
-        safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
-                       safe_name, product_not_for_region_catalog)
-        # product_data_frame = None
-        not_available_product_df = my_beautiful_task_data_frame_merge(not_available_product_df, new_df_row)
-        logging.info("'" + app_name + "' " + not_available_log_masege)
-    return [product_data_frame, not_available_product_df]
+    return product_data_frame
 
 
 def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str, day_for_landing: str,
                        apps_df: DataFrame or None, dlc_df: DataFrame or None,
-                       unsuitable_region_apps_df: DataFrame or None,
-                       unsuitable_region_dlc_df: DataFrame or None) -> list[DataFrame]:
+                       unsuitable_region_products_df: DataFrame or None) -> list[DataFrame]:
     """
     Root function responsible for reading the local cache and
     merge it with parsed data from scraping steam application pages.
@@ -394,15 +378,14 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     """
     apps_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'Apps_info'}/{'_safe_dict_apps_data'}"
     dlc_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'DLC_info'}/{'_safe_dict_dlc_data'}"
-    unsuitable_region_apps_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/" \
-                                                 f"{'Apps_not_for_this_region_info'}/{'_safe_dict_apps_data'}"
-    unsuitable_region_dlc_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/" \
-                                                f"{'DLC_not_for_this_region_info'}/{'_safe_dict_dlc_data'}"
+    unsuitable_region_products_df_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}" \
+                                                        f"/{'Product_not_for_this_region_info'}/" \
+                                                        f"{'_safe_dict_product_data'}"
 
     apps_df_redy = data_from_file_to_pd_dataframe(apps_safe_dict_data_path)
     dlc_df_redy = data_from_file_to_pd_dataframe(dlc_safe_dict_data_path)
-    unsuitable_region_apps_df_redy = data_from_file_to_pd_dataframe(unsuitable_region_apps_safe_dict_data_path)
-    unsuitable_region_dlc_df_redy = data_from_file_to_pd_dataframe(unsuitable_region_dlc_safe_dict_data_path)
+    unsuitable_region_products_df_redy = \
+        data_from_file_to_pd_dataframe(unsuitable_region_products_df_safe_dict_data_path)
 
     for index in range(len(interested_data)):  # Get app data to data frame
         time_wait = randint(1, 3)
@@ -410,32 +393,31 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
         app_id = interested_data.iloc[index]['appid']
         # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
         if str(app_name) not in concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
-                                        unsuitable_region_apps_df_redy['app_name'],
-                                        unsuitable_region_dlc_df_redy['app_name']]).drop_duplicates().values:
+                                        unsuitable_region_products_df_redy['app_name']]).drop_duplicates().values:
             sleep(time_wait)
             result_list = ask_app_in_steam_store(app_id, app_name)
             result, result_dlc,  = result_list[0], result_list[1]
-            # App scraping result validate.
-            apps_result_list = steam_product_scraping_validator(result, get_steam_app_info_path,
-                                                                day_for_landing, apps_df, app_id, app_name,
-                                                                '_safe_dict_apps_data', 'Apps_info',
-                                                                'Apps_not_for_this_region_info',
-                                                                'app is not available in this region...',
-                                                                unsuitable_region_apps_df)
-            apps_df, unsuitable_region_apps_df = apps_result_list[0], apps_result_list[1]
-            # DLC scraping result validate.
-            dlc_result_list = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
-                                                               day_for_landing, dlc_df, app_id, app_name,
-                                                               '_safe_dict_dlc_data', 'DLC_info',
-                                                               'DLC_not_for_this_region_info',
-                                                               'DLC is not available in this region...',
-                                                                unsuitable_region_dlc_df)
-            dlc_result_list, unsuitable_region_dlc_df = dlc_result_list[0], dlc_result_list[1]
+            if result or result_dlc is not None and len(result) or len(result_dlc) != 0:
+                # App scraping result validate.
+                apps_df = steam_product_scraping_validator(result, get_steam_app_info_path,
+                                                           day_for_landing, apps_df, app_name,
+                                                           '_safe_dict_apps_data', 'Apps_info',)
+                # DLC scraping result validate.
+                dlc_df = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
+                                                          day_for_landing, dlc_df, app_name,
+                                                          '_safe_dict_dlc_data', 'DLC_info')
+            else:  # Product not available in this region!
+                new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
+                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
+                               '_safe_dict_product_data', 'Product_not_for_this_region_info')
+                unsuitable_region_products_df = my_beautiful_task_data_frame_merge(unsuitable_region_products_df,
+                                                                                   new_df_row)
+                logging.info("'" + app_name + "' " + 'product is not available in this region...')
         else:
             logging.info("'" + app_name + "' already is in _safe_*_data...")
     apps_and_dlc_df_list = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy,
-                                                       unsuitable_region_apps_df, unsuitable_region_apps_df_redy,
-                                                       unsuitable_region_dlc_df, unsuitable_region_dlc_df_redy)
+                                                       unsuitable_region_products_df,
+                                                       unsuitable_region_products_df_redy)
     return apps_and_dlc_df_list
 
 

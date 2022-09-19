@@ -106,7 +106,7 @@ def my_beautiful_task_data_table_parser(interested_partition: dict[DataFrame],
         for file in files:  # Parsing tables in to raw DataFrame.
             extract_data = how_to_extract(file)
             # Merging Pandas DataFrames
-            data_from_files = my_beautiful_task_data_frame_merge(data_from_files, extract_data)
+            data_from_files: DataFrame = my_beautiful_task_data_frame_merge(data_from_files, extract_data)
         interested_data[key] = data_from_files
 
 
@@ -118,6 +118,6 @@ def my_beautiful_task_universal_parser_part(result_successor: list or tuple or s
     interested_partition, dir_list = {}, []
     my_beautiful_task_path_parser(result_successor, dir_list, interested_partition, file_mask)
 
-    interested_data = {}  # Парсинг данных из файлов по путям унаследованным от прошлой таски.
+    interested_data = {}  # Parsing data from files along the paths inherited from the previous task.
     my_beautiful_task_data_table_parser(interested_partition, interested_data, file_mask)
     return interested_data

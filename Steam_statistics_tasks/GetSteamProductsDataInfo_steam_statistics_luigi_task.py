@@ -76,7 +76,8 @@ def scraping_steam_product_tags(app_tags: BeautifulSoup.find_all, result: dict) 
     if len(app_tag_dict.get('tags')) > 0:
         result.update({'tags': [str(app_tag_dict)]})
     else:
-        result.update({'tags': ''})
+        if len(result) > 0:
+            result.update({'tags': ''})
     return result
 
 
@@ -397,7 +398,8 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
             sleep(time_wait)
             result_list: list[dict, dict] = ask_app_in_steam_store(app_id, app_name)
             result, result_dlc,  = result_list[0], result_list[1]
-            if result or result_dlc is not None and len(result) or len(result_dlc) != 0:
+
+            if int(len(result) + len(result_dlc)) > 0:
                 # App scraping result validate.
                 apps_df: DataFrame = steam_product_scraping_validator(result, get_steam_app_info_path,
                                                                       day_for_landing, apps_df, app_name,
@@ -409,7 +411,7 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
             else:  # Product not available in this region!
                 new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
                 safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
-                               '_safe_dict_product_data', 'Product_not_for_this_region_info')
+                               '_safe_dict_products_not_for_this_region_data', 'Products_not_for_this_region_info')
                 unsuitable_region_products_df: DataFrame = \
                     my_beautiful_task_data_frame_merge(unsuitable_region_products_df, new_df_row)
                 logging.info("'" + app_name + "' " + 'product is not available in this region...')

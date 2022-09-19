@@ -4,7 +4,7 @@ import json
 
 from requests import get
 from luigi import run, Task, LocalTarget, DateParameter, Parameter
-from pandas import DataFrame  # Do not delete! (pipeline use DataFrame type between functions)
+from pandas import DataFrame
 
 from Steam_statistics_tasks.Logging_Config import logging_config
 from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part, \
@@ -93,7 +93,8 @@ class GetSteamProductsDataInfo(Task):
 
         delete_temporary_safe_files(self, {'Apps_info': '_safe_dict_apps_data',
                                            'DLC_info': '_safe_dict_dlc_data',
-                                           'Products_not_for_this_region_info': '_safe_dict_products_data'})
+                                           'Products_not_for_this_region_info':
+                                               '_safe_dict_products_not_for_this_region_data'})
 
         make_flag(f"{self.get_steam_products_data_info_path}/{day_for_landing}")
 

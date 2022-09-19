@@ -35,10 +35,10 @@ def steam_apps_validator(steam_apps_list: dict[str], partition_path: str) -> Dat
                 path_to_file = f'{dirs}/{file}'
                 file_list.append(path_to_file)
     if len(file_list) != 0:
-        interested_data = my_beautiful_task_universal_parser_part(file_list, '.json')
+        interested_data: dict[DataFrame] = my_beautiful_task_universal_parser_part(file_list, '.json')
         all_apps_parsing_data = None
         for data in interested_data.values():
-            all_apps_parsing_data = my_beautiful_task_data_frame_merge(all_apps_parsing_data, data)
+            all_apps_parsing_data: DataFrame = my_beautiful_task_data_frame_merge(all_apps_parsing_data, data)
         new_steam_apps_list = DataFrame(steam_apps_list)
 
         interested_apps = new_steam_apps_list[~new_steam_apps_list['name']

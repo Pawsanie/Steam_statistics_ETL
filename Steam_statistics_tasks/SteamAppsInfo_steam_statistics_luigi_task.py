@@ -22,7 +22,7 @@ def get_csv_for_join(result_successor, catalog: str) -> dict[DataFrame]:
             for file in files:
                 path_to_file = f'{dirs}/{file}'
                 file_list.append(path_to_file)
-    interested_data = my_beautiful_task_universal_parser_part(file_list, '.csv')
+    interested_data: dict[DataFrame] = my_beautiful_task_universal_parser_part(file_list, '.csv')
     return interested_data
 
 

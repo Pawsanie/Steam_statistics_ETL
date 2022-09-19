@@ -361,9 +361,9 @@ def steam_product_scraping_validator(scraping_result: dict[str], get_steam_produ
     Validate scraping status of steam product then safe a result.
     """
     if scraping_result is not None and len(scraping_result) != 0:
-        new_df_row = result_column_sort(scraping_result)
+        new_df_row: DataFrame = result_column_sort(scraping_result)
         safe_dict_data(get_steam_product_info_path, day_for_landing, new_df_row, safe_name, catalogue_name)
-        product_data_frame = my_beautiful_task_data_frame_merge(product_data_frame, new_df_row)
+        product_data_frame: DataFrame = my_beautiful_task_data_frame_merge(product_data_frame, new_df_row)
         logging.info("'" + app_name + "' scraping succsessfully completed.")
     return product_data_frame
 
@@ -395,39 +395,30 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
         if str(app_name) not in concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
                                         unsuitable_region_products_df_redy['app_name']]).drop_duplicates().values:
             sleep(time_wait)
-            result_list = ask_app_in_steam_store(app_id, app_name)
+            result_list: list[dict, dict] = ask_app_in_steam_store(app_id, app_name)
             result, result_dlc,  = result_list[0], result_list[1]
             if result or result_dlc is not None and len(result) or len(result_dlc) != 0:
                 # App scraping result validate.
-                apps_df = steam_product_scraping_validator(result, get_steam_app_info_path,
-                                                           day_for_landing, apps_df, app_name,
-                                                           '_safe_dict_apps_data', 'Apps_info',)
+                apps_df: DataFrame = steam_product_scraping_validator(result, get_steam_app_info_path,
+                                                                      day_for_landing, apps_df, app_name,
+                                                                      '_safe_dict_apps_data', 'Apps_info',)
                 # DLC scraping result validate.
-                dlc_df = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
-                                                          day_for_landing, dlc_df, app_name,
-                                                          '_safe_dict_dlc_data', 'DLC_info')
+                dlc_df: DataFrame = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
+                                                                     day_for_landing, dlc_df, app_name,
+                                                                     '_safe_dict_dlc_data', 'DLC_info')
             else:  # Product not available in this region!
                 new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
                 safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
                                '_safe_dict_product_data', 'Product_not_for_this_region_info')
-                unsuitable_region_products_df = my_beautiful_task_data_frame_merge(unsuitable_region_products_df,
-                                                                                   new_df_row)
+                unsuitable_region_products_df: DataFrame = \
+                    my_beautiful_task_data_frame_merge(unsuitable_region_products_df, new_df_row)
                 logging.info("'" + app_name + "' " + 'product is not available in this region...')
         else:
             logging.info("'" + app_name + "' already is in _safe_*_data...")
-    apps_and_dlc_df_list = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy,
-                                                       unsuitable_region_products_df,
-                                                       unsuitable_region_products_df_redy)
+    apps_and_dlc_df_list: list[DataFrame] = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy,
+                                                                        unsuitable_region_products_df,
+                                                                        unsuitable_region_products_df_redy)
     return apps_and_dlc_df_list
-
-
-def delete_temporary_safe_file(self, product: str, save_file: str):
-    """
-    Delete temporary file for task.
-    """
-    file_path = product_save_file_path(self, product, save_file)
-    if path.isfile(file_path):
-        remove(file_path)
 
 
 def product_save_file_path(self, product: str, save_file: str) -> str:
@@ -435,3 +426,23 @@ def product_save_file_path(self, product: str, save_file: str) -> str:
     Path generator.
     """
     return f"{self.get_steam_products_data_info_path}/{self.date_path_part:%Y/%m/%d}/{product}/{save_file}"
+
+
+def get_product_save_file_path_list(self, products_save_file_list: list[str]) -> list[str]:
+    """
+    Path multy-generator.
+    """
+    result = []
+    for dir_name in products_save_file_list:
+        result.append(product_save_file_path(self, dir_name, ''))
+    return result
+
+
+def delete_temporary_safe_files(self, products_dict: dict[str]):
+    """
+    Delete temporary files for task.
+    """
+    for key in products_dict:
+        file_path: str = product_save_file_path(self, key, products_dict.get(key))
+        if path.isfile(file_path):
+            remove(file_path)

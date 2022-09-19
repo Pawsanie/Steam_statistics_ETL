@@ -7,7 +7,7 @@ Logging configuration.
 def logging_config(log_path: str, log_level: int) -> 'logging.basicConfig':
     """
     Get logging configuration.
-    As result set logging ruls.
+    As result set logging rules.
     --------------
     log_path - path to logging file.
     log_level:

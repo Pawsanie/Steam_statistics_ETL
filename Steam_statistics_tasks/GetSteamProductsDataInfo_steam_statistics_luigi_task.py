@@ -214,9 +214,22 @@ def scraping_steam_product(app_id: str, app_name: str, soup: 'BeautifulSoup["lxm
         result_dict.update({'app_id': [app_id]})
         result_dict.update({'app_name': [app_name]})
         date_today = str(datetime.today()).split(' ')
-        date_today = date_today[0]
-        result_dict.update({'scan_date': [date_today]})
+        result_dict.update({'scan_date': [date_today[0]]})
     return result_dict
+
+
+def is_an_fake_user_must_be_registered(must_be_logged: BeautifulSoup.find_all) -> bool:
+    """
+    Check is fake user must be login to scrap steam product page.
+    """
+    if len(must_be_logged) > 0:
+        for element in must_be_logged:
+            if 'You must login to see this content' in str(element):
+                return True
+            else:
+                return False
+    else:
+        return False
 
 
 @connect_retry(3)
@@ -233,15 +246,17 @@ def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
     soup = BeautifulSoup(app_page.text, "lxml")
     result, result_dlc = {}, {}
 
-    is_it_dls, interest_heads = soup.find_all('h1'), []
-    for head in is_it_dls:
-        interest_heads.append(str(head).replace('<h1>', '').replace('</h1>', ''))
-    if 'Downloadable Content' not in interest_heads:  # Drope DLC
-        scraping_steam_product(app_id, app_name, soup, result)
-    else:  # Save DLC
-        scraping_steam_product(app_id, app_name, soup, result_dlc)
+    must_be_logged = is_an_fake_user_must_be_registered(must_be_logged=soup.find_all('span', class_="error"))
+    if must_be_logged is False:
+        is_it_dls, interest_heads = soup.find_all('h1'), []
+        for head in is_it_dls:
+            interest_heads.append(str(head).replace('<h1>', '').replace('</h1>', ''))
+        if 'Downloadable Content' not in interest_heads:  # Drope DLC
+            scraping_steam_product(app_id, app_name, soup, result)
+        else:  # Save DLC
+            scraping_steam_product(app_id, app_name, soup, result_dlc)
 
-    return [result, result_dlc]
+    return [result, result_dlc, must_be_logged]
 
 
 def safe_dict_data(path_to_file: str, date: str, df: DataFrame, file_name: str, ds_name: str):
@@ -300,14 +315,17 @@ def make_flag(partition_path: str):
 
 def apps_and_dlc_df_landing(apps_df: DataFrame, apps_df_save_path: str,
                             dlc_df: DataFrame, dlc_df_save_path: str,
-                            unsuitable_region_products_df: DataFrame, unsuitable_region_products_df_path: str):
+                            unsuitable_region_products_df: DataFrame, unsuitable_region_products_df_path: str,
+                            products_not_for_unlogged_user_df: DataFrame, products_not_for_unlogged_user_df_path: str):
     """
     Lands real collections and maike flags if theme empty.
     """
     data_for_landing = {"Steam_Apps_Info.csv": [apps_df, apps_df_save_path],
                         "Steam_DLC_Info.csv": [dlc_df, dlc_df_save_path],
                         "Unsuitable_region_Products_Info.csv": [unsuitable_region_products_df,
-                                                                unsuitable_region_products_df_path]}
+                                                                unsuitable_region_products_df_path],
+                        "Products_not_for_unlogged_user_Info.csv": [products_not_for_unlogged_user_df,
+                                                                    products_not_for_unlogged_user_df_path]}
     for key in data_for_landing:
         if len(data_for_landing.get(key)[0]) != 0:
             my_beautiful_task_data_landing(data_for_landing.get(key)[0], data_for_landing.get(key)[1], key)
@@ -318,7 +336,10 @@ def apps_and_dlc_df_landing(apps_df: DataFrame, apps_df_save_path: str,
 def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
                                 dlc_df: DataFrame, dlc_df_redy: DataFrame,
                                 unsuitable_region_products_df: DataFrame,
-                                unsuitable_region_products_df_redy: DataFrame) -> list[DataFrame]:
+                                unsuitable_region_products_df_redy: DataFrame,
+                                products_not_for_unlogged_user_df: DataFrame,
+                                products_not_for_unlogged_user_df_redy: DataFrame
+                                ) -> list[DataFrame]:
     """
     Pandas DataFrame validator.
     Checks that the application and DLC collections are not empty.
@@ -327,7 +348,9 @@ def apps_and_dlc_list_validator(apps_df: DataFrame, apps_df_redy: DataFrame,
     data_for_validation = {"Steam_Apps_Info": [apps_df, apps_df_redy],
                            "Steam_DLC_Info": [dlc_df, dlc_df_redy],
                            "Unsuitable_region_Products_Info": [unsuitable_region_products_df,
-                                                               unsuitable_region_products_df_redy]}
+                                                               unsuitable_region_products_df_redy],
+                           "Products_not_for_unlogged_user_Info": [products_not_for_unlogged_user_df,
+                                                                   products_not_for_unlogged_user_df_redy]}
     apps_and_dlc_df_list = []
     for key in data_for_validation:
         if type(data_for_validation.get(key)[0]) == type(None):
@@ -369,9 +392,27 @@ def steam_product_scraping_validator(scraping_result: dict[str], get_steam_produ
     return product_data_frame
 
 
+def unsuitable_products(app_id: str, app_name: str, get_steam_app_info_path: str,
+                        day_for_landing: str, unsuitable_products_df: DataFrame,
+                        safe_file_name: str, unsuitable_product_catalog: str,
+                        logg_massage: str) -> DataFrame:
+    """
+    Unsuitable product safe, add to DataFrame and logging info massage.
+    """
+    date_today = str(datetime.today()).split(' ')
+    new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name], 'scan_date': [date_today[0]]})
+    safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
+                   safe_file_name, unsuitable_product_catalog)
+    unsuitable_products_df: DataFrame = \
+        my_beautiful_task_data_frame_merge(unsuitable_products_df, new_df_row)
+    logging.info("'" + app_name + "' " + logg_massage)
+    return unsuitable_products_df
+
+
 def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str, day_for_landing: str,
                        apps_df: DataFrame or None, dlc_df: DataFrame or None,
-                       unsuitable_region_products_df: DataFrame or None) -> list[DataFrame]:
+                       unsuitable_region_products_df: DataFrame or None,
+                       products_not_for_unlogged_user_df: DataFrame or None) -> list[DataFrame]:
     """
     Root function responsible for reading the local cache and
     merge it with parsed data from scraping steam application pages.
@@ -382,11 +423,16 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     unsuitable_region_products_df_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}" \
                                                         f"/{'Product_not_for_this_region_info'}/" \
                                                         f"{'_safe_dict_product_data'}"
+    products_not_for_unlogged_user_df_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}" \
+                                                            f"/{'Products_not_for_unlogged_user_Info'}/" \
+                                                            f"{'_safe_dict_must_be_logged_to_scrapping_products'}"
 
     apps_df_redy = data_from_file_to_pd_dataframe(apps_safe_dict_data_path)
     dlc_df_redy = data_from_file_to_pd_dataframe(dlc_safe_dict_data_path)
     unsuitable_region_products_df_redy = \
         data_from_file_to_pd_dataframe(unsuitable_region_products_df_safe_dict_data_path)
+    products_not_for_unlogged_user_df_redy = \
+        data_from_file_to_pd_dataframe(products_not_for_unlogged_user_df_safe_dict_data_path)
 
     for index in range(len(interested_data)):  # Get app data to data frame
         time_wait = randint(1, 3)
@@ -394,32 +440,43 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
         app_id = interested_data.iloc[index]['appid']
         # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
         if str(app_name) not in concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
-                                        unsuitable_region_products_df_redy['app_name']]).drop_duplicates().values:
+                                        unsuitable_region_products_df_redy['app_name'],
+                                        products_not_for_unlogged_user_df_redy['app_name']]).drop_duplicates().values:
             sleep(time_wait)
             result_list: list[dict, dict] = ask_app_in_steam_store(app_id, app_name)
-            result, result_dlc,  = result_list[0], result_list[1]
+            result, result_dlc, must_be_logged = result_list[0], result_list[1], result_list[2]
 
-            if int(len(result) + len(result_dlc)) > 0:
-                # App scraping result validate.
-                apps_df: DataFrame = steam_product_scraping_validator(result, get_steam_app_info_path,
-                                                                      day_for_landing, apps_df, app_name,
-                                                                      '_safe_dict_apps_data', 'Apps_info',)
-                # DLC scraping result validate.
-                dlc_df: DataFrame = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
-                                                                     day_for_landing, dlc_df, app_name,
-                                                                     '_safe_dict_dlc_data', 'DLC_info')
-            else:  # Product not available in this region!
-                new_df_row = DataFrame(data={'app_id': [app_id], 'app_name': [app_name]})
-                safe_dict_data(get_steam_app_info_path, day_for_landing, new_df_row,
-                               '_safe_dict_products_not_for_this_region_data', 'Products_not_for_this_region_info')
-                unsuitable_region_products_df: DataFrame = \
-                    my_beautiful_task_data_frame_merge(unsuitable_region_products_df, new_df_row)
-                logging.info("'" + app_name + "' " + 'product is not available in this region...')
+            if must_be_logged is False:
+                if int(len(result) + len(result_dlc)) > 0:
+                    # App scraping result validate.
+                    apps_df: DataFrame = steam_product_scraping_validator(result, get_steam_app_info_path,
+                                                                          day_for_landing, apps_df, app_name,
+                                                                          '_safe_dict_apps_data', 'Apps_info',)
+                    # DLC scraping result validate.
+                    dlc_df: DataFrame = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
+                                                                         day_for_landing, dlc_df, app_name,
+                                                                         '_safe_dict_dlc_data', 'DLC_info')
+                else:  # Product not available in this region!
+                    unsuitable_region_products_df: DataFrame = \
+                        unsuitable_products(app_id, app_name, get_steam_app_info_path,
+                                            day_for_landing, unsuitable_region_products_df,
+                                            '_safe_dict_products_not_for_this_region_data',
+                                            'Products_not_for_this_region_info',
+                                            'product is not available in this region...')
+            else:  # Fake user must be logged in steam for scraping this product page.
+                products_not_for_unlogged_user_df: DataFrame = \
+                    unsuitable_products(app_id, app_name, get_steam_app_info_path,
+                                        day_for_landing, products_not_for_unlogged_user_df,
+                                        '_safe_dict_must_be_logged_to_scrapping_products',
+                                        'Products_not_for_unlogged_user_info',
+                                        'product is not available for unlogged user...')
         else:
             logging.info("'" + app_name + "' already is in _safe_*_data...")
     apps_and_dlc_df_list: list[DataFrame] = apps_and_dlc_list_validator(apps_df, apps_df_redy, dlc_df, dlc_df_redy,
                                                                         unsuitable_region_products_df,
-                                                                        unsuitable_region_products_df_redy)
+                                                                        unsuitable_region_products_df_redy,
+                                                                        products_not_for_unlogged_user_df,
+                                                                        products_not_for_unlogged_user_df_redy)
     return apps_and_dlc_df_list
 
 

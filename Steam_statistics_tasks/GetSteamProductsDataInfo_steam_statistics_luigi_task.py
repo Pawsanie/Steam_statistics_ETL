@@ -9,6 +9,7 @@ from pandas import DataFrame, concat
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from requests import get, exceptions
+from numpy import nan
 
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
     my_beautiful_task_data_frame_merge
@@ -328,7 +329,8 @@ def apps_and_dlc_df_landing(apps_df: DataFrame, apps_df_save_path: str,
                                                                     products_not_for_unlogged_user_df_path]}
     for key in data_for_landing:
         if len(data_for_landing.get(key)[0]) != 0:
-            my_beautiful_task_data_landing(data_for_landing.get(key)[0], data_for_landing.get(key)[1], key)
+            my_beautiful_task_data_landing(data_for_landing.get(key)[0].replace(r'^\s*$', 'NULL', regex=True),
+                                           data_for_landing.get(key)[1], key)
         else:
             make_flag(data_for_landing.get(key)[1])
 

@@ -80,8 +80,7 @@ def my_beautiful_task_data_frame_merge(data_from_files: DataFrame or None, extra
         data_from_files = extract_data
     else:
         extract_data = extract_data.astype(object)
-        data_from_files = data_from_files.merge(extract_data, how='outer')
-        data_from_files = data_from_files.reset_index(drop=True)
+        data_from_files = data_from_files.merge(extract_data, how='outer').reset_index(drop=True)
     return data_from_files
 
 

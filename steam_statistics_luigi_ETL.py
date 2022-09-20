@@ -74,7 +74,7 @@ class SteamAppInfoCSVJoiner(Task):
     """
     Merges all raw CSV tables into one MasterData.
     """
-    task_namespace = 'SteamAppsInfo'
+    task_namespace = 'SteamProductsInfo'
     priority = 100
     steam_apps_info_path = Parameter(significant=True, description='Path to join all GetSteamProductsDataInfo .csv')
     date_path_part = DateParameter(default=date.today(), description='Date for root path')

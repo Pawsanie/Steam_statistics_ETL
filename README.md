@@ -83,7 +83,7 @@ in which case the cell will be empty.
 
 ****
 
-SteamAppsInfo
+SteamAppInfoCSVJoiner
 * Collects the results of all successful instances of the past task and merges them into a new file containing statistics about applications.
 * Fills in the empty cells 'nan'.
 

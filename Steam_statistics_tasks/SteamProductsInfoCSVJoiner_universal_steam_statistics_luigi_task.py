@@ -2,10 +2,27 @@ from os import walk
 
 from pandas import DataFrame
 
-from .Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part
+from .Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part, \
+    my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
 """
-Contains code for luigi task 'AppInfoCSVJoiner'.
+Contains code for luigi tasks: 'SteamAppInfoCSVJoiner', .
 """
+
+
+def steam_products_info_run(self):
+    """
+    Function for Luigi.Task.run()
+    Need "directory_for_csv_join and csv_file_for_result" variables in class.
+    """
+    result_successor = self.input()['GetSteamProductsDataInfo']
+    interested_data: dict[DataFrame] = get_csv_for_join(result_successor, self.directory_for_csv_join)
+    all_apps_data_frame = None
+    for data in interested_data.values():
+        all_apps_data_frame: DataFrame = my_beautiful_task_data_frame_merge(all_apps_data_frame, data)
+    all_apps_data_frame: DataFrame = steam_apps_data_cleaning(all_apps_data_frame)
+    day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
+    my_beautiful_task_data_landing(all_apps_data_frame, f"{self.steam_apps_info_path}/{day_for_landing}",
+                                   self.csv_file_for_result)
 
 
 def get_csv_for_join(result_successor, catalog: str) -> dict[DataFrame]:
@@ -30,7 +47,7 @@ def steam_apps_data_cleaning(all_apps_data_frame: DataFrame) -> DataFrame:
     """
     Clears all_apps_data_frame from apps that are not games.
     """
-    # 'apps_which_are_not_game_list' требует дополнения, по результатам тестирования ->
+    # 'apps_which_are_not_game_list' needs to be supplemented, according to test results ->
     apps_which_are_not_game = ['Animation & Modeling', 'Game Development', 'Tutorial']
     apps_which_are_not_game_str = '|'.join(apps_which_are_not_game)
     all_apps_data_frame = all_apps_data_frame[~all_apps_data_frame['tags'].str.contains(

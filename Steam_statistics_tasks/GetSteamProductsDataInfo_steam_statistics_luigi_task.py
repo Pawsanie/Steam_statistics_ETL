@@ -9,10 +9,10 @@ from pandas import DataFrame, concat
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from requests import get, exceptions
-from numpy import nan
 
+from .Logging_Config import logging_config
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
-    my_beautiful_task_data_frame_merge
+    my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
 
 """
 Contains code for luigi task 'GetSteamAppInfo'.
@@ -507,3 +507,46 @@ def delete_temporary_safe_files(self, products_dict: dict[str]):
         file_path: str = product_save_file_path(self, key, products_dict.get(key))
         if path.isfile(file_path):
             remove(file_path)
+
+
+def get_steam_products_data_info_steam_statistics_luigi_task_run(self):
+    """
+    Function for Luigi.Task.run()
+    """
+    logging_config(self.get_steam_products_data_info_logfile_path, int(self.get_steam_products_data_info_loglevel))
+    result_successor = self.input()['AllSteamProductsData']
+    interested_data: dict[DataFrame] = my_beautiful_task_universal_parser_part(result_successor, ".json")
+    interested_data: DataFrame = steam_apps_parser(interested_data)
+    apps_df, dlc_df, unsuitable_region_products_df, products_not_for_unlogged_user_df = None, None, None, None
+    day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
+
+    apps_and_dlc_df_list: list[DataFrame] = parsing_steam_data(interested_data,
+                                                               self.get_steam_products_data_info_path,
+                                                               day_for_landing, apps_df, dlc_df,
+                                                               unsuitable_region_products_df,
+                                                               products_not_for_unlogged_user_df)
+    apps_df, dlc_df, unsuitable_region_products_df, products_not_for_unlogged_user_df = \
+        apps_and_dlc_df_list[0], apps_and_dlc_df_list[1], apps_and_dlc_df_list[2], apps_and_dlc_df_list[3]
+
+    product_save_file_path_list: list[str] = \
+        get_product_save_file_path_list(self, ['Apps_info', 'DLC_info', 'Products_not_for_this_region_info',
+                                               'Products_not_for_unlogged_user_info'])
+    apps_df_save_path, dlc_df_save_path, unsuitable_region_products_df_path, products_not_for_unlogged_user_df_path = \
+        product_save_file_path_list[0], product_save_file_path_list[1], \
+        product_save_file_path_list[2], product_save_file_path_list[3]
+
+    apps_and_dlc_df_landing(apps_df, apps_df_save_path, dlc_df, dlc_df_save_path,
+                            unsuitable_region_products_df, unsuitable_region_products_df_path,
+                            products_not_for_unlogged_user_df, products_not_for_unlogged_user_df_path)
+
+    delete_temporary_safe_files(self, {'Apps_info': '_safe_dict_apps_data',
+                                       'DLC_info': '_safe_dict_dlc_data',
+                                       'Products_not_for_this_region_info':
+                                           '_safe_dict_products_not_for_this_region_data',
+                                       "Products_not_for_unlogged_user_info":
+                                           "_safe_dict_must_be_logged_to_scrapping_products"})
+
+    make_flag(f"{self.get_steam_products_data_info_path}/{day_for_landing}")
+
+
+

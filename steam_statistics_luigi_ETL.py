@@ -13,6 +13,7 @@ from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task
     get_steam_products_data_info_steam_statistics_luigi_task_run
 from Steam_statistics_tasks.SteamProductsInfoCSVJoiner_universal_steam_statistics_luigi_task import \
     steam_products_info_run
+from Steam_statistics_tasks.CreateAppsDiagram_steam_statistics_luigi_task import *
 
 """
 Steam statistics Luigi ETL.
@@ -72,7 +73,7 @@ class GetSteamProductsDataInfo(Task):
 
 class SteamAppInfoCSVJoiner(Task):
     """
-    Merges all raw CSV tables into one MasterData.
+    Merges all raw CSV tables into one MasterData for Steam Apps.
     """
     task_namespace = 'SteamProductsInfo'
     priority = 100
@@ -81,6 +82,29 @@ class SteamAppInfoCSVJoiner(Task):
 
     directory_for_csv_join = 'Apps_info'
     csv_file_for_result = "SteamAppsInfo.csv"
+
+    def requires(self):
+        return {'GetSteamProductsDataInfo': GetSteamProductsDataInfo()}
+
+    def output(self):
+        return LocalTarget(
+            path.join(f"{self.steam_apps_info_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
+
+    def run(self):
+        steam_products_info_run(self)
+
+
+class SteamDLCInfoCSVJoiner(Task):
+    """
+    Merges all raw CSV tables into one MasterData for Steam DLC.
+    """
+    task_namespace = 'SteamProductsInfo'
+    priority = 100
+    steam_apps_info_path = Parameter(significant=True, description='Path to join all GetSteamProductsDataInfo .csv')
+    date_path_part = DateParameter(default=date.today(), description='Date for root path')
+
+    directory_for_csv_join = 'DLC_info'
+    csv_file_for_result = "SteamDLCInfo.csv"
 
     def requires(self):
         return {'GetSteamProductsDataInfo': GetSteamProductsDataInfo()}

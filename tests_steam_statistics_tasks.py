@@ -7,10 +7,10 @@ from requests import get
 import luigi.notifications
 from luigi import DateParameter, Parameter
 
-from steam_statistics_luigi_ETL import AllSteamProductsData, GetSteamProductsDataInfo, SteamAppsInfo
+from steam_statistics_luigi_ETL import AllSteamProductsData, GetSteamProductsDataInfo, SteamAppInfoCSVJoiner
 from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import *
 from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import *
-from Steam_statistics_tasks.SteamAppsInfo_steam_statistics_luigi_task import *
+from Steam_statistics_tasks.SteamProductsInfoCSVJoiner_universal_steam_statistics_luigi_task import *
 from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import *
 
 """
@@ -157,7 +157,7 @@ class TestGetSteamProductsDataInfo(unittest.TestCase):
             self.assertEqual(warn, 0, '\nlen(mock_interested_data.return_value) == 0...')
 
 
-class TestSteamAppsInfo(unittest.TestCase):
+class TestSteamAppInfoCSVJoiner(unittest.TestCase):
     """
     Test SteamAppsInfo.
     """
@@ -178,14 +178,14 @@ class TestSteamAppsInfo(unittest.TestCase):
         """
         The operability of the GetSteamAppInfo task itself, without writing to disk.
         """
-        SteamAppsInfo.steam_apps_info_path = Parameter(self.test_get_steam_app_info_path)
-        SteamAppsInfo.date_path_part = DateParameter(default=self.test_date_path_part)
-        self.GetSteamAppInfo = SteamAppsInfo()
-        partition_path = SteamAppsInfo.steam_apps_info_path
+        SteamAppInfoCSVJoiner.steam_apps_info_path = Parameter(self.test_get_steam_app_info_path)
+        SteamAppInfoCSVJoiner.date_path_part = DateParameter(default=self.test_date_path_part)
+        self.GetSteamAppInfo = SteamAppInfoCSVJoiner()
+        partition_path = SteamAppInfoCSVJoiner.steam_apps_info_path
         day_for_landing = str(self.test_date_path_part)
         mock_my_beautiful_task_data_landing.return_value = f'{partition_path}/{day_for_landing}/{"_Validate_Success"}'
 
-        is_there_an_error = SteamAppsInfo().set_status_message
+        is_there_an_error = SteamAppInfoCSVJoiner().set_status_message
         self.assertEqual(is_there_an_error, None)
         if type(self.test_get_steam_app_info_path) is not str:
             warn = 1

@@ -11,13 +11,19 @@ from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landin
 from .GetSteamProductsDataInfo_steam_statistics_luigi_task import make_flag
 
 
-def get_steam_products_tags_list_and_slices_count(cors_number: int, interest_df: DataFrame) -> list[list[str], list[int]]:
-    columns, result_dict = ['app_id', 'app_name', 'developer', 'rating_all_time_percent',
-                            'rating_all_time_count', 'rating_30d_percent', 'rating_30d_count',
-                            'publisher', 'price', 'steam_release_date', 'tags', 'scan_date'], {}
+columns = ['app_id', 'app_name', 'developer', 'rating_all_time_percent',
+           'rating_all_time_count', 'rating_30d_percent', 'rating_30d_count',
+           'publisher', 'price', 'steam_release_date', 'tags', 'scan_date']
 
+
+def get_steam_products_tags_list_and_slices_count(cors_number: int, interest_df: DataFrame
+                                                  ) -> list[list[str], list[int]]:
+    """
+    Make slices for diagram.
+    Tags and counts.
+    """
     tags = interest_df['tags'].values()
-    tags_list, count_list = [], []
+    tags_list, count_list, result_dict = [], [], {}
     result = [tags_list, count_list]
 
     def executor_job():
@@ -31,7 +37,9 @@ def get_steam_products_tags_list_and_slices_count(cors_number: int, interest_df:
     with ThreadPoolExecutor(max_workers=cors_number) as executor:
         executor.map(executor_job)
 
-    interest_df = interest_df[columns]
+    for key in result_dict:
+        tags_list.append(key)
+        count_list.append(result_dict.get(key))
 
     return result
 

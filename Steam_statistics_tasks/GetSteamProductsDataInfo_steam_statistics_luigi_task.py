@@ -179,9 +179,9 @@ def connect_retry(maximum_iterations: int):
             while try_number < maximum_iterations:
                 try:
                     return function(*args, **kwargs)
-                except exceptions as connect_error:
+                except Exception as connect_error:
                     try_number += 1
-                    logging.error('Connect Retry... ' + str(try_number) + '\n' + connect_error)
+                    logging.error('Connect Retry... ' + str(try_number) + '\n' + str(connect_error) + '\n')
         return function_for_trying
     return function_decor
 
@@ -437,13 +437,21 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
         data_from_file_to_pd_dataframe(products_not_for_unlogged_user_df_safe_dict_data_path)
 
     for index in range(len(interested_data)):  # Get app data to data frame
+        # time_wait = randint(1, 3)
         time_wait = uniform(0.1, 0.3)
         app_name = interested_data.iloc[index]['name']
         app_id = interested_data.iloc[index]['appid']
         # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
         if str(app_name) not in concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
                                         unsuitable_region_products_df_redy['app_name'],
-                                        products_not_for_unlogged_user_df_redy['app_name']]).drop_duplicates().values:
+                                        products_not_for_unlogged_user_df_redy['app_name']]
+                                       ).drop_duplicates().values:
+
+            # if concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
+            #           unsuitable_region_products_df_redy['app_name'],
+            #           products_not_for_unlogged_user_df_redy['app_name']]
+            #           )['app_name'].drop_duplicates().values != str(app_name):
+
             sleep(time_wait)
             result_list: list[dict, dict, bool] = ask_app_in_steam_store(app_id, app_name)
             result, result_dlc, must_be_logged = result_list[0], result_list[1], result_list[2]

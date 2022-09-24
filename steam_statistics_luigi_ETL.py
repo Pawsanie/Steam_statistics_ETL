@@ -4,9 +4,8 @@ import json
 
 from requests import get
 from luigi import run, Task, LocalTarget, DateParameter, Parameter
-from pandas import DataFrame
+from pandas import DataFrame  # Do not delete! Conveyor use type between functions.
 
-from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing
 from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser, \
     steam_apps_validator
 from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import \

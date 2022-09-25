@@ -116,5 +116,6 @@ class SteamDLCInfoCSVJoiner(Task):
         steam_products_info_run(self)
 
 
-if __name__ == "__main__":
-    run()
+# if __name__ == "__main__":
+#     run()
+run()

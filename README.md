@@ -28,6 +28,7 @@ pip install requests
 pip install beautifulsoup4
 pip install numpy
 pip install pyarrow
+pip install tqdm
 ```
 ## Launch:
 If Your OS has a bash shell the ETL pipeline can be started using the bash script:

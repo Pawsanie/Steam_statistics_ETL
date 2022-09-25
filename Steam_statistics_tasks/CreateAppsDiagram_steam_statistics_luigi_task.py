@@ -33,6 +33,7 @@ def get_steam_products_tags_list_and_slices_count(cors_number: int, interest_df:
             else:
                 count = result_dict.get(str(tag))
                 result_dict.update({str(tag): count + 1})
+            logging.info("'" + tag + "' count: " + result_dict.get(str(tag)) + '...')
 
     with ThreadPoolExecutor(max_workers=cors_number) as executor:
         executor.map(executor_job)

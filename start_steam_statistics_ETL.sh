@@ -22,8 +22,9 @@ steam_apps_info_path=$HOME"/Steam_ETL/Data_Warehouse/Steam_apps_info"
 steam_DLC_info_path=$HOME"/Steam_ETL/Data_Warehouse/Steam_DLC_info"
 
 # Date:
-date_path_part=$(date +%F)  # Today
-#date_path_part=$(date +%F --date "YYY-MM-DD")  # Exemple
+#date_path_part=$(date +%F)  # Today
+#date_path_part=$(date +%F --date "YYYY-MM-DD")  # Exemple
+date_path_part=$(date +%F --date "2022-09-24")
 
 
 # Start:

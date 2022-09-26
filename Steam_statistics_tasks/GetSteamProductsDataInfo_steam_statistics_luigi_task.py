@@ -5,7 +5,7 @@ from time import sleep
 from ast import literal_eval
 import logging
 
-from pandas import DataFrame, concat
+from pandas import DataFrame, concat, merge
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from requests import get, exceptions
@@ -16,15 +16,15 @@ from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landin
     my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
 
 """
-Contains code for luigi task 'GetSteamAppInfo'.
+Contains code for luigi task 'GetSteamProductsInfo'.
 """
 
 
-def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:  # Have bug?
+def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:
     """
     Delete what is not a game at the stage of working with raw data.
     """
-    is_not_application_list = ['Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest'
+    is_not_application_list = ['Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest',
                                'test2', 'test3', 'Pieterw', 'Closed Beta', 'Open Beta', 'RPG Maker',
                                'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus']
     is_not_application_str, result_df = '|'.join(is_not_application_list), None
@@ -183,7 +183,6 @@ def connect_retry(maximum_iterations: int):
                 except Exception as connect_error:
                     try_number += 1
                     logging.error('Connect Retry... ' + str(try_number) + '\n' + str(connect_error) + '\n')
-                    sleep(randint(60, 180))   # DEL after 1st result
         return function_for_trying
     return function_decor
 
@@ -235,7 +234,7 @@ def is_an_fake_user_must_be_registered(must_be_logged: BeautifulSoup.find_all) -
         return False
 
 
-@connect_retry(20)
+@connect_retry(100)
 def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict, bool]:
     """
     Application page scraping.
@@ -438,18 +437,26 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     products_not_for_unlogged_user_df_redy = \
         data_from_file_to_pd_dataframe(products_not_for_unlogged_user_df_safe_dict_data_path)
 
-    for index, tqdm_percent in zip(range(len(interested_data)),
-                                   tqdm(range(len(interested_data)),
-                                        desc="Scraping Steam products...")):
+    all_products_data_redy = concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
+                                    unsuitable_region_products_df_redy['app_name'],
+                                    products_not_for_unlogged_user_df_redy['app_name']]
+                                    ).drop_duplicates().values
+    common = interested_data.merge(DataFrame({'name': all_products_data_redy}), on=['name'])
+    interested_products = interested_data[~interested_data.name.isin(common.name)].reset_index(drop=True)
+
+    for index, tqdm_percent in zip(range(len(interested_products)),
+                                   tqdm(range(len(interested_products) + len(all_products_data_redy)),
+                                        desc="Scraping Steam products...",
+                                        # colour='green',
+                                        initial=len(all_products_data_redy))):
         # time_wait = randint(1, 3)
         time_wait = uniform(0.1, 0.3)
         app_name = interested_data.iloc[index]['name']
         app_id = interested_data.iloc[index]['appid']
+
         # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
-        if concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
-                  unsuitable_region_products_df_redy['app_name'],
-                  products_not_for_unlogged_user_df_redy['app_name']]
-                  ).drop_duplicates().values.any() != str(app_name):
+        # The error message cannot be corrected now.
+        if all_products_data_redy.any() != str(app_name):
 
             sleep(time_wait)
             result_list: list[dict, dict, bool] = ask_app_in_steam_store(app_id, app_name)

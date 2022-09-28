@@ -445,7 +445,6 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     interested_products = interested_data[~interested_data.name.isin(
         common_all_products_data_redy.name)].reset_index(drop=True)
 
-
     for index, tqdm_percent in zip(range(len(interested_products)),
                                    tqdm(range(len(interested_products) + len(common_all_products_data_redy)),
                                         desc="Scraping Steam products",
@@ -460,7 +459,7 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
 
         # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
         # The error message cannot be corrected now.
-        if interested_products.any() != str(app_name):
+        if str(app_name) not in common_all_products_data_redy.values:
 
             sleep(time_wait)
             result_list: list[dict, dict, bool] = ask_app_in_steam_store(app_id, app_name)

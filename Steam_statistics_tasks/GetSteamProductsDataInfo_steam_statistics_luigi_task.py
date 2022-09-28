@@ -424,10 +424,10 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     apps_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'Apps_info'}/{'_safe_dict_apps_data'}"
     dlc_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'DLC_info'}/{'_safe_dict_dlc_data'}"
     unsuitable_region_products_df_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}" \
-                                                        f"/{'Product_not_for_this_region_info'}/" \
-                                                        f"{'_safe_dict_product_data'}"
+                                                        f"/{'Products_not_for_this_region_info'}/" \
+                                                        f"{'_safe_dict_products_not_for_this_region_data'}"
     products_not_for_unlogged_user_df_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}" \
-                                                            f"/{'Products_not_for_unlogged_user_Info'}/" \
+                                                            f"/{'Products_not_for_unlogged_user_info'}/" \
                                                             f"{'_safe_dict_must_be_logged_to_scrapping_products'}"
 
     apps_df_redy = data_from_file_to_pd_dataframe(apps_safe_dict_data_path)
@@ -439,16 +439,20 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
 
     all_products_data_redy = concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
                                     unsuitable_region_products_df_redy['app_name'],
-                                    products_not_for_unlogged_user_df_redy['app_name']]
-                                    ).drop_duplicates().values
-    common = interested_data.merge(DataFrame({'name': all_products_data_redy}), on=['name'])
-    interested_products = interested_data[~interested_data.name.isin(common.name)].reset_index(drop=True)
+                                    products_not_for_unlogged_user_df_redy['app_name']],
+                                    ).drop_duplicates().values  # where 500 rows: bag?
+    common_all_products_data_redy = interested_data.merge(DataFrame({'name': all_products_data_redy}), on=['name'])
+    interested_products = interested_data[~interested_data.name.isin(
+        common_all_products_data_redy.name)].reset_index(drop=True)
+
 
     for index, tqdm_percent in zip(range(len(interested_products)),
-                                   tqdm(range(len(interested_products) + len(all_products_data_redy)),
-                                        desc="Scraping Steam products...",
+                                   tqdm(range(len(interested_products) + len(common_all_products_data_redy)),
+                                        desc="Scraping Steam products",
+                                        unit=' SteamApp',
+                                        ncols=120,
                                         # colour='green',
-                                        initial=len(all_products_data_redy))):
+                                        initial=len(common_all_products_data_redy))):
         # time_wait = randint(1, 3)
         time_wait = uniform(0.1, 0.3)
         app_name = interested_data.iloc[index]['name']
@@ -456,7 +460,7 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
 
         # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
         # The error message cannot be corrected now.
-        if all_products_data_redy.any() != str(app_name):
+        if interested_products.any() != str(app_name):
 
             sleep(time_wait)
             result_list: list[dict, dict, bool] = ask_app_in_steam_store(app_id, app_name)

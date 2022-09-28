@@ -22,18 +22,19 @@ def get_steam_products_tags_list_and_slices_count(cors_number: int, interest_df:
     Make slices for diagram.
     Tags and counts.
     """
-    tags = interest_df['tags'].values()
+    tags_column = interest_df['tags'].values()
     tags_list, count_list, result_dict = [], [], {}
     result = [tags_list, count_list]
 
     def executor_job():
-        for tag in tags:
-            if tag not in tags:
-                result_dict.update({str(tag): 1})
-            else:
-                count = result_dict.get(str(tag))
-                result_dict.update({str(tag): count + 1})
-            logging.info("'" + tag + "' count: " + result_dict.get(str(tag)) + '...')
+        for tags in tags_column:
+            for tag in tags:
+                if tag not in result_dict:
+                    result_dict.update({str(tag): 1})
+                else:
+                    count = result_dict.get(str(tag))
+                    result_dict.update({str(tag): count + 1})
+                logging.info("'" + tag + "' count: " + result_dict.get(str(tag)) + '...')
 
     with ThreadPoolExecutor(max_workers=cors_number) as executor:
         executor.map(executor_job)

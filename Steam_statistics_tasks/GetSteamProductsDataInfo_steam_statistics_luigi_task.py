@@ -440,10 +440,10 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     all_products_data_redy = concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
                                     unsuitable_region_products_df_redy['app_name'],
                                     products_not_for_unlogged_user_df_redy['app_name']],
-                                    ).drop_duplicates().values  # where 500 rows: bag?
+                                    ).drop_duplicates().values
     common_all_products_data_redy = interested_data.merge(DataFrame({'name': all_products_data_redy}), on=['name'])
     interested_products = interested_data[~interested_data.name.isin(
-        common_all_products_data_redy.name)].reset_index(drop=True)
+        common_all_products_data_redy.name)].drop_duplicates().reset_index(drop=True)
 
     for index, tqdm_percent in zip(range(len(interested_products)),
                                    tqdm(range(len(interested_products) + len(common_all_products_data_redy)),
@@ -459,7 +459,7 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
 
         # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
         # The error message cannot be corrected now.
-        if str(app_name) not in common_all_products_data_redy.values:
+        if str(app_name) not in common_all_products_data_redy['name'].values:
 
             sleep(time_wait)
             result_list: list[dict, dict, bool] = ask_app_in_steam_store(app_id, app_name)

@@ -5,11 +5,11 @@ from pandas import DataFrame
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_universal_parser_part, \
     my_beautiful_task_data_frame_merge, my_beautiful_task_data_landing
 """
-Contains code for luigi tasks: 'SteamAppInfoCSVJoiner', .
+Contains code for luigi tasks: 'SteamAppInfoCSVJoiner', 'SteamDLCInfoCSVJoiner'.
 """
 
 
-def steam_products_info_run(self):
+def steam_products_info_run(self, steam_info_path):
     """
     Function for Luigi.Task.run()
     Need "directory_for_csv_join and csv_file_for_result" variables in class.
@@ -21,7 +21,7 @@ def steam_products_info_run(self):
         all_apps_data_frame: DataFrame = my_beautiful_task_data_frame_merge(all_apps_data_frame, data)
     all_apps_data_frame: DataFrame = steam_apps_data_cleaning(all_apps_data_frame)
     day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
-    my_beautiful_task_data_landing(all_apps_data_frame, f"{self.steam_apps_info_path}/{day_for_landing}",
+    my_beautiful_task_data_landing(all_apps_data_frame, f"{steam_info_path}/{day_for_landing}",
                                    self.csv_file_for_result)
 
 

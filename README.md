@@ -28,6 +28,7 @@ pip install requests
 pip install beautifulsoup4
 pip install numpy
 pip install pyarrow
+pip install tqdm
 ```
 ## Launch:
 If Your OS has a bash shell the ETL pipeline can be started using the bash script:
@@ -83,7 +84,7 @@ in which case the cell will be empty.
 
 ****
 
-SteamAppInfoCSVJoiner
+[SteamAppInfoCSVJoiner, SteamDLCInfoCSVJoiner]
 * Collects the results of all successful instances of the past task and merges them into a new file containing statistics about applications.
 * Fills in the empty cells 'nan'.
 

@@ -1,21 +1,22 @@
 from datetime import datetime
 from os import path, makedirs, remove
-from random import randint
+from random import randint, uniform
 from time import sleep
 from ast import literal_eval
 import logging
 
-from pandas import DataFrame, concat
+from pandas import DataFrame, concat, merge
 from fake_useragent import UserAgent
 from bs4 import BeautifulSoup
 from requests import get, exceptions
+from tqdm import tqdm
 
 from .Logging_Config import logging_config
 from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
     my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
 
 """
-Contains code for luigi task 'GetSteamAppInfo'.
+Contains code for luigi task 'GetSteamProductsInfo'.
 """
 
 
@@ -23,7 +24,7 @@ def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:
     """
     Delete what is not a game at the stage of working with raw data.
     """
-    is_not_application_list = ['Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest'
+    is_not_application_list = ['Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest',
                                'test2', 'test3', 'Pieterw', 'Closed Beta', 'Open Beta', 'RPG Maker',
                                'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus']
     is_not_application_str, result_df = '|'.join(is_not_application_list), None
@@ -73,7 +74,7 @@ def scraping_steam_product_tags(app_tags: BeautifulSoup.find_all, result: dict) 
                 tag = tag.replace("	", "")
             app_tag_dict.get('tags').append(tag)
             if tag == 'Free to Play':
-                result.update({'price': ['0']})
+                result.update({'price': ['Free_to_Play']})
     if len(app_tag_dict.get('tags')) > 0:
         result.update({'tags': [str(app_tag_dict)]})
     else:
@@ -179,9 +180,9 @@ def connect_retry(maximum_iterations: int):
             while try_number < maximum_iterations:
                 try:
                     return function(*args, **kwargs)
-                except exceptions as connect_error:
+                except Exception as connect_error:
                     try_number += 1
-                    logging.error('Connect Retry... ' + str(try_number) + '\n' + connect_error)
+                    logging.error('Connect Retry... ' + str(try_number) + '\n' + str(connect_error) + '\n')
         return function_for_trying
     return function_decor
 
@@ -233,8 +234,8 @@ def is_an_fake_user_must_be_registered(must_be_logged: BeautifulSoup.find_all) -
         return False
 
 
-@connect_retry(3)
-def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict]:
+@connect_retry(10)
+def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict, bool]:
     """
     Application page scraping.
     """
@@ -423,10 +424,10 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     apps_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'Apps_info'}/{'_safe_dict_apps_data'}"
     dlc_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'DLC_info'}/{'_safe_dict_dlc_data'}"
     unsuitable_region_products_df_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}" \
-                                                        f"/{'Product_not_for_this_region_info'}/" \
-                                                        f"{'_safe_dict_product_data'}"
+                                                        f"/{'Products_not_for_this_region_info'}/" \
+                                                        f"{'_safe_dict_products_not_for_this_region_data'}"
     products_not_for_unlogged_user_df_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}" \
-                                                            f"/{'Products_not_for_unlogged_user_Info'}/" \
+                                                            f"/{'Products_not_for_unlogged_user_info'}/" \
                                                             f"{'_safe_dict_must_be_logged_to_scrapping_products'}"
 
     apps_df_redy = data_from_file_to_pd_dataframe(apps_safe_dict_data_path)
@@ -436,16 +437,30 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     products_not_for_unlogged_user_df_redy = \
         data_from_file_to_pd_dataframe(products_not_for_unlogged_user_df_safe_dict_data_path)
 
-    for index in range(len(interested_data)):  # Get app data to data frame
-        time_wait = randint(1, 3)
-        app_name = interested_data.iloc[index]['name']
-        app_id = interested_data.iloc[index]['appid']
-        # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
-        if str(app_name) not in concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
-                                        unsuitable_region_products_df_redy['app_name'],
-                                        products_not_for_unlogged_user_df_redy['app_name']]).drop_duplicates().values:
+    all_products_data_redy = concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
+                                    unsuitable_region_products_df_redy['app_name'],
+                                    products_not_for_unlogged_user_df_redy['app_name']],
+                                    ).drop_duplicates().values
+    common_all_products_data_redy = interested_data.merge(DataFrame({'name': all_products_data_redy}), on=['name'])
+    interested_products = interested_data[~interested_data.name.isin(
+        common_all_products_data_redy.name)].drop_duplicates().reset_index(drop=True)
+
+    for index, tqdm_percent in zip(range(len(interested_products)),
+                                   tqdm(range(len(interested_products) + len(common_all_products_data_redy)),
+                                        desc="Scraping Steam products",
+                                        unit=' SteamApp',
+                                        ncols=120,
+                                        # colour='green',
+                                        initial=len(common_all_products_data_redy))):
+        # time_wait = randint(1, 3)
+        time_wait = uniform(0.1, 0.3)
+        app_name = interested_products.iloc[index]['name']
+        app_id = interested_products.iloc[index]['appid']
+
+        if str(app_name) not in common_all_products_data_redy['name'].values:
+
             sleep(time_wait)
-            result_list: list[dict, dict] = ask_app_in_steam_store(app_id, app_name)
+            result_list: list[dict, dict, bool] = ask_app_in_steam_store(app_id, app_name)
             result, result_dlc, must_be_logged = result_list[0], result_list[1], result_list[2]
 
             if must_be_logged is False:
@@ -458,7 +473,7 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
                     dlc_df: DataFrame = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
                                                                          day_for_landing, dlc_df, app_name,
                                                                          '_safe_dict_dlc_data', 'DLC_info')
-                else:  # Product not available in this region!
+                else:  # Product not available in this region!  # BAG!
                     unsuitable_region_products_df: DataFrame = \
                         unsuitable_products(app_id, app_name, get_steam_app_info_path,
                                             day_for_landing, unsuitable_region_products_df,
@@ -547,6 +562,3 @@ def get_steam_products_data_info_steam_statistics_luigi_task_run(self):
                                            "_safe_dict_must_be_logged_to_scrapping_products"})
 
     make_flag(f"{self.get_steam_products_data_info_path}/{day_for_landing}")
-
-
-

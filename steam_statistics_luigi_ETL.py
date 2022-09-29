@@ -6,13 +6,15 @@ from requests import get
 from luigi import run, Task, LocalTarget, DateParameter, Parameter
 from pandas import DataFrame  # Do not delete! Conveyor use type between functions.
 
+from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing
 from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser, \
     steam_apps_validator
 from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import \
     get_steam_products_data_info_steam_statistics_luigi_task_run
 from Steam_statistics_tasks.SteamProductsInfoCSVJoiner_universal_steam_statistics_luigi_task import \
     steam_products_info_run
-from Steam_statistics_tasks.CreateAppsDiagram_steam_statistics_luigi_task import *
+from Steam_statistics_tasks.CreateDiagrams_steam_statistics_luigi_task import \
+    create_diagrams_steam_statistics_luigi_task_run
 
 """
 Steam statistics Luigi ETL.
@@ -24,7 +26,7 @@ class AllSteamProductsData(Task):
     Gets a list of products from the SteamAPI.
     """
     task_namespace = 'AllSteamProductsData'
-    priority = 200
+    priority = 300
     all_steam_products_data_path = Parameter(significant=True, description='Root path for gets all products from steam')
     date_path_part = DateParameter(default=date.today(), description='Date for root path')
 
@@ -90,7 +92,7 @@ class SteamAppInfoCSVJoiner(Task):
             path.join(f"{self.steam_apps_info_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
-        steam_products_info_run(self)
+        steam_products_info_run(self, self.steam_apps_info_path)
 
 
 class SteamDLCInfoCSVJoiner(Task):
@@ -99,7 +101,7 @@ class SteamDLCInfoCSVJoiner(Task):
     """
     task_namespace = 'SteamProductsInfo'
     priority = 100
-    steam_apps_info_path = Parameter(significant=True, description='Path to join all GetSteamProductsDataInfo .csv')
+    steam_dlc_info_path = Parameter(significant=True, description='Path to join all GetSteamProductsDataInfo .csv')
     date_path_part = DateParameter(default=date.today(), description='Date for root path')
 
     directory_for_csv_join = 'DLC_info'
@@ -110,10 +112,38 @@ class SteamDLCInfoCSVJoiner(Task):
 
     def output(self):
         return LocalTarget(
-            path.join(f"{self.steam_apps_info_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
+            path.join(f"{self.steam_dlc_info_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
 
     def run(self):
-        steam_products_info_run(self)
+        steam_products_info_run(self, self.steam_dlc_info_path)
+
+
+class CreateDiagramsSteamStatistics(Task):
+    """
+    Create diagrams for the report.
+    """
+    task_namespace = 'CreateDiagramsSteamStatistics'
+    priority = 200
+    create_diagrams_steam_statistics_path = \
+        Parameter(significant=True,
+                  description='Path to join all CreateAppsDiagramSteamStatistics .csv')
+    date_path_part = DateParameter(default=date.today(), description='Date for root path')
+    create_diagrams_steam_logfile_path = Parameter(default="create_diagrams_steam_statistics.log",
+                                                   description='Path for ".log" file')
+    create_diagrams_steam_loglevel = Parameter(default=30, description='Log Level')
+
+    def requires(self):
+        return {'SteamAppInfoCSVJoiner': SteamAppInfoCSVJoiner(),
+                'SteamDLCInfoCSVJoiner': SteamDLCInfoCSVJoiner()}
+
+    # def output(self):
+    #     return LocalTarget(
+    #         path.join(
+    #             f"{self.create_apps_diagram_steam_statistics_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"
+    #         ))
+
+    def run(self):
+        create_diagrams_steam_statistics_luigi_task_run(self)
 
 
 # if __name__ == "__main__":

@@ -77,10 +77,10 @@ def my_beautiful_task_data_frame_merge(data_from_files: DataFrame or None, extra
     Merges the given dataframes into one, filling NaN empty cells.
     """
     if data_from_files is None:
-        data_from_files = extract_data
+        data_from_files = extract_data.astype(str)
     else:
-        extract_data = extract_data.astype(object)
-        data_from_files = data_from_files.merge(extract_data, how='outer').reset_index(drop=True)
+        extract_data = extract_data.astype(str)
+        data_from_files = data_from_files.merge(extract_data, how='outer').reset_index(drop=True).astype(str)
     return data_from_files
 
 

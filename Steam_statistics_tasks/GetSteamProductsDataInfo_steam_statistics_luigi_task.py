@@ -234,7 +234,7 @@ def is_an_fake_user_must_be_registered(must_be_logged: BeautifulSoup.find_all) -
         return False
 
 
-@connect_retry(100)
+@connect_retry(10)
 def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict, bool]:
     """
     Application page scraping.
@@ -454,11 +454,9 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
                                         initial=len(common_all_products_data_redy))):
         # time_wait = randint(1, 3)
         time_wait = uniform(0.1, 0.3)
-        app_name = interested_data.iloc[index]['name']
-        app_id = interested_data.iloc[index]['appid']
+        app_name = interested_products.iloc[index]['name']
+        app_id = interested_products.iloc[index]['appid']
 
-        # 1 rows below have conflict with Numpy and Pandas. Might cause errors in the future.
-        # The error message cannot be corrected now.
         if str(app_name) not in common_all_products_data_redy['name'].values:
 
             sleep(time_wait)

@@ -73,9 +73,17 @@ def make_diagram(path_to_save_diagram: str, steam_products_tags_list: list[str],
                    backend=None)
 
 
-def create_apps_diagram_steam_statistics_luigi_task_run(self, day_for_landing: str):
+def create_diagrams_steam_statistics_luigi_task_run(self):
     """
     Function for Luigi.Task.run()
     """
-    logging_config(self.get_steam_products_data_info_logfile_path, int(self.get_steam_products_data_info_loglevel))
-    make_flag(f"{self.get_steam_products_data_info_path}/{day_for_landing}")
+    logging_config(self.create_diagrams_steam_logfile_path, int(self.create_diagrams_steam_loglevel))
+
+    interested_aps: dict[DataFrame] = \
+        my_beautiful_task_universal_parser_part(self.input()['SteamAppInfoCSVJoiner'], ".csv")
+    interested_dlc: dict[DataFrame] = \
+        my_beautiful_task_universal_parser_part(self.input()['SteamDLCInfoCSVJoiner'], ".csv")
+
+    print(interested_aps)
+    # day_for_landing=
+    # make_flag(f"{self.get_steam_products_data_info_path}/{day_for_landing}")

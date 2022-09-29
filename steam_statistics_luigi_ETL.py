@@ -4,7 +4,7 @@ import json
 
 from requests import get
 from luigi import run, Task, LocalTarget, DateParameter, Parameter
-from pandas import DataFrame  # Do not delete! Conveyor use type between functions.
+from pandas import DataFrame
 
 from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing
 from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import steam_aps_from_web_api_parser, \
@@ -136,11 +136,11 @@ class CreateDiagramsSteamStatistics(Task):
         return {'SteamAppInfoCSVJoiner': SteamAppInfoCSVJoiner(),
                 'SteamDLCInfoCSVJoiner': SteamDLCInfoCSVJoiner()}
 
-    # def output(self):
-    #     return LocalTarget(
-    #         path.join(
-    #             f"{self.create_apps_diagram_steam_statistics_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"
-    #         ))
+    def output(self):
+        return LocalTarget(
+            path.join(
+                f"{self.create_diagrams_steam_logfile_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"
+            ))
 
     def run(self):
         create_diagrams_steam_statistics_luigi_task_run(self)

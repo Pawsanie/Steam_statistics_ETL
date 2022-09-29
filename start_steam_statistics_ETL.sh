@@ -24,11 +24,10 @@ steam_DLC_info_path=$HOME"/Steam_ETL/Data_Warehouse/Steam_DLC_info"
 # Date:
 date_path_part=$(date +%F)  # Today
 #date_path_part=$(date +%F --date "YYYY-MM-DD")  # Exemple
-#date_path_part=$(date +%F --date "2022-09-24")
 
 
 # Start:
-python3 -B -m steam_statistics_luigi_ETL GetSteamProductsDataInfo.GetSteamProductsDataInfo \
+python3 -B -m steam_statistics_luigi_ETL SteamDLCInfoCSVJoiner.SteamDLCInfoCSVJoiner \
 \
 --AllSteamProductsData.AllSteamProductsData-all-steam-products-data-path $all_steam_products_data_path \
 --AllSteamProductsData.AllSteamProductsData-date-path-part $date_path_part \

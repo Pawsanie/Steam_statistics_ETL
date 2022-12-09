@@ -53,3 +53,7 @@ def steam_apps_data_cleaning(all_apps_data_frame: DataFrame) -> DataFrame:
     all_apps_data_frame = all_apps_data_frame[~all_apps_data_frame['tags'].str.contains(
         apps_which_are_not_game_str, regex=True)].reset_index(drop=True)
     return all_apps_data_frame
+
+
+class AllSteamProductsData():
+    ...

@@ -2,6 +2,8 @@
 
 # AllSteamProductsData args:
 all_steam_products_data_path=$HOME"/Steam_ETL/Data_Lake/All_steam_products_data"
+all_steam_products_data_file_mask='json'
+all_steam_products_data_file_name='AllSteamProductsData'
 
 # GetSteamProductsDataInfo args:
 get_steam_products_data_info_path=$HOME"/Steam_ETL/Data_Lake/Info_about_steam_products"
@@ -30,26 +32,29 @@ date_path_part=$(date +%F)  # Today
 
 
 # Start:
-python3 -B -m steam_statistics_luigi_ETL CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics \
+python3 -B -m steam_statistics_luigi_ETL AllSteamProductsData.AllSteamProductsDataTask \
 \
---AllSteamProductsData.AllSteamProductsData-all-steam-products-data-path $all_steam_products_data_path \
---AllSteamProductsData.AllSteamProductsData-date-path-part $date_path_part \
-\
---GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-path $get_steam_products_data_info_path \
---GetSteamProductsDataInfo.GetSteamProductsDataInfo-date-path-part $date_path_part \
---GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-logfile-path $get_steam_products_data_info_logfile_path \
---GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-loglevel $get_steam_products_data_info_loglevel \
-\
---SteamProductsInfo.SteamAppInfoCSVJoiner-steam-apps-info-path $steam_apps_info_path \
---SteamProductsInfo.SteamAppInfoCSVJoiner-date-path-part $date_path_part \
-\
---SteamProductsInfo.SteamDLCInfoCSVJoiner-steam-dlc-info-path $steam_DLC_info_path \
---SteamProductsInfo.SteamDLCInfoCSVJoiner-date-path-part $date_path_part \
-\
---CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-create-diagrams-steam-statistics-path $create_diagrams_steam_statistics_path \
---CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-date-path-part $date_path_part \
---CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-create-diagrams-steam-logfile-path $get_steam_products_data_info_logfile_path \
---CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-create-diagrams-steam-loglevel $get_steam_products_data_info_loglevel \
-\
+--AllSteamProductsData.AllSteamProductsDataTask-landing-path-part $all_steam_products_data_path \
+--AllSteamProductsData.AllSteamProductsDataTask-date-path-part $date_path_part \
+--AllSteamProductsData.AllSteamProductsDataTask-file-mask $all_steam_products_data_file_mask \
+--AllSteamProductsData.AllSteamProductsDataTask-file-name $all_steam_products_data_file_name \
 \
 --local-scheduler
+#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-path $get_steam_products_data_info_path \
+#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-date-path-part $date_path_part \
+#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-logfile-path $get_steam_products_data_info_logfile_path \
+#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-loglevel $get_steam_products_data_info_loglevel \
+#\
+#--SteamProductsInfo.SteamAppInfoCSVJoiner-steam-apps-info-path $steam_apps_info_path \
+#--SteamProductsInfo.SteamAppInfoCSVJoiner-date-path-part $date_path_part \
+#\
+#--SteamProductsInfo.SteamDLCInfoCSVJoiner-steam-dlc-info-path $steam_DLC_info_path \
+#--SteamProductsInfo.SteamDLCInfoCSVJoiner-date-path-part $date_path_part \
+#\
+#--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-create-diagrams-steam-statistics-path $create_diagrams_steam_statistics_path \
+#--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-date-path-part $date_path_part \
+#--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-create-diagrams-steam-logfile-path $get_steam_products_data_info_logfile_path \
+#--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-create-diagrams-steam-loglevel $get_steam_products_data_info_loglevel \
+#\
+#\
+#--local-scheduler

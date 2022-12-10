@@ -1,264 +1,20 @@
-from datetime import datetime
+from datetime import datetime, date
 from os import path, makedirs, remove
-from random import randint, uniform
-from time import sleep
-from ast import literal_eval
 import logging
+from random import randint, uniform
 
-from pandas import DataFrame, concat, merge
-from fake_useragent import UserAgent
-from bs4 import BeautifulSoup
-from requests import get, exceptions
-from tqdm import tqdm
+from pandas import DataFrame
+from luigi import Parameter, DateParameter
+
+
 
 from .Logging_Config import logging_config
-from .Universal_steam_statistics_luigi_task import my_beautiful_task_data_landing, \
-    my_beautiful_task_data_frame_merge, my_beautiful_task_universal_parser_part
+from .Universal_steam_statistics_luigi_task import UniversalLuigiTask
+from .AllSteamProductsData_steam_statistics_luigi_task import AllSteamProductsDataTask
 
 """
 Contains code for luigi task 'GetSteamProductsInfo'.
 """
-
-
-def steam_apps_parser(interested_data: dict[DataFrame]) -> DataFrame:
-    """
-    Delete what is not a game at the stage of working with raw data.
-    """
-    is_not_application_list = ['Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest',
-                               'test2', 'test3', 'Pieterw', 'Closed Beta', 'Open Beta', 'RPG Maker',
-                               'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus']
-    is_not_application_str, result_df = '|'.join(is_not_application_list), None
-    for value in interested_data:
-        interested_data = interested_data.get(value)
-        interested_data = interested_data[~interested_data['name'].str.contains(
-            is_not_application_str, regex=True)]
-        null_filter = interested_data['name'] != ""
-        result_df = my_beautiful_task_data_frame_merge(result_df, interested_data[null_filter])
-    return result_df.reset_index(drop=True)
-
-
-def scraping_steam_product_rating(app_ratings: BeautifulSoup.find_all, result: dict) -> dict[str]:
-    """
-    Scraping steam product rating.
-    """
-    for rating in app_ratings:
-        rating = rating.text
-        rating = rating.replace("\t", "").replace("\n", "").replace("\r", "").replace("- ", "")
-
-        if 'user reviews in the last 30 days' in rating:
-            rating = rating.replace(" user reviews in the last 30 days are positive.", "") \
-                            .replace("of the ", "") \
-                            .split(' ')
-            result.update({"rating_30d_percent": [rating[0]],
-                           "rating_30d_count": [rating[1]]})
-
-        if 'user reviews for this game are positive' in rating:
-            rating = rating.replace(" user reviews for this game are positive.", "") \
-                            .replace("of the ", "") \
-                            .replace(",", "") \
-                            .split(' ')
-            result.update({"rating_all_time_percent": [rating[0]],
-                           "rating_all_time_count": [rating[1]]})
-    return result
-
-
-def scraping_steam_product_tags(app_tags: BeautifulSoup.find_all, result: dict) -> dict[str]:
-    """
-    Scraping steam product tags.
-    """
-    app_tag_dict = {'tags': []}
-    for tags in app_tags:
-        for tag in tags:
-            tag = tag.replace("\n", "").replace("\r", "")
-            while "	" in tag:  # This is not "space"!
-                tag = tag.replace("	", "")
-            app_tag_dict.get('tags').append(tag)
-            if tag == 'Free to Play':
-                result.update({'price': ['Free_to_Play']})
-    if len(app_tag_dict.get('tags')) > 0:
-        result.update({'tags': [str(app_tag_dict)]})
-    else:
-        if len(result) > 0:
-            result.update({'tags': ''})
-    return result
-
-
-def scraping_steam_product_maker(app_content_makers: BeautifulSoup.find_all, result: dict) -> dict[str]:
-    """
-    Scraping steam product maker.
-    """
-    for makers in app_content_makers:
-        for maker in makers:
-            maker = str(maker)
-            while "	" in maker:
-                maker = maker.replace("	", "")
-            if 'developer' in maker:
-                maker = maker.split('>')
-                maker = maker[1].replace('</a', '')
-                result.update({'developer': [maker]})
-            if 'publisher' in maker:
-                maker = maker.split('>')
-                maker = maker[1].replace('</a', '')
-                result.update({'publisher': [maker]})
-    return result
-
-
-def scraping_steam_product_release_date(app_release_date: BeautifulSoup.find_all, result: dict) -> dict[str]:
-    """
-    Scraping product steam release date.
-    """
-    for date in app_release_date:
-        try:
-            date = str(date)
-            date = date.replace('<div class="date">', '')\
-                       .replace('</div>', '')\
-                       .replace(',', '')
-            date = datetime.strptime(date, '%d %b %Y')  # b - month by a word
-            date = str(date).split(' ')
-            date = date[0]
-            result.update({'steam_release_date': [date]})
-        except ValueError:
-            result.update({'steam_release_date': ['in_the_pipeline']})
-    return result
-
-
-def scraping_steam_product_price_with_discount(app_release_date: BeautifulSoup.find_all, result: dict) -> dict[str]:
-    """
-    Scraping steam product steam price.
-    For prices with discount.
-    """
-    for prices in app_release_date:
-        for price in prices:
-            price = str(price)
-            if '%' not in price:
-                price = price.split('">')
-                price = price[2].replace('</div><div class="discount_final_price', '')
-                result.update({'price': [price]})
-    return result
-
-
-def scraping_steam_product_price(app_release_date: BeautifulSoup.find_all, result: dict) -> dict[str]:
-    """
-    Scraping steam product steam price.
-    For normal prices.
-    """
-    for price in app_release_date:
-        price = str(price)
-        while "	" in price:  # This is not "space"!
-            price = price.replace("	", "")
-        price = price.split('div')
-        price = price[1].replace("</", "")
-        if 'data-price' in price:
-            price = price.split('>')
-            price = price[1].replace('\r\n', '')
-            result.update({'price': [price]})
-    return result
-
-
-def scraping_is_available_in_steam(notice: BeautifulSoup.find_all, result: dict) -> dict[str]:
-    """
-    Check that the application or DLC is available for purchase in Steam.
-    """
-    no_available_in_steam = 'is no longer available for sale on Steam.'
-    available_notice = str(notice).replace('</div>', '')
-    while "	" in available_notice:  # This is not "space"!
-        available_notice = available_notice.replace("	", "")
-    available_notice = available_notice.split('\n')
-    for data in available_notice:
-        if no_available_in_steam in data:
-            result.update({'price': ['not_available_in_steam_now']})
-    return result
-
-
-def connect_retry(maximum_iterations: int):
-    """
-    Decorator responsible for retrying connections in cases of errors.
-    """
-    def function_decor(function):
-        def function_for_trying(*args, **kwargs):
-            try_number = 0
-            while try_number < maximum_iterations:
-                try:
-                    return function(*args, **kwargs)
-                except Exception as connect_error:
-                    try_number += 1
-                    logging.error('Connect Retry... ' + str(try_number) + '\n' + str(connect_error) + '\n')
-        return function_for_trying
-    return function_decor
-
-
-def scraping_steam_product(app_id: str, app_name: str, soup: 'BeautifulSoup["lxml"]', result_dict: dict) -> dict[str]:
-    """
-    Scraping conveyor.
-    """
-    # Steam product rating.
-    app_ratings = soup.find_all('span', class_='nonresponsive_hidden responsive_reviewdesc')
-    scraping_steam_product_rating(app_ratings, result_dict)
-    # Steam product maker.
-    app_content_makers = soup.find_all('div', class_='grid_content')
-    scraping_steam_product_maker(app_content_makers, result_dict)
-    # Product steam release date.
-    app_release_date = soup.find_all('div', class_='date')
-    scraping_steam_product_release_date(app_release_date, result_dict)
-    # If price have discount.
-    app_release_date = soup.find_all('div', class_='discount_block game_purchase_discount')
-    scraping_steam_product_price_with_discount(app_release_date, result_dict)
-    # If price have no discount.
-    app_release_date = soup.find_all('div', class_='game_purchase_price price')
-    scraping_steam_product_price(app_release_date, result_dict)
-    # Steam product tags.
-    app_tags = soup.find_all('a', class_='app_tag')
-    scraping_steam_product_tags(app_tags, result_dict)
-    # Is steam product available?
-    notice = soup.find_all('div', class_='notice_box_content')
-    scraping_is_available_in_steam(notice, result_dict)
-    if len(result_dict) != 0:
-        result_dict.update({'app_id': [app_id]})
-        result_dict.update({'app_name': [app_name]})
-        date_today = str(datetime.today()).split(' ')
-        result_dict.update({'scan_date': [date_today[0]]})
-    return result_dict
-
-
-def is_an_fake_user_must_be_registered(must_be_logged: BeautifulSoup.find_all) -> bool:
-    """
-    Check is fake user must be login to scrap steam product page.
-    """
-    if len(must_be_logged) > 0:
-        for element in must_be_logged:
-            if 'You must login to see this content' in str(element):
-                return True
-            else:
-                return False
-    else:
-        return False
-
-
-@connect_retry(10)
-def ask_app_in_steam_store(app_id: str, app_name: str) -> list[dict, dict, bool]:
-    """
-    Application page scraping.
-    """
-    logging.info("Try to scraping: '" + app_name + "'")
-    # fake_user = UserAgent(cache=False, verify_ssl=False).random  # UserAgent bag spam in logs. Wait new version.
-    fake_user = UserAgent().random
-    scrap_user = {"User-Agent": fake_user, "Cache-Control": "no-cache", "Pragma": "no-cache"}
-    app_page_url = f"{'https://store.steampowered.com/app'}/{app_id}/{app_name}"
-    app_page = get(app_page_url, headers=scrap_user)
-    soup = BeautifulSoup(app_page.text, "lxml")
-    result, result_dlc = {}, {}
-
-    must_be_logged = is_an_fake_user_must_be_registered(must_be_logged=soup.find_all('span', class_="error"))
-    if must_be_logged is False:
-        is_it_dls, interest_heads = soup.find_all('h1'), []
-        for head in is_it_dls:
-            interest_heads.append(str(head).replace('<h1>', '').replace('</h1>', ''))
-        if 'Downloadable Content' not in interest_heads:  # Drope DLC
-            scraping_steam_product(app_id, app_name, soup, result)
-        else:  # Save DLC
-            scraping_steam_product(app_id, app_name, soup, result_dlc)
-
-    return [result, result_dlc, must_be_logged]
 
 
 def safe_dict_data(path_to_file: str, date: str, df: DataFrame, file_name: str, ds_name: str):
@@ -275,32 +31,7 @@ def safe_dict_data(path_to_file: str, date: str, df: DataFrame, file_name: str, 
         safe_file.write(df)
 
 
-def data_from_file_to_pd_dataframe(safe_dict_data_path: str) -> DataFrame:
-    """
-    Reads the local cache.
-    """
-    apps_df_redy = None
-    if path.isfile(safe_dict_data_path):
-        with open(safe_dict_data_path, 'r') as safe_dict_data_file:
-            rows = safe_dict_data_file.readlines()
-        rows_len = len(rows) - 1
-        if rows_len > 0:
-            rows.pop(rows_len)
-            with open(safe_dict_data_path, 'w') as safe_dict_data_file:
-                for row in rows:
-                    safe_dict_data_file.write(row)
-            logging.info('Start merge local_cash...')
-            with open(safe_dict_data_path, 'r') as safe_dict_data_file:
-                data = safe_dict_data_file.read()
-                apps_df_redy = DataFrame.from_dict(literal_eval(data.replace('\n', ',')))
-                apps_df_redy.reset_index(drop=True)
-                logging.info(str(apps_df_redy) + '\nLocal_cash successfully merged...')
-        else:
-            remove(safe_dict_data_path)
-            apps_df_redy = DataFrame({'app_name': []})
-    else:
-        apps_df_redy = DataFrame({'app_name': []})
-    return apps_df_redy
+
 
 
 def make_flag(partition_path: str):
@@ -421,45 +152,8 @@ def parsing_steam_data(interested_data: DataFrame, get_steam_app_info_path: str,
     merge it with parsed data from scraping steam application pages.
     Responsible for timeouts of get requests to application pages.
     """
-    apps_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'Apps_info'}/{'_safe_dict_apps_data'}"
-    dlc_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}/{'DLC_info'}/{'_safe_dict_dlc_data'}"
-    unsuitable_region_products_df_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}" \
-                                                        f"/{'Products_not_for_this_region_info'}/" \
-                                                        f"{'_safe_dict_products_not_for_this_region_data'}"
-    products_not_for_unlogged_user_df_safe_dict_data_path = f"{get_steam_app_info_path}/{day_for_landing}" \
-                                                            f"/{'Products_not_for_unlogged_user_info'}/" \
-                                                            f"{'_safe_dict_must_be_logged_to_scrapping_products'}"
 
-    apps_df_redy = data_from_file_to_pd_dataframe(apps_safe_dict_data_path)
-    dlc_df_redy = data_from_file_to_pd_dataframe(dlc_safe_dict_data_path)
-    unsuitable_region_products_df_redy = \
-        data_from_file_to_pd_dataframe(unsuitable_region_products_df_safe_dict_data_path)
-    products_not_for_unlogged_user_df_redy = \
-        data_from_file_to_pd_dataframe(products_not_for_unlogged_user_df_safe_dict_data_path)
 
-    all_products_data_redy = concat([apps_df_redy['app_name'], dlc_df_redy['app_name'],
-                                    unsuitable_region_products_df_redy['app_name'],
-                                    products_not_for_unlogged_user_df_redy['app_name']],
-                                    ).drop_duplicates().values
-    common_all_products_data_redy = interested_data.merge(DataFrame({'name': all_products_data_redy}), on=['name'])
-    interested_products = interested_data[~interested_data.name.isin(
-        common_all_products_data_redy.name)].drop_duplicates().reset_index(drop=True)
-
-    for index, tqdm_percent in zip(range(len(interested_products)),
-                                   tqdm(range(len(interested_products) + len(common_all_products_data_redy)),
-                                        desc="Scraping Steam products",
-                                        unit=' SteamApp',
-                                        ncols=120,
-                                        # colour='green',
-                                        initial=len(common_all_products_data_redy))):
-        # time_wait = randint(1, 3)
-        time_wait = uniform(0.1, 0.3)
-        app_name = interested_products.iloc[index]['name']
-        app_id = interested_products.iloc[index]['appid']
-
-        if str(app_name) not in common_all_products_data_redy['name'].values:
-
-            sleep(time_wait)
             result_list: list[dict, dict, bool] = ask_app_in_steam_store(app_id, app_name)
             result, result_dlc, must_be_logged = result_list[0], result_list[1], result_list[2]
 
@@ -528,12 +222,7 @@ def get_steam_products_data_info_steam_statistics_luigi_task_run(self):
     """
     Function for Luigi.Task.run()
     """
-    logging_config(self.get_steam_products_data_info_logfile_path, int(self.get_steam_products_data_info_loglevel))
-    result_successor = self.input()['AllSteamProductsData']
-    interested_data: dict[DataFrame] = my_beautiful_task_universal_parser_part(result_successor, ".json")
-    interested_data: DataFrame = steam_apps_parser(interested_data)
-    apps_df, dlc_df, unsuitable_region_products_df, products_not_for_unlogged_user_df = None, None, None, None
-    day_for_landing = f"{self.date_path_part:%Y/%m/%d}"
+
 
     apps_and_dlc_df_list: list[DataFrame] = parsing_steam_data(interested_data,
                                                                self.get_steam_products_data_info_path,
@@ -562,3 +251,80 @@ def get_steam_products_data_info_steam_statistics_luigi_task_run(self):
                                            "_safe_dict_must_be_logged_to_scrapping_products"})
 
     make_flag(f"{self.get_steam_products_data_info_path}/{day_for_landing}")
+
+
+class GetSteamProductsDataInfoTask(UniversalLuigiTask):
+    """
+    Parses and scrapes the list of products available on Steam.
+    """
+    # Luigi parameters:
+    landing_path_part: str = Parameter(
+        significant=True,
+        description='Root path for landing task result.')
+    file_mask: str = Parameter(
+        significant=True,
+        description='File format for landing.')
+    ancestor_file_mask: str = Parameter(
+        significant=True,
+        description='File format for extract.')
+    file_name: str = Parameter(
+        significant=True,
+        description='File name for landing.')
+    date_path_part: date = DateParameter(
+        default=date.today(),
+        description='Date for root path')
+    # Luigi loging parameters:
+    get_steam_products_data_info_logfile_path: str = Parameter(
+        default="steam_products_data_info.log",
+        description='Path to ".log" file')
+    get_steam_products_data_info_loglevel: int = Parameter(
+        default=30,
+        description='Log Level')
+    # Task settings:
+    task_namespace: str = 'GetSteamProductsDataInfo'
+    priority: int = 5000
+    # Collections base values:
+    is_not_application_list = [
+        'Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest',
+        'test2', 'test3', 'Pieterw', 'Closed Beta', 'Open Beta', 'RPG Maker',
+        'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus'
+    ]
+    # Wait settings:
+    # time_wait = randint(1, 3)
+    time_wait = uniform(0.1, 0.3)
+
+    def requires(self):
+        """
+        Standard Luigi.Task.requires method.
+        """
+        return {'AllSteamProductsData': AllSteamProductsDataTask()}
+
+    def steam_apps_parser(self) -> DataFrame:
+        """
+        Delete what is not a game at the stage of working with raw data.
+        """
+        is_not_application_str: str = '|'.join(self.is_not_application_list)
+        result_df: None = None
+        for value in self.interested_data:
+            interested_data = self.interested_data.get(value)
+            interested_data = interested_data[
+                ~interested_data['name']
+                .str.contains(is_not_application_str, regex=True)
+            ]
+            null_filter = interested_data['name'] != ""
+            result_df: DataFrame = self.data_frames_merge(
+                data_from_files=result_df,
+                extracted_data=interested_data[null_filter])
+        return result_df.reset_index(drop=True)
+
+    def run(self):
+        # Path settings:
+        self.date_path_part: str = self.get_date_path_part()
+        self.output_path: str = path.join(*[str(self.landing_path_part), self.date_path_part])
+        # Result Successor:
+        self.result_successor = self.input()['AllSteamProductsData']
+        # Logging settings:
+        logging_config(self.get_steam_products_data_info_logfile_path, int(self.get_steam_products_data_info_loglevel))
+        # Run:
+        self.interested_data: dict[str, DataFrame] = self.get_extract_data(requires=self.result_successor)
+        self.interested_data: DataFrame = self.steam_apps_parser()

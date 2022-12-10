@@ -1,54 +1,29 @@
-from os import path
-from datetime import date
-
-
 from luigi import run, Task, LocalTarget, DateParameter, Parameter
 
-from Steam_statistics_tasks.Universal_steam_statistics_luigi_task import UniversalLuigiTask
-from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import AllSteamProductsData
-# from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import \
-#     get_steam_products_data_info_steam_statistics_luigi_task_run
+from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import AllSteamProductsDataTask
+from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import GetSteamProductsDataInfoTask
 # from Steam_statistics_tasks.SteamProductsInfoCSVJoiner_universal_steam_statistics_luigi_task import \
 #     steam_products_info_run
 # from Steam_statistics_tasks.CreateDiagrams_steam_statistics_luigi_task import \
 #     create_diagrams_steam_statistics_luigi_task_run
-
 """
 Steam statistics Luigi ETL.
 """
 
 
-class AllSteamProductsDataTask(AllSteamProductsData):
+class AllSteamProductsData(AllSteamProductsDataTask):
     """
     Gets a list of products from the SteamAPI.
     """
 
 
+class GetSteamProductsDataInfo(GetSteamProductsDataInfoTask):
+    """
+    Parses and scrapes the list of products available on Steam.
+    """
+    def requires(self):
+        return {'AllSteamProductsData': AllSteamProductsData()}
 
-
-# class GetSteamProductsDataInfo(Task):
-#     """
-#     Parses and scrapes the list of products available on Steam.
-#     """
-#     task_namespace = 'GetSteamProductsDataInfo'
-#     priority = 5000
-#     get_steam_products_data_info_path = Parameter(significant=True,
-#                                                   description='Root path for gets info about steam products')
-#     date_path_part = DateParameter(default=date.today(), description='Date for root path')
-#     get_steam_products_data_info_logfile_path = Parameter(default="steam_products_data_info.log",
-#                                                           description='Path for ".log" file')
-#     get_steam_products_data_info_loglevel = Parameter(default=30, description='Log Level')
-#
-#     def requires(self):
-#         return {'AllSteamProductsData': AllSteamProductsData()}
-#
-#     def output(self):
-#         return LocalTarget(
-#             path.join(
-#                 f"{self.get_steam_products_data_info_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"))
-#
-#     def run(self):
-#         get_steam_products_data_info_steam_statistics_luigi_task_run(self)
 #
 #
 # class SteamAppInfoCSVJoiner(Task):

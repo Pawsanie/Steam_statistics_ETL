@@ -3,12 +3,16 @@
 # AllSteamProductsData args:
 all_steam_products_data_path=$HOME"/Steam_ETL/Data_Lake/All_steam_products_data"
 all_steam_products_data_file_mask='json'
+all_steam_products_data_ancestor_file_mask=all_steam_products_data_file_mask
 all_steam_products_data_file_name='AllSteamProductsData'
 
 # GetSteamProductsDataInfo args:
 get_steam_products_data_info_path=$HOME"/Steam_ETL/Data_Lake/Info_about_steam_products"
 get_steam_products_data_info_logfile_path=$HOME"/Steam_ETL/Logs/steam_products_data_info.log"
-get_steam_products_data_info_loglevel=30
+get_steam_products_data_info_file_mask='csv'
+get_steam_products_data_info_ancestor_file_mask='json'
+get_steam_products_data_info_file_name='AllSteamProductsData'
+get_steam_products_data_info_info_loglevel=30
 #log_level:
 # CRITICAL - 50
 # ERROR - 40
@@ -37,13 +41,18 @@ python3 -B -m steam_statistics_luigi_ETL AllSteamProductsData.AllSteamProductsDa
 --AllSteamProductsData.AllSteamProductsDataTask-landing-path-part $all_steam_products_data_path \
 --AllSteamProductsData.AllSteamProductsDataTask-date-path-part $date_path_part \
 --AllSteamProductsData.AllSteamProductsDataTask-file-mask $all_steam_products_data_file_mask \
+--AllSteamProductsData.AllSteamProductsDataTask-ancestor-file-mask $all_steam_products_data_ancestor_file_mask \
 --AllSteamProductsData.AllSteamProductsDataTask-file-name $all_steam_products_data_file_name \
 \
+\
+--GetSteamProductsDataInfo.GetSteamProductsDataInfoTask-get-steam-products-data-info-path $get_steam_products_data_info_path \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfoTask-date-path-part $date_path_part \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfoTask-get-steam-products-data-info-logfile-path $get_steam_products_data_info_logfile_path \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfoTask-get-steam-products-data-info-loglevel $get_steam_products_data_info_loglevel \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfoTask-file-mask $get_steam_products_data_info_file_mask \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfoTask-ancestor-file-mask $get_steam_products_data_info_ancestor_file_mask \
+--GetSteamProductsDataInfo.GetSteamProductsDataInfoTask-file-name $get_steam_products_data_info_file_name \
 --local-scheduler
-#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-path $get_steam_products_data_info_path \
-#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-date-path-part $date_path_part \
-#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-logfile-path $get_steam_products_data_info_logfile_path \
-#--GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-loglevel $get_steam_products_data_info_loglevel \
 #\
 #--SteamProductsInfo.SteamAppInfoCSVJoiner-steam-apps-info-path $steam_apps_info_path \
 #--SteamProductsInfo.SteamAppInfoCSVJoiner-date-path-part $date_path_part \

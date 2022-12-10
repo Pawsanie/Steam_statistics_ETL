@@ -12,22 +12,25 @@ Contains code for luigi task 'AllSteamAppsData'.
 """
 
 
-class AllSteamProductsData(UniversalLuigiTask):
+class AllSteamProductsDataTask(UniversalLuigiTask):
     """
     Gets a list of products from the SteamAPI.
     """
     # Luigi parameters:
-    landing_path_part = Parameter(significant=True, description='Root path for landing task result.')
-    file_mask = Parameter(significant=True, description='File format for landing.')
-    file_name = Parameter(significant=True, description='File name for landing.')
-    date_path_part = DateParameter(default=date.today(), description='Date for root path')
+    landing_path_part: str = Parameter(significant=True, description='Root path for landing task result.')
+    file_mask: str = Parameter(significant=True, description='File format for landing.')
+    ancestor_file_mask: str = Parameter(significant=True, description='File format for extract.')
+    file_name: str = Parameter(significant=True, description='File name for landing.')
+    date_path_part: date = DateParameter(default=date.today(), description='Date for root path')
     # Task settings:
-    task_namespace = 'AllSteamProductsData'
+    task_namespace: str = 'AllSteamProductsData'
     priority = 300
 
     def run(self):
-        self.date_path_part: str = f"{self.date_path_part:%Y/%m/%d}"
+        # Path settings:
+        self.date_path_part: str = self.get_date_path_part()
         self.output_path: str = path.join(*[str(self.landing_path_part), self.date_path_part])
+        # Run:
         if path.exists(path.join(*[
             str(self.landing_path_part),
             self.date_path_part,

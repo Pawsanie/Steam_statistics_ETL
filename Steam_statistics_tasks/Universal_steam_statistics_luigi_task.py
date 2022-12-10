@@ -138,37 +138,50 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
     Universal super class for Steam Statistics ETL Task.
     """
     # Luigi parameters:
-    landing_path_part = Parameter(significant=True, description='Root path for landing task result.')
-    file_mask = Parameter(significant=True, description='File format for landing.')
-    file_name = Parameter(significant=True, description='File name for landing.')
-    date_path_part = DateParameter(default=date.today(), description='Date for root path')
+    landing_path_part: str = Parameter(significant=True, description='Root path for landing task result.')
+    file_mask: str = Parameter(significant=True, description='File format for landing.')
+    ancestor_file_mask: str = Parameter(significant=True, description='File format for extract.')
+    file_name: str = Parameter(significant=True, description='File name for landing.')
+    date_path_part: date = DateParameter(default=date.today(), description='Date for root path')
     # Task settings:
     success_flag: str = '_Validate_Success'
-    output_path: str = ''
+    output_path: str = ''  # Must be rewrite in "run()" method.
 
-    def get_extract_data(self):
+    def get_extract_data(self, requires) -> dict[str, DataFrame]:
         """
         Retrieves data from the corresponding iteration of the previous Luigi task.
         """
         extract_data = ExtractDataFromWarHouse(
-            result_successor=self.requires(),
-            file_mask=str(self.file_mask),
+            result_successor=requires,
+            file_mask=str(self.ancestor_file_mask),
             success_flag=self.success_flag)
         return extract_data.task_universal_parser_part()
 
-    def output(self):
+    def get_date_path_part(self) -> str:
+        """
+        Make string with YYYY-mm-dd date for output path.
+        As example YYYY/mm/dd.
+        """
+        return path.join(*[str(self.date_path_part.year), str(self.date_path_part.month), str(self.date_path_part.day)])
+
+    def output(self) -> LocalTarget:
+        """
+        Standard Luigi.Task.output method.
+        """
         return LocalTarget(path.join(*[self.output_path, self.success_flag]))
 
-    def task_data_landing(self, *, data_to_landing: dict or DataFrame):
+    def task_data_landing(self, *, data_to_landing: dict or DataFrame, file_name: str or None = None):
         """
         Landing parsed data as json, csv, or parquet.
         """
+        if file_name is None:
+            file_name: str = self.file_name
         data_type_need: str = f"{self.file_mask}"
         data_from_files: DataFrame = DataFrame(data_to_landing)
         if not path.exists(self.output_path):
             makedirs(self.output_path)
         flag_path: str = path.join(*[self.output_path, self.success_flag])
-        output_path: str = path.join(*[self.output_path, f"{self.file_name}.{self.file_mask}"])
+        output_path: str = path.join(*[self.output_path, f"{file_name}.{self.file_mask}"])
         if data_type_need == 'json':
             data_from_files: str = data_from_files.to_json(orient='records')
             data_from_files: str = json.loads(data_from_files)

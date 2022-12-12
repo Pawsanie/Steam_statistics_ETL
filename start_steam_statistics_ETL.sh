@@ -48,7 +48,7 @@ date_path_part=$(date +%F --date "2022-12-10")  # Exemple
 
 
 # Start:
-python3 -B -m steam_statistics_luigi_ETL GetSteamProductsDataInfo.GetSteamProductsDataInfo \
+python3 -B -m steam_statistics_luigi_ETL CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics \
 \
 \
 --AllSteamProductsData.AllSteamProductsData-landing-path-part $all_steam_products_data_path \

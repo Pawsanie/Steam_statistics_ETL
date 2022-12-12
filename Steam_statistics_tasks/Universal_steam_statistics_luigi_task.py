@@ -138,11 +138,11 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
     Universal super class for Steam Statistics ETL Task.
     """
     # Luigi parameters:
-    landing_path_part: str = Parameter(significant=True, description='Root path for landing task result.')
-    file_mask: str = Parameter(significant=True, description='File format for landing.')
-    ancestor_file_mask: str = Parameter(significant=True, description='File format for extract.')
-    file_name: str = Parameter(significant=True, default='default', description='File name for landing.')
-    date_path_part: date = DateParameter(significant=True, default=date.today(), description='Date for root path')
+    landing_path_part: str = ''
+    file_mask: str = ''
+    ancestor_file_mask: str = ''
+    file_name: str = ''
+    date_path_part: date = ''
     # Task settings:
     success_flag: str = '_Validate_Success'
     output_path: str = ''  # Must be rewrite in "run()" method.

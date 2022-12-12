@@ -6,6 +6,7 @@ from luigi import Parameter, DateParameter
 
 from .Universal_steam_statistics_luigi_task import UniversalLuigiTask
 from .GetSteamProductsDataInfo_steam_statistics_luigi_task import GetSteamProductsDataInfoTask
+from .Logging_Config import logging_config
 """
 Contains code for luigi tasks: 'SteamAppInfoCSVJoiner', 'SteamDLCInfoCSVJoiner'.
 """
@@ -26,6 +27,7 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
         significant=True,
         description='File format for extract.')
     date_path_part: date = DateParameter(
+        significant=True,
         default=date.today(),
         description='Date for root path')
     file_name: str = Parameter(
@@ -88,8 +90,12 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
         return all_apps_data_frame
 
     def run(self):
+        # Path settings:
         self.result_successor = self.input()['GetSteamProductsDataInfo']
         interested_data: dict[DataFrame] = self.get_csv_for_join()
+        # Logging settings:
+        logging_config(self.logfile_path, int(self.loglevel))
+        # Run:
         all_apps_data_frame: None = None
         for data in interested_data.values():
             all_apps_data_frame: DataFrame = self.data_frames_merge(

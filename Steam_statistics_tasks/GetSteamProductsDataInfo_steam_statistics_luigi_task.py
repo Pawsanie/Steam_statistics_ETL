@@ -31,6 +31,7 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
         significant=True,
         description='File format for extract.')
     date_path_part: date = DateParameter(
+        significant=True,
         default=date.today(),
         description='Date for root path')
     # Luigi loging parameters:
@@ -134,7 +135,7 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
         # Result Successor:
         self.result_successor: str = self.input()['AllSteamProductsData']
         # Logging settings:
-        logging_config(self.get_steam_products_data_info_logfile_path, int(self.get_steam_products_data_info_loglevel))
+        logging_config(self.logfile_path, int(self.loglevel))
 
         # Run:
         self.interested_data: dict[str, DataFrame] = self.get_extract_data(requires=self.result_successor)

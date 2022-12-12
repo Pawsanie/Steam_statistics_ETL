@@ -141,8 +141,8 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
     landing_path_part: str = Parameter(significant=True, description='Root path for landing task result.')
     file_mask: str = Parameter(significant=True, description='File format for landing.')
     ancestor_file_mask: str = Parameter(significant=True, description='File format for extract.')
-    file_name: str = Parameter(significant=True, description='File name for landing.')
-    date_path_part: date = DateParameter(default=date.today(), description='Date for root path')
+    file_name: str = Parameter(significant=True, default='default', description='File name for landing.')
+    date_path_part: date = DateParameter(significant=True, default=date.today(), description='Date for root path')
     # Task settings:
     success_flag: str = '_Validate_Success'
     output_path: str = ''  # Must be rewrite in "run()" method.

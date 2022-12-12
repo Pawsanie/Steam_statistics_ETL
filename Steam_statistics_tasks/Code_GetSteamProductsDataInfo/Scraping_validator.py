@@ -22,13 +22,12 @@ class ScrapingValidator(DataFramesMerge):
     ]
     # Luigi parameters:
     output_path: str = ''
-    date_path_part: str = ''
 
     def safe_dict_data(self, *, data_frame: DataFrame, file_name: str, catalogue_name: str):
         """
         Temporary storage, for landing raw data.
         """
-        path_to_file: str = path.join(*[self.output_path, self.date_path_part, catalogue_name])
+        path_to_file: str = path.join(*[self.output_path, catalogue_name])
         file_path: str = path.join(*[path_to_file, file_name])
         df: DataFrame = data_frame.to_dict('records')
         df: str = str(df[0]) + '\n'

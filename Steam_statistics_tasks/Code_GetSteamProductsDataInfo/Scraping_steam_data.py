@@ -214,7 +214,7 @@ class ScrapingSteamData:
         soup: BeautifulSoup = BeautifulSoup(app_page.text, "lxml")
         result_apps, result_dlc = {}, {}
 
-        must_be_logged: bool = self.is_an_fake_user_must_be_registered(must_be_logged=soup.find_all('span', class_="error"))
+        must_be_logged: bool = self.is_an_fake_user_must_be_registered(soup.find_all('span', class_="error"))
         if must_be_logged is False:
             is_it_dls, interest_heads = soup.find_all('h1'), []
             for head in is_it_dls:

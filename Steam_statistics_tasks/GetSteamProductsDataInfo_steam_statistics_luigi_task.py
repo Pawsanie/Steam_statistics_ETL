@@ -1,6 +1,6 @@
 from datetime import date
 from os import path, makedirs, remove
-from random import uniform
+from random import randint, uniform
 
 from pandas import DataFrame
 from luigi import Parameter, DateParameter
@@ -30,9 +30,6 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
     ancestor_file_mask: str = Parameter(
         significant=True,
         description='File format for extract.')
-    file_name: str = Parameter(
-        significant=True,
-        description='File name for landing.')
     date_path_part: date = DateParameter(
         default=date.today(),
         description='Date for root path')
@@ -53,8 +50,8 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
         'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus'
     ]
     # Wait settings:
-    # time_wait = randint(1, 3)
-    time_wait = uniform(0.1, 0.3)
+    time_wait: float = uniform(0.1, 0.3)
+    # time_wait: int = randint(1, 3)
 
     def requires(self):
         """

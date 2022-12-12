@@ -25,3 +25,18 @@ class SpecificFilePathsGenerator:
         return path.join(*[self.output_path,
                            'Products_not_for_unlogged_user_info',
                            '_safe_dict_must_be_logged_to_scrapping_products'])
+
+    def get_product_save_file_path_list(self, products_save_file_list: list[str]) -> list[str]:
+        """
+        Path multy-generator.
+        """
+        result: list = []
+        for dir_name in products_save_file_list:
+            result.append(self.product_save_file_path(dir_name, ''))
+        return result
+
+    def product_save_file_path(self, product: str, save_file: str) -> str:
+        """
+        Path generator.
+        """
+        return path.join(*[self.output_path, product, save_file])

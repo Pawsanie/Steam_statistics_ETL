@@ -170,18 +170,23 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
         """
         return LocalTarget(path.join(*[self.output_path, self.success_flag]))
 
-    def task_data_landing(self, *, data_to_landing: dict or DataFrame, file_name: str or None = None):
+    def task_data_landing(self, *, data_to_landing: dict or DataFrame,
+                          output_path: str or None = None, file_name: str or None = None):
         """
         Landing parsed data as json, csv, or parquet.
         """
+        # Arguments parsing:
         if file_name is None:
             file_name: str = self.file_name
+        if output_path is None:
+            output_path: str = self.output_path
+        # Landing:
         data_type_need: str = f"{self.file_mask}"
         data_from_files: DataFrame = DataFrame(data_to_landing)
-        if not path.exists(self.output_path):
-            makedirs(self.output_path)
-        flag_path: str = path.join(*[self.output_path, self.success_flag])
-        output_path: str = path.join(*[self.output_path, f"{file_name}.{self.file_mask}"])
+        if not path.exists(output_path):
+            makedirs(output_path)
+        flag_path: str = path.join(*[output_path, self.success_flag])
+        output_path: str = path.join(*[output_path, f"{file_name}.{self.file_mask}"])
         if data_type_need == 'json':
             data_from_files: str = data_from_files.to_json(orient='records')
             data_from_files: str = json.loads(data_from_files)

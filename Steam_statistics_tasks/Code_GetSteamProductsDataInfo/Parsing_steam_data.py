@@ -9,12 +9,13 @@ from tqdm import tqdm
 from .Specific_file_paths_generator import SpecificFilePathsGenerator
 from .Local_cash_reader import LocalCashReader
 from .Scraping_steam_data import ScrapingSteamData
+from .Scraping_validator import ScrapingValidator
 """
 Contains the ParsingSteamData code.
 """
 
 
-class ParsingSteamData(SpecificFilePathsGenerator, LocalCashReader, ScrapingSteamData):
+class ParsingSteamData(SpecificFilePathsGenerator, LocalCashReader, ScrapingSteamData, ScrapingValidator):
     # Collections base values:
     apps_df: DataFrame or None = None
     dlc_df: DataFrame or None = None
@@ -31,16 +32,20 @@ class ParsingSteamData(SpecificFilePathsGenerator, LocalCashReader, ScrapingStea
         self.products_not_for_unlogged_user_df_redy: DataFrame = DataFrame()
 
     def local_cash_read(self):
-        self.apps_df_redy: DataFrame = self.data_from_file_to_pd_dataframe(self.apps_safe_dict_data_path())
-        self.dlc_df_redy: DataFrame = self.data_from_file_to_pd_dataframe(self.dlc_safe_dict_data_path())
-        self.unsuitable_region_products_df_redy: DataFrame = \
-            self.data_from_file_to_pd_dataframe(self.unsuitable_region_products_df_safe_dict_data_path())
-        self.products_not_for_unlogged_user_df_redy: DataFrame = \
-            self.data_from_file_to_pd_dataframe(self.products_not_for_unlogged_user_df_safe_dict_data_path())
+        self.apps_df_redy: DataFrame = self.data_from_file_to_pd_dataframe(
+            self.apps_safe_dict_data_path()
+        )
+        self.dlc_df_redy: DataFrame = self.data_from_file_to_pd_dataframe(
+            self.dlc_safe_dict_data_path()
+        )
+        self.unsuitable_region_products_df_redy: DataFrame = self.data_from_file_to_pd_dataframe(
+            self.unsuitable_region_products_df_safe_dict_data_path()
+        )
+        self.products_not_for_unlogged_user_df_redy: DataFrame = self.data_from_file_to_pd_dataframe(
+            self.products_not_for_unlogged_user_df_safe_dict_data_path()
+        )
 
-
-
-    def parsing_steam_data(self, get_steam_app_info_path: str, day_for_landing: str) -> list[DataFrame]:
+    def parsing_steam_data(self) -> list[DataFrame]:
         """
         Root function responsible for reading the local cache and
         merge it with parsed data from scraping steam application pages.
@@ -72,42 +77,54 @@ class ParsingSteamData(SpecificFilePathsGenerator, LocalCashReader, ScrapingStea
                                             # colour='green',
                                             initial=len(common_all_products_data_redy))):
 
-            app_name = interested_products.iloc[index]['name']
-            app_id = interested_products.iloc[index]['appid']
+            app_name: str = interested_products.iloc[index]['name']
+            app_id: str = interested_products.iloc[index]['appid']
 
             if str(app_name) not in common_all_products_data_redy['name'].values:
 
                 sleep(self.time_wait)
-                result_list: list[dict, dict, bool] = self.ask_app_in_steam_store(app_id, app_name)
-                result, result_dlc, must_be_logged = result_list[0], result_list[1], result_list[2]
+                result_list: tuple[dict, dict, bool] = self.ask_app_in_steam_store(app_id, app_name)
+                result_apps, result_dlc, must_be_logged = result_list[0], result_list[1], result_list[2]
 
                 if must_be_logged is False:
-                    if int(len(result) + len(result_dlc)) > 0:
-                        # App scraping result validate.
-                        apps_df: DataFrame = steam_product_scraping_validator(result, get_steam_app_info_path,
-                                                                              day_for_landing, self.apps_df, app_name,
-                                                                              '_safe_dict_apps_data', 'Apps_info', )
-                        # DLC scraping result validate.
-                        dlc_df: DataFrame = steam_product_scraping_validator(result_dlc, get_steam_app_info_path,
-                                                                             day_for_landing, self.dlc_df, app_name,
-                                                                             '_safe_dict_dlc_data', 'DLC_info')
-                    else:  # Product not available in this region!  # BAG!
-                        unsuitable_region_products_df: DataFrame = \
-                            unsuitable_products(app_id, app_name, get_steam_app_info_path,
-                                                day_for_landing, self.unsuitable_region_products_df,
-                                                '_safe_dict_products_not_for_this_region_data',
-                                                'Products_not_for_this_region_info',
-                                                'product is not available in this region...')
-                else:  # Fake user must be logged in steam for scraping this product page.
-                    products_not_for_unlogged_user_df: DataFrame = \
-                        unsuitable_products(app_id, app_name, get_steam_app_info_path,
-                                            day_for_landing, self.products_not_for_unlogged_user_df,
-                                            '_safe_dict_must_be_logged_to_scrapping_products',
-                                            'Products_not_for_unlogged_user_info',
-                                            'product is not available for unlogged user...')
+                    if int(len(result_apps) + len(result_dlc)) > 0:
+                        # App scraping result validate:
+                        self.apps_df: DataFrame = self.steam_product_scraping_validator(
+                            scraping_result=result_apps,
+                            product_data_frame=self.apps_df,
+                            app_name=app_name,
+                            safe_name='_safe_dict_apps_data',
+                            catalogue_name='Apps_info'
+                        )
+                        # DLC scraping result validate:
+                        self.dlc_df: DataFrame = self.steam_product_scraping_validator(
+                            scraping_result=result_dlc,
+                            product_data_frame=self.dlc_df,
+                            app_name=app_name,
+                            safe_name='_safe_dict_dlc_data',
+                            catalogue_name='DLC_info'
+                        )
+                    else:  # Product not available in this region!:  # BAG!
+                        self.unsuitable_region_products_df: DataFrame = self.unsuitable_products(
+                            app_id=app_id,
+                            app_name=app_name,
+                            unsuitable_products_df=self.unsuitable_region_products_df,
+                            safe_file_name='_safe_dict_products_not_for_this_region_data',
+                            unsuitable_product_catalog='Products_not_for_this_region_info',
+                            logg_massage='product is not available in this region...'
+                        )
+                else:  # Fake user must be logged in steam for scraping this product page:
+                    self.products_not_for_unlogged_user_df: DataFrame = self.unsuitable_products(
+                        app_id=app_id,
+                        app_name=app_name,
+                        unsuitable_products_df=self.products_not_for_unlogged_user_df,
+                        safe_file_name='_safe_dict_must_be_logged_to_scrapping_products',
+                        unsuitable_product_catalog='Products_not_for_unlogged_user_info',
+                        logg_massage='product is not available for unlogged user...'
+                    )
             else:
                 logging.info("'" + app_name + "' already is in _safe_*_data...")
-        apps_and_dlc_df_list: list[DataFrame] = apps_and_dlc_list_validator(
+        apps_and_dlc_df_list: list[DataFrame] = self.apps_and_dlc_list_validator(
             self.apps_df,
             self.apps_df_redy,
             self.dlc_df,

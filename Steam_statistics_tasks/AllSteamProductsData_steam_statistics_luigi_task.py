@@ -17,11 +17,28 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
     Gets a list of products from the SteamAPI.
     """
     # Luigi parameters:
-    landing_path_part: str = Parameter(significant=True, description='Root path for landing task result.')
-    file_mask: str = Parameter(significant=True, description='File format for landing.')
-    ancestor_file_mask: str = Parameter(significant=True, description='File format for extract.')
-    file_name: str = Parameter(significant=True, description='File name for landing.')
-    date_path_part: date = DateParameter(default=date.today(), description='Date for root path')
+    landing_path_part: str = Parameter(
+        significant=True,
+        description='Root path for landing task result.')
+    file_mask: str = Parameter(
+        significant=True,
+        description='File format for landing.')
+    ancestor_file_mask: str = Parameter(
+        significant=True,
+        description='File format for extract.')
+    file_name: str = Parameter(
+        significant=True,
+        description='File name for landing.')
+    date_path_part: date = DateParameter(
+        default=date.today(),
+        description='Date for root path')
+    # Luigi loging parameters:
+    logfile_path: str = Parameter(
+        default="all_steam_products.log",
+        description='Path to ".log" file')
+    loglevel: int = Parameter(
+        default=30,
+        description='Log Level')
     # Task settings:
     task_namespace: str = 'AllSteamProductsData'
     priority = 300
@@ -65,7 +82,7 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
                     path_to_file: str = path.join(*[dirs, file])
                     file_list.append(path_to_file)
         if len(file_list) != 0:
-            self.result_successor = file_list
+            self.result_successor: list[str] = file_list
             interested_data: dict[str, DataFrame] = self.task_universal_parser_part()
             all_apps_parsing_data: None = None
             for data in interested_data.values():

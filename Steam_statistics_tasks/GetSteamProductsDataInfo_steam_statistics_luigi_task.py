@@ -34,10 +34,10 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
         default=date.today(),
         description='Date for root path')
     # Luigi loging parameters:
-    get_steam_products_data_info_logfile_path: str = Parameter(
+    logfile_path: str = Parameter(
         default="steam_products_data_info.log",
         description='Path to ".log" file')
-    get_steam_products_data_info_loglevel: int = Parameter(
+    loglevel: int = Parameter(
         default=30,
         description='Log Level')
     # Task settings:
@@ -84,7 +84,7 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
         output_path: str = f'{partition_path}'
         if not path.exists(output_path):
             makedirs(output_path)
-        flag_path: str = path.join(*[output_path, "_Validate_Success"])
+        flag_path: str = path.join(*[output_path, self.success_flag])
         with open(flag_path, 'w'):
             pass
 
@@ -132,7 +132,7 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
         self.date_path_part: str = self.get_date_path_part()
         self.output_path: str = path.join(*[str(self.landing_path_part), self.date_path_part])
         # Result Successor:
-        self.result_successor = self.input()['AllSteamProductsData']
+        self.result_successor: str = self.input()['AllSteamProductsData']
         # Logging settings:
         logging_config(self.get_steam_products_data_info_logfile_path, int(self.get_steam_products_data_info_loglevel))
 

@@ -1,5 +1,6 @@
 from os import walk, path
 from datetime import date
+from pathlib import PurePath
 
 from pandas import DataFrame
 from luigi import Parameter, DateParameter
@@ -54,13 +55,13 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
     def requires(self):
         return {'GetSteamProductsDataInfo': GetSteamProductsDataInfoTask()}
 
-    def get_csv_for_join(self) -> dict[DataFrame]:
+    def get_csv_for_join(self) -> dict[str, DataFrame]:
         """
         Creates a root path for csv.
         Then it parses it to get all csv tables to merge.
         """
         result_path: str = self.result_successor.path
-        cut_off_path: list[str] = result_path.split('/')
+        cut_off_path: tuple[str] = PurePath(result_path).parts
         cut_off_path: str = path.join(*[
             cut_off_path[-4],
             cut_off_path[-3],
@@ -71,10 +72,11 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
         for dirs, folders, files in walk(root_path):
             if self.directory_for_csv_join in dirs:
                 for file in files:
-                    path_to_file: str = path.join(*[dirs, file])
-                    file_list.append(path_to_file)
+                    if file != self.success_flag:
+                        path_to_file: str = path.join(*[dirs, file])
+                        file_list.append(path_to_file)
         self.result_successor: list[str] = file_list
-        interested_data: dict[DataFrame] = self.task_path_parser()
+        interested_data: dict[str, DataFrame] = self.get_extract_data(self.result_successor)
         return interested_data
 
     def steam_apps_data_cleaning(self, all_apps_data_frame: DataFrame) -> DataFrame:
@@ -92,7 +94,7 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
     def run(self):
         # Path settings:
         self.result_successor = self.input()['GetSteamProductsDataInfo']
-        interested_data: dict[DataFrame] = self.get_csv_for_join()
+        interested_data: dict[str, DataFrame] = self.get_csv_for_join()
         # Logging settings:
         logging_config(self.logfile_path, int(self.loglevel))
         # Run:

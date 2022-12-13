@@ -1,3 +1,5 @@
+from random import uniform
+
 from luigi import run, Task
 
 from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import AllSteamProductsDataTask
@@ -27,12 +29,16 @@ class GetSteamProductsDataInfo(GetSteamProductsDataInfoTask):
     # Task settings:
     task_namespace: str = 'GetSteamProductsDataInfo'
     priority: int = 5000
+    # Wait settings:
+    time_wait: float = uniform(0.1, 0.3)
+
+    retry_count: int = 1
 
     def requires(self):
         return {'AllSteamProductsData': AllSteamProductsData()}
 
 
-class SteamAppInfoCSVJoiner(SteamProductsInfoInfoCSVJoinerTask):
+class SteamAppsInfoCSVJoiner(SteamProductsInfoInfoCSVJoinerTask):
     """
     Merges all raw CSV tables into one MasterData for Steam Apps.
     """
@@ -73,7 +79,7 @@ class CreateDiagramsSteamStatistics(Task):
 #     create_diagrams_steam_loglevel = Parameter(default=30, description='Log Level')
 
     def requires(self):
-        return {'SteamAppInfoCSVJoiner': SteamAppInfoCSVJoiner(),
+        return {'SteamAppInfoCSVJoiner': SteamAppsInfoCSVJoiner(),
                 'SteamDLCInfoCSVJoiner': SteamDLCInfoCSVJoiner()}
 #
 #     def output(self):

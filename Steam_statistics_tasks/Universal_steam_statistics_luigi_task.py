@@ -137,12 +137,23 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
     """
     Universal super class for Steam Statistics ETL Task.
     """
-    # Luigi parameters:
-    landing_path_part: str = ''
-    file_mask: str = ''
-    ancestor_file_mask: str = ''
-    file_name: str = ''
-    date_path_part: date = ''
+    landing_path_part: str = Parameter(
+        significant=True,
+        description='Root path for landing task result.')
+    file_mask: str = Parameter(
+        significant=True,
+        description='File format for landing.')
+    ancestor_file_mask: str = Parameter(
+        significant=True,
+        description='File format for extract.')
+    date_path_part: date = DateParameter(
+        significant=True,
+        default=date.today(),
+        description='Date for root path')
+    file_name: str = Parameter(
+        significant=True,
+        default='',
+        description='File name for landing.')
     # Task settings:
     success_flag: str = '_Validate_Success'
     output_path: str = ''  # Must be rewrite in "run()" method.
@@ -164,10 +175,9 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
         """
         return path.join(*[str(self.date_path_part.year), str(self.date_path_part.month), str(self.date_path_part.day)])
 
-    def output(self) -> LocalTarget:
-        """
-        Standard Luigi.Task.output method.
-        """
+    def output(self):
+        date_path_part: str = self.get_date_path_part()
+        self.output_path: str = path.join(*[str(self.landing_path_part), date_path_part])
         return LocalTarget(path.join(*[self.output_path, self.success_flag]))
 
     def task_data_landing(self, *, data_to_landing: dict or DataFrame,

@@ -3,14 +3,13 @@ from os import path, makedirs, remove
 from random import randint, uniform
 
 from pandas import DataFrame
-from luigi import Parameter, DateParameter
+from luigi import Parameter, DateParameter, LocalTarget
 
 from .Logging_Config import logging_config
 from .Universal_steam_statistics_luigi_task import UniversalLuigiTask
 from .AllSteamProductsData_steam_statistics_luigi_task import AllSteamProductsDataTask
 from .Code_GetSteamProductsDataInfo.Parsing_steam_data import ParsingSteamData
 from .Code_GetSteamProductsDataInfo.Specific_file_paths_generator import SpecificFilePathsGenerator
-
 """
 Contains code for luigi task 'GetSteamProductsInfo'.
 """
@@ -44,6 +43,7 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
     # Task settings:
     task_namespace: str = 'GetSteamProductsDataInfo'
     priority: int = 5000
+    retry_count: int = 1
     # Collections base values:
     is_not_application_list: list[str] = [
         'Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest',
@@ -51,14 +51,20 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
         'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus'
     ]
     # Wait settings:
-    time_wait: float = uniform(0.1, 0.3)
-    # time_wait: int = randint(1, 3)
-
-    def requires(self):
-        """
-        Standard Luigi.Task.requires method.
-        """
-        return {'AllSteamProductsData': AllSteamProductsDataTask()}
+    # time_wait: float = uniform(0.1, 0.3)
+    time_wait: int = randint(1, 3)
+    #
+    # def requires(self):
+    #     """
+    #     Standard Luigi.Task.requires method.
+    #     """
+    #     return {'AllSteamProductsData': AllSteamProductsDataTask()}
+    #
+    # def output(self) -> LocalTarget:
+    #     """
+    #     Standard Luigi.Task.output method.
+    #     """
+    #     return LocalTarget(path.join(*[self.output_path, self.success_flag]))
 
     def steam_apps_parser(self) -> DataFrame:
         """
@@ -107,16 +113,16 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
         Lands real collections and maike flags if theme empty.
         """
         data_for_landing: dict = {
-            f"{'Steam_Apps_Info'}.{self.file_mask}": [
+            f"{'Steam_Apps_Info'}": [
                 apps_df, apps_df_save_path
             ],
-            f"{'Steam_DLC_Info'}.{self.file_mask}": [
+            f"{'Steam_DLC_Info'}": [
                 dlc_df, dlc_df_save_path
             ],
-            f"{'Unsuitable_region_Products_Info'}.{self.file_mask}": [
+            f"{'Unsuitable_region_Products_Info'}": [
                 unsuitable_region_products_df, unsuitable_region_products_df_path
             ],
-            f"{'Products_not_for_unlogged_user_Info'}.{self.file_mask}": [
+            f"{'Products_not_for_unlogged_user_Info'}": [
                 products_not_for_unlogged_user_df, products_not_for_unlogged_user_df_path]
         }
         for key in data_for_landing:

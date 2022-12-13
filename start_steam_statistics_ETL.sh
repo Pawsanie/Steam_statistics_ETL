@@ -68,13 +68,13 @@ python3 -B -m steam_statistics_luigi_ETL CreateDiagramsSteamStatistics.CreateDia
 --GetSteamProductsDataInfo.GetSteamProductsDataInfo-ancestor-file-mask $get_steam_products_data_info_ancestor_file_mask \
 \
 \
---SteamProductsInfo.SteamAppInfoCSVJoiner-landing-path-part $steam_apps_info_path \
---SteamProductsInfo.SteamAppInfoCSVJoiner-date-path-part $date_path_part \
---SteamProductsInfo.SteamAppInfoCSVJoiner-logfile-path $steam_apps_info_logfile_path \
---SteamProductsInfo.SteamAppInfoCSVJoiner-loglevel $steam_apps_info_loglevel \
---SteamProductsInfo.SteamAppInfoCSVJoiner-file-mask  $steam_apps_info_file_mask \
---SteamProductsInfo.SteamAppInfoCSVJoiner-ancestor-file-mask $steam_apps_info_ancestor_file_mask \
---SteamProductsInfo.SteamAppInfoCSVJoiner-file-name $steam_apps_info_data_file_name \
+--SteamProductsInfo.SteamAppsInfoCSVJoiner-landing-path-part $steam_apps_info_path \
+--SteamProductsInfo.SteamAppsInfoCSVJoiner-date-path-part $date_path_part \
+--SteamProductsInfo.SteamAppsInfoCSVJoiner-logfile-path $steam_apps_info_logfile_path \
+--SteamProductsInfo.SteamAppsInfoCSVJoiner-loglevel $steam_apps_info_loglevel \
+--SteamProductsInfo.SteamAppsInfoCSVJoiner-file-mask  $steam_apps_info_file_mask \
+--SteamProductsInfo.SteamAppsInfoCSVJoiner-ancestor-file-mask $steam_apps_info_ancestor_file_mask \
+--SteamProductsInfo.SteamAppsInfoCSVJoiner-file-name $steam_apps_info_data_file_name \
 \
 \
 --SteamProductsInfo.SteamDLCInfoCSVJoiner-landing-path-part $steam_DLC_info_path \

@@ -1,12 +1,12 @@
-from random import uniform
+from random import uniform, randint
 
 from luigi import run, Task
 
-from Steam_statistics_tasks.AllSteamProductsData_steam_statistics_luigi_task import AllSteamProductsDataTask
-from Steam_statistics_tasks.GetSteamProductsDataInfo_steam_statistics_luigi_task import GetSteamProductsDataInfoTask
-from Steam_statistics_tasks.SteamProductsInfoCSVJoiner_steam_statistics_luigi_task import \
+from Steam_statistics_tasks.AllSteamProductsData_luigi_task import AllSteamProductsDataTask
+from Steam_statistics_tasks.GetSteamProductsDataInfo_luigi_task import GetSteamProductsDataInfoTask
+from Steam_statistics_tasks.SteamProductsInfoCSVJoiner_luigi_task import \
     SteamProductsInfoInfoCSVJoinerTask
-# from Steam_statistics_tasks.CreateDiagrams_steam_statistics_luigi_task import \
+# from Steam_statistics_tasks.CreateDiagrams_sluigi_task import \
 #     create_diagrams_steam_statistics_luigi_task_run
 """
 Steam statistics Luigi ETL.
@@ -29,10 +29,10 @@ class GetSteamProductsDataInfo(GetSteamProductsDataInfoTask):
     # Task settings:
     task_namespace: str = 'GetSteamProductsDataInfo'
     priority: int = 5000
+    retry_count: int = 30
     # Wait settings:
-    time_wait: float = uniform(0.1, 0.3)
-
-    retry_count: int = 1
+    time_wait: int = randint(1, 3)
+    # time_wait: float = uniform(0.1, 0.3)
 
     def requires(self):
         return {'AllSteamProductsData': AllSteamProductsData()}
@@ -68,6 +68,7 @@ class CreateDiagramsSteamStatistics(Task):
     """
     Create diagrams for the report.
     """
+    # Task settings:
     task_namespace = 'CreateDiagramsSteamStatistics'
     priority = 200
 #     create_diagrams_steam_statistics_path = \
@@ -81,12 +82,6 @@ class CreateDiagramsSteamStatistics(Task):
     def requires(self):
         return {'SteamAppInfoCSVJoiner': SteamAppsInfoCSVJoiner(),
                 'SteamDLCInfoCSVJoiner': SteamDLCInfoCSVJoiner()}
-#
-#     def output(self):
-#         return LocalTarget(
-#             path.join(
-#                 f"{self.create_diagrams_steam_logfile_path}/{self.date_path_part:%Y/%m/%d}/{'_Validate_Success'}"
-#             ))
 
     def run(self):
         pass

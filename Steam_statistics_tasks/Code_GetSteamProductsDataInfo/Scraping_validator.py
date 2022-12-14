@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pandas import DataFrame
 
-from ..Universal_steam_statistics_luigi_task import DataFramesMerge
+from ..Universal_luigi_task import DataFramesMerge
 """
 Contains the ScrapingValidator code.
 """

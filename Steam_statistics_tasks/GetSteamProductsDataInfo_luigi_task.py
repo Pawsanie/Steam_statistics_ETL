@@ -3,11 +3,11 @@ from os import path, makedirs, remove
 from random import randint, uniform
 
 from pandas import DataFrame
-from luigi import Parameter, DateParameter, LocalTarget
+from luigi import Parameter, DateParameter
 
 from .Logging_Config import logging_config
-from .Universal_steam_statistics_luigi_task import UniversalLuigiTask
-from .AllSteamProductsData_steam_statistics_luigi_task import AllSteamProductsDataTask
+from .Universal_luigi_task import UniversalLuigiTask
+from .AllSteamProductsData_luigi_task import AllSteamProductsDataTask
 from .Code_GetSteamProductsDataInfo.Parsing_steam_data import ParsingSteamData
 from .Code_GetSteamProductsDataInfo.Specific_file_paths_generator import SpecificFilePathsGenerator
 """
@@ -51,20 +51,14 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
         'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus'
     ]
     # Wait settings:
-    # time_wait: float = uniform(0.1, 0.3)
     time_wait: int = randint(1, 3)
-    #
-    # def requires(self):
-    #     """
-    #     Standard Luigi.Task.requires method.
-    #     """
-    #     return {'AllSteamProductsData': AllSteamProductsDataTask()}
-    #
-    # def output(self) -> LocalTarget:
-    #     """
-    #     Standard Luigi.Task.output method.
-    #     """
-    #     return LocalTarget(path.join(*[self.output_path, self.success_flag]))
+    # time_wait: float = uniform(0.1, 0.3)
+
+    def requires(self):
+        """
+        Standard Luigi.Task.requires method.
+        """
+        return {'AllSteamProductsData': AllSteamProductsDataTask()}
 
     def steam_apps_parser(self) -> DataFrame:
         """
@@ -104,7 +98,7 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
             if path.isfile(file_path):
                 remove(file_path)
 
-    def apps_and_dlc_df_landing(self, apps_df: DataFrame, apps_df_save_path: str,
+    def apps_and_dlc_df_landing(self, *, apps_df: DataFrame, apps_df_save_path: str,
                                 dlc_df: DataFrame, dlc_df_save_path: str,
                                 unsuitable_region_products_df: DataFrame, unsuitable_region_products_df_path: str,
                                 products_not_for_unlogged_user_df: DataFrame,
@@ -135,22 +129,22 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
                 self.make_flag(data_for_landing.get(key)[1])
 
     def run(self):
+        # Logging settings:
+        logging_config(self.logfile_path, int(self.loglevel))
         # Path settings:
         self.date_path_part: str = self.get_date_path_part()
         self.output_path: str = path.join(*[str(self.landing_path_part), self.date_path_part])
         # Result Successor:
         self.result_successor: str = self.input()['AllSteamProductsData']
-        # Logging settings:
-        logging_config(self.logfile_path, int(self.loglevel))
 
         # Run:
         self.interested_data: dict[str, DataFrame] = self.get_extract_data(requires=self.result_successor)
         self.interested_data: DataFrame = self.steam_apps_parser()
 
-        # list[DataFrame]
+        # parsing_steam_data -> list[DataFrame]:
         apps_df, dlc_df, unsuitable_region_products_df, products_not_for_unlogged_user_df = self.parsing_steam_data()
 
-        # list[str]
+        # get_product_save_file_path_list -> list[str]:
         apps_df_save_path, dlc_df_save_path, unsuitable_region_products_df_path, products_not_for_unlogged_user_df_path\
             = self.get_product_save_file_path_list([
                 'Apps_info',
@@ -160,14 +154,14 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
             ])
 
         self.apps_and_dlc_df_landing(
-            apps_df,
-            apps_df_save_path,
-            dlc_df,
-            dlc_df_save_path,
-            unsuitable_region_products_df,
-            unsuitable_region_products_df_path,
-            products_not_for_unlogged_user_df,
-            products_not_for_unlogged_user_df_path
+            apps_df=apps_df,
+            apps_df_save_path=apps_df_save_path,
+            dlc_df=dlc_df,
+            dlc_df_save_path=dlc_df_save_path,
+            unsuitable_region_products_df=unsuitable_region_products_df,
+            unsuitable_region_products_df_path=unsuitable_region_products_df_path,
+            products_not_for_unlogged_user_df=products_not_for_unlogged_user_df,
+            products_not_for_unlogged_user_df_path=products_not_for_unlogged_user_df_path
         )
         self.delete_temporary_safe_files({
             'Apps_info': '_safe_dict_apps_data',

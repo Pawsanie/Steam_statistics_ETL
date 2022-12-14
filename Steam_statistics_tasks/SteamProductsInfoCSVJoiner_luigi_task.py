@@ -3,10 +3,10 @@ from datetime import date
 from pathlib import PurePath
 
 from pandas import DataFrame
-from luigi import Parameter, DateParameter
+from luigi import Parameter, DateParameter, LocalTarget
 
-from .Universal_steam_statistics_luigi_task import UniversalLuigiTask
-from .GetSteamProductsDataInfo_steam_statistics_luigi_task import GetSteamProductsDataInfoTask
+from .Universal_luigi_task import UniversalLuigiTask
+from .GetSteamProductsDataInfo_luigi_task import GetSteamProductsDataInfoTask
 from .Logging_Config import logging_config
 """
 Contains code for luigi tasks: 'SteamAppInfoCSVJoiner', 'SteamDLCInfoCSVJoiner'.
@@ -44,8 +44,8 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
     # Task settings:
     task_namespace: str = 'SteamProductsInfo'
     priority: int = 100
-
-    directory_for_csv_join: str = ''
+    # Landing path settings:
+    directory_for_csv_join: str = 'ProductsInfo'
 
     # 'apps_which_are_not_game_list' needs to be supplemented, according to test results ->
     apps_which_are_not_game: list[str] = [
@@ -55,10 +55,20 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
     def requires(self):
         return {'GetSteamProductsDataInfo': GetSteamProductsDataInfoTask()}
 
-    def get_csv_for_join(self) -> dict[str, DataFrame]:
+    def output(self) -> LocalTarget:
+        """
+        Specific Luigi.output method for this Task.
+        """
+        date_path_part: str = self.get_date_path_part()
+        self.output_path: str = path.join(*[str(self.landing_path_part), self.directory_for_csv_join, date_path_part])
+        return LocalTarget(path.join(*[self.output_path, self.success_flag]))
+
+    def get_csv_for_join(self):
         """
         Creates a root path for csv.
         Then it parses it to get all csv tables to merge.
+
+        Result: dict[str, DataFrame]
         """
         result_path: str = self.result_successor.path
         cut_off_path: tuple[str] = PurePath(result_path).parts
@@ -73,11 +83,13 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
             if self.directory_for_csv_join in dirs:
                 for file in files:
                     if file != self.success_flag:
-                        path_to_file: str = path.join(*[dirs, file])
+                        # path_to_file: str = path.join(*[dirs, file])
+                        path_to_file: str = dirs
                         file_list.append(path_to_file)
         self.result_successor: list[str] = file_list
-        interested_data: dict[str, DataFrame] = self.get_extract_data(self.result_successor)
-        return interested_data
+        self.interested_data: dict[str, DataFrame] = self.get_extract_data(
+            self.result_successor,
+            self.ancestor_file_mask)
 
     def steam_apps_data_cleaning(self, all_apps_data_frame: DataFrame) -> DataFrame:
         """
@@ -92,26 +104,26 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
         return all_apps_data_frame
 
     def run(self):
-        # Path settings:
-        self.result_successor = self.input()['GetSteamProductsDataInfo']
-        interested_data: dict[str, DataFrame] = self.get_csv_for_join()
         # Logging settings:
         logging_config(self.logfile_path, int(self.loglevel))
+        # Result Successor:
+        self.result_successor = self.input()['GetSteamProductsDataInfo']
         # Run:
+        self.get_csv_for_join()
         all_apps_data_frame: None = None
-        for data in interested_data.values():
+        for data in self.interested_data.values():
             all_apps_data_frame: DataFrame = self.data_frames_merge(
                 data_from_files=all_apps_data_frame,
                 extracted_data=data)
         all_apps_data_frame: DataFrame = self.steam_apps_data_cleaning(all_apps_data_frame)
-
-        output_path: str = path.join(*[
+        # Path settings:
+        self.output_path: str = path.join(*[
             self.landing_path_part,
             self.directory_for_csv_join,
             self.get_date_path_part()
         ])
         self.task_data_landing(
             data_to_landing=all_apps_data_frame,
-            output_path=output_path,
+            output_path=self.output_path,
             file_name=f"{self.file_name}.{self.file_mask}"
         )

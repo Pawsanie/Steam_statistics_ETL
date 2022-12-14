@@ -40,7 +40,7 @@ class ExtractDataFromWarHouse(DataFramesMerge):
     :type success_flag: str
     """
 
-    dir_list: list[str] = []
+    # dir_list: list[str] = []
     interested_partition: dict[str] = {}
     interested_data: dict[str, DataFrame] = {}
 
@@ -53,6 +53,7 @@ class ExtractDataFromWarHouse(DataFramesMerge):
         :param success_flag: String with name of success flag file.
         :type success_flag: str
         """
+        self.dir_list: list = []
         self.result_successor: list or tuple or str = result_successor
         self.file_mask: str = file_mask
         self.success_flag: str = success_flag
@@ -158,14 +159,26 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
     success_flag: str = '_Validate_Success'
     output_path: str = ''  # Must be rewrite in "run()" method.
 
-    def get_extract_data(self, requires) -> dict[str, DataFrame]:
+    def get_extract_data(self, requires: list or tuple or str,
+                         success_flag: None or str = None) -> dict[str, DataFrame]:
         """
         Retrieves data from the corresponding iteration of the previous Luigi task.
+
+        :param requires: As a rule result_successor.
+                         Can be any path or path collection.
+        :type requires: list or tuple or str
+        :param success_flag: As default self.ancestor_file_mask.
+                                   Must be string. as custom.
+        :type success_flag: None or str
         """
+        # Arguments processing:
+        if success_flag is None:
+            success_flag: str = self.success_flag
+
         extract_data = ExtractDataFromWarHouse(
             result_successor=requires,
-            file_mask=str(self.ancestor_file_mask),
-            success_flag=self.success_flag)
+            file_mask=self.ancestor_file_mask,
+            success_flag=success_flag)
         return extract_data.task_universal_parser_part()
 
     def get_date_path_part(self) -> str:
@@ -175,7 +188,10 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
         """
         return path.join(*[str(self.date_path_part.year), str(self.date_path_part.month), str(self.date_path_part.day)])
 
-    def output(self):
+    def output(self) -> LocalTarget:
+        """
+        Standard Luigi.output method for Universal Task.
+        """
         date_path_part: str = self.get_date_path_part()
         self.output_path: str = path.join(*[str(self.landing_path_part), date_path_part])
         return LocalTarget(path.join(*[self.output_path, self.success_flag]))

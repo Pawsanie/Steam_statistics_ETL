@@ -6,7 +6,7 @@ from requests import get, Response
 from pandas import DataFrame
 from luigi import Parameter, DateParameter
 
-from .Universal_steam_statistics_luigi_task import UniversalLuigiTask
+from .Universal_luigi_task import UniversalLuigiTask
 from .Logging_Config import logging_config
 """
 Contains code for luigi task 'AllSteamAppsData'.
@@ -46,11 +46,11 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
     priority = 300
 
     def run(self):
+        # Logging settings:
+        logging_config(self.logfile_path, int(self.loglevel))
         # Path settings:
         self.date_path_part: str = self.get_date_path_part()
         self.output_path: str = path.join(*[str(self.landing_path_part), self.date_path_part])
-        # Logging settings:
-        logging_config(self.logfile_path, int(self.loglevel))
         # Run:
         if path.exists(path.join(*[
             str(self.landing_path_part),

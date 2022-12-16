@@ -1,13 +1,12 @@
 from random import uniform, randint
 
-from luigi import run, Task
+from luigi import run
 
 from Steam_statistics_tasks.AllSteamProductsData_luigi_task import AllSteamProductsDataTask
 from Steam_statistics_tasks.GetSteamProductsDataInfo_luigi_task import GetSteamProductsDataInfoTask
 from Steam_statistics_tasks.SteamProductsInfoCSVJoiner_luigi_task import \
     SteamProductsInfoInfoCSVJoinerTask
-# from Steam_statistics_tasks.CreateDiagrams_sluigi_task import \
-#     create_diagrams_steam_statistics_luigi_task_run
+from Steam_statistics_tasks.CreateDiagrams_luigi_task import CreateDiagramsSteamStatisticsTask
 """
 Steam statistics Luigi ETL.
 """
@@ -46,6 +45,7 @@ class SteamAppsInfoCSVJoiner(SteamProductsInfoInfoCSVJoinerTask):
     directory_for_csv_join = 'Apps_info'
     task_namespace: str = 'SteamProductsInfo'
     priority: int = 100
+    retry_count: int = 2
 
     def requires(self):
         return {'GetSteamProductsDataInfo': GetSteamProductsDataInfo()}
@@ -59,33 +59,23 @@ class SteamDLCInfoCSVJoiner(SteamProductsInfoInfoCSVJoinerTask):
     directory_for_csv_join = 'DLC_info'
     task_namespace: str = 'SteamProductsInfo'
     priority: int = 100
+    retry_count: int = 2
 
     def requires(self):
         return {'GetSteamProductsDataInfo': GetSteamProductsDataInfo()}
 
 
-class CreateDiagramsSteamStatistics(Task):
+class CreateDiagramsSteamStatistics(CreateDiagramsSteamStatisticsTask):
     """
     Create diagrams for the report.
     """
     # Task settings:
     task_namespace = 'CreateDiagramsSteamStatistics'
     priority = 200
-#     create_diagrams_steam_statistics_path = \
-#         Parameter(significant=True,
-#                   description='Path to join all CreateAppsDiagramSteamStatistics .csv')
-#     date_path_part = DateParameter(default=date.today(), description='Date for root path')
-#     create_diagrams_steam_logfile_path = Parameter(default="create_diagrams_steam_statistics.log",
-#                                                    description='Path for ".log" file')
-#     create_diagrams_steam_loglevel = Parameter(default=30, description='Log Level')
 
     def requires(self):
         return {'SteamAppInfoCSVJoiner': SteamAppsInfoCSVJoiner(),
                 'SteamDLCInfoCSVJoiner': SteamDLCInfoCSVJoiner()}
-
-    def run(self):
-        pass
-#         create_diagrams_steam_statistics_luigi_task_run(self)
 
 
 if __name__ == "__main__":

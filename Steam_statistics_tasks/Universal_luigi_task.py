@@ -1,7 +1,7 @@
 import json
 from os import walk, path, makedirs
 from pathlib import PurePath
-from datetime import date
+from datetime import date, datetime
 
 from luigi import Task, Parameter, DateParameter, LocalTarget
 from pandas import DataFrame, read_csv, read_json
@@ -15,6 +15,8 @@ class DataFramesMerge:
     """
     Merges the given dataframes into one, filling NaN empty cells.
     """
+    merge_columns_names: list[str] = []
+
     def data_frames_merge(self, *, data_from_files: DataFrame or None,
                           extracted_data: DataFrame) -> DataFrame:
         """
@@ -24,7 +26,16 @@ class DataFramesMerge:
             data_from_files: DataFrame = extracted_data.astype(str)
         else:
             extract_data: DataFrame = extracted_data.astype(str)
-            data_from_files = data_from_files.merge(extract_data, how='outer').reset_index(drop=True).astype(str)
+
+            if len(self.merge_columns_names) > 0:
+                data_from_files = data_from_files.merge(
+                    extract_data, how='outer', on=self.merge_columns_names) \
+                    .reset_index(drop=True) \
+                    .astype(str)
+            else:
+                data_from_files = data_from_files.merge(extract_data, how='outer')\
+                    .reset_index(drop=True)\
+                    .astype(str)
         return data_from_files
 
 
@@ -40,10 +51,6 @@ class ExtractDataFromWarHouse(DataFramesMerge):
     :type success_flag: str
     """
 
-    # dir_list: list[str] = []
-    interested_partition: dict[str] = {}
-    interested_data: dict[str, DataFrame] = {}
-
     def __init__(self, *, result_successor: list or tuple or str, file_mask: str, success_flag):
         """
         :param result_successor: List, tuple or string with file`s paths.
@@ -57,6 +64,8 @@ class ExtractDataFromWarHouse(DataFramesMerge):
         self.result_successor: list or tuple or str = result_successor
         self.file_mask: str = file_mask
         self.success_flag: str = success_flag
+        self.interested_partition: dict[str] = {}
+        self.interested_data: dict[str, DataFrame] = {}
 
     def task_path_parser(self):
         """
@@ -114,7 +123,7 @@ class ExtractDataFromWarHouse(DataFramesMerge):
         :type file: str
         """
         if self.file_mask == 'csv':
-            return read_csv(file).astype(str)
+            return read_csv(file, sep=';').astype(str)
         if self.file_mask == 'json':
             return read_json(file, dtype='int64')
 
@@ -186,15 +195,21 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
         Make string with YYYY-mm-dd date for output path.
         As example YYYY/mm/dd.
         """
-        return path.join(*[str(self.date_path_part.year), str(self.date_path_part.month), str(self.date_path_part.day)])
+        date_path_part: date or str = self.date_path_part
+        if type(date_path_part) is str:
+            date_path_part_list: tuple[str] = PurePath(str(date_path_part)).parts
+            date_path_part: date = datetime.strptime(
+                f"{date_path_part_list[0]}-{date_path_part_list[1]}-{date_path_part_list[2]}",
+                "%Y-%m-%d")
+        return path.join(*[str(date_path_part.year), str(date_path_part.month), str(date_path_part.day)])
 
     def output(self) -> LocalTarget:
         """
         Standard Luigi.output method for Universal Task.
         """
         date_path_part: str = self.get_date_path_part()
-        self.output_path: str = path.join(*[str(self.landing_path_part), date_path_part])
-        return LocalTarget(path.join(*[self.output_path, self.success_flag]))
+        output_path: str = path.join(*[str(self.landing_path_part), date_path_part])
+        return LocalTarget(path.join(*[output_path, self.success_flag]))
 
     def task_data_landing(self, *, data_to_landing: dict or DataFrame,
                           output_path: str or None = None, file_name: str or None = None):
@@ -223,7 +238,7 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
             parquet_table = Table.from_pandas(data_to_landing)
             parquet.write_table(parquet_table, output_path, use_dictionary=False, compression=None)
         if data_type_need == 'csv':
-            data_to_csv: str = data_to_landing.to_csv(index=False)
+            data_to_csv: str = data_to_landing.to_csv(index=False, sep=';')
             with open(output_path, 'w') as csv_file:
                 csv_file.write(data_to_csv)
         with open(flag_path, 'w'):

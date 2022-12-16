@@ -40,6 +40,10 @@ steam_DLC_info_loglevel=30
 
 # CreateAppsDiagramSteamStatistics args:
 create_diagrams_steam_statistics_path=$HOME"/Steam_ETL/Data_Warehouse/Diagram_Steam_Statistics"
+create_diagrams_steam_statistics_logfile_path=$HOME"/Steam_ETL/Logs/create_diagrams_steam_statistics.log"
+create_diagrams_steam_statistics_file_mask='jpg'
+create_diagrams_steam_statistics_ancestor_file_mask='csv'
+create_diagrams_steam_statistics_loglevel=30
 
 # Date:
 #date_path_part=$(date +%F)  # Today
@@ -86,11 +90,12 @@ python3 -B -m steam_statistics_luigi_ETL CreateDiagramsSteamStatistics.CreateDia
 --SteamProductsInfo.SteamDLCInfoCSVJoiner-file-name $steam_DLC_info_data_file_name \
 \
 \
+--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-landing-path-part $create_diagrams_steam_statistics_path \
+--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-date-path-part $date_path_part \
+--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-logfile-path $create_diagrams_steam_statistics_logfile_path \
+--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-loglevel $create_diagrams_steam_statistics_loglevel \
+--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-file-mask $create_diagrams_steam_statistics_file_mask  \
+--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-ancestor-file-mask $create_diagrams_steam_statistics_ancestor_file_mask \
+\
+\
 --local-scheduler
-#--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-landing-path-part $create_diagrams_steam_statistics_path \
-#--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-date-path-part $date_path_part \
-#--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-create-diagrams-steam-logfile-path $get_steam_products_data_info_logfile_path \
-#--CreateDiagramsSteamStatistics.CreateDiagramsSteamStatistics-create-diagrams-steam-loglevel $get_steam_products_data_info_loglevel \
-#\
-#\
-#--local-scheduler

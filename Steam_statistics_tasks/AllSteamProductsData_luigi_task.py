@@ -43,7 +43,7 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
         description='Log Level')
     # Task settings:
     task_namespace: str = 'AllSteamProductsData'
-    priority = 300
+    priority: int = 300
 
     def run(self):
         # Logging settings:

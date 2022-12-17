@@ -95,7 +95,7 @@ To launch the pipeline through this script, do not forget to make it executable.
 ```bash
 chmod +x ./start_steam_statistics_ETL.sh
 ```
-The script can also be run directly with 'python' command.
+The script can also be run directly with 'python' command.<br/>
 **Example of one task with 'python' command:**
 ```bash
 python3 -B -m steam_statistics_luigi_ETL AllSteamProductsData.AllSteamProductsData \

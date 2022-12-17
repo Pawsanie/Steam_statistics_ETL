@@ -3,6 +3,8 @@
 ## Disclaimer:
 **Using** some or all of the elements of this code, **You** assume **responsibility for any consequences!**<br/>
 
+The **licenses** for the technologies on which the code **depends** are subject to **change by their authors**.
+
 ## Description of the pipeline:
 This pipeline is used to collect statistical information about all games, <br/>
 distributed through the Steam platform, including:
@@ -10,7 +12,7 @@ distributed through the Steam platform, including:
 * Tags
 * Publisher
 * Developer
-* Steam release date<br/>
+* Steam release date
 
 Unfortunately, the [Steam Web API](https://developer.valvesoftware.com/wiki/Steam_Web_API) does not provide such information when requested directly through its [methods](https://wiki.teamfortress.com/wiki/WebAPI) at the moment.<br/>
 To solve this problem, this pipeline is being developed.<br/>
@@ -19,6 +21,54 @@ The pipeline also receives directly from the Steam Web API:
 * And their id on Steam.
 
 Additionally, the pipeline remembers the scan date.
+
+****
+
+## Required:
+The application code is written in python and obviously depends on it.<br>
+**Python** version 3.6 [Python Software Foundation License / (with) Zero-Clause BSD license (after 3.8.6 version Python)]:
+* [Python GitHub](https://github.com/python)
+* [Python internet page](https://www.python.org/)
+
+## Required Packages:
+Used to Luigi tasks conveyor.<br>
+**Luigi** [Apache License 2.0]:
+* [Luigi GitHub](https://github.com/spotify/luigi)
+
+Used to work with tabular data.<br>
+**Pandas** [BSD-3-Clause license]:
+* [Pandas GitHub](https://github.com/pandas-dev/pandas/)
+* [Pandas internet page](https://pandas.pydata.org/)
+
+Used to create a random user agent.<br>
+**fake-useragent** [Apache-2.0 license]:
+* [fake-useragent GitHub](https://github.com/fake-useragent/fake-useragent)
+
+Used to send requests and receive responses.<br>
+**Requests** [Apache-2.0 license]:
+* [Requests GitHub](https://github.com/psf/requests)
+* [Requests internet page](https://requests.readthedocs.io/en/latest/)
+
+Used for scraping.<br>
+**BeautifulSoup4** [MIT]:
+* [BeautifulSoup4 GitHub](https://github.com/getanewsletter/BeautifulSoup4)
+* [BeautifulSoup4 internet page](https://www.crummy.com/software/BeautifulSoup/)
+
+Used to bring the table cells to the desired value.<br>
+**NumPy** [BSD-3-Clause license]:
+* [NumPy GitHub](https://github.com/numpy/numpy)
+* [NumPy internet page](https://numpy.org/)
+
+Used to save data in parquet format.<br>
+**PyArrow** [Apache-2.0 license]:
+* [PyArrow GitHub](https://github.com/apache/arrow)
+* [PyArrow internet page](https://arrow.apache.org/)
+
+Used to monitor the progress of certain tasks from the terminal while they are running.<br>
+**tqdm** [MIT/Mozilla v. 2.0]:
+* [tqdm GitHub](https://github.com/tqdm/tqdm)
+* [tqdm internet page](https://tqdm.github.io/)
+
 ## Installing the Required Packages:
 ```bash
 pip install luigi
@@ -35,33 +85,43 @@ If Your OS has a bash shell the ETL pipeline can be started using the bash scrip
 ```bash
 ./start_steam_statistics_ETL.sh
 ```
+At the beginning of this script, the values of variables are described, <br/>
+by changing the values of which you can change this pipeline.<br/>
+**File location:**<br>
+./:open_file_folder:Steam_statistics_tasks<br>
+   ├── :file_folder:start_steam_statistics_ETL.sh<br>
 The script contains an example of all the necessary arguments to run.<br/>
 To launch the pipeline through this script, do not forget to make it executable.
 ```bash
 chmod +x ./start_steam_statistics_ETL.sh
 ```
-The script can also be run directly with python.
+The script can also be run directly with 'python' command.
+**Example of one task with 'python' command:**
 ```bash
-python3 -B -m steam_statistics_luigi_ETL SteamAppsInfo.SteamAppsInfo --local-scheduler \
---AllSteamProductsData.AllSteamProductsData-all-steam-products-data-path $all_steam_products_data_path \
+python3 -B -m steam_statistics_luigi_ETL AllSteamProductsData.AllSteamProductsData \
+\
+--AllSteamProductsData.AllSteamProductsData-landing-path-part $all_steam_products_data_path \
 --AllSteamProductsData.AllSteamProductsData-date-path-part $date_path_part \
-\
---GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-path $get_steam_products_data_info_path \
---GetSteamProductsDataInfo.GetSteamProductsDataInfo-date-path-part $date_path_part \
---GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-logfile-path $get_steam_products_data_info_logfile_path \
---GetSteamProductsDataInfo.GetSteamProductsDataInfo-get-steam-products-data-info-loglevel $get_steam_products_data_info_loglevel \
-\
---SteamAppsInfo.SteamAppsInfo-steam-apps-info-path $steam_apps_info_path \
---SteamAppsInfo.SteamAppsInfo-date-path-part $date_path_part
+--AllSteamProductsData.AllSteamProductsData-file-mask $all_steam_products_data_file_mask \
+--AllSteamProductsData.AllSteamProductsData-ancestor-file-mask $all_steam_products_data_ancestor_file_mask \
+--AllSteamProductsData.AllSteamProductsData-file-name $all_steam_products_data_file_name \
+--AllSteamProductsData.AllSteamProductsData-logfile-path $all_steam_products_logfile_path \
+--AllSteamProductsData.AllSteamProductsData-loglevel $all_steam_products_loglevel \
+
 ```
-The example above shows the launch of all tasks.
+The example above shows the launch of one task.
+
+Also note that the task pipeline itself is described in the 'steam_statistics_luigi_ETL.py' script.<br/>
+**File location:**<br>
+./:open_file_folder:Steam_statistics_tasks<br>
+   ├── :file_folder:steam_statistics_luigi_ETL.py<br>
 
 ## Description of tasks:
-AllSteamProductsData
+**AllSteamProductsData**
 * Retrieves a list of applications from steam Web-API.
 * If the launch is not the first time, saves the difference with the previous launch as a result.
 ****
-GetSteamProductsDataInfo
+**GetSteamProductsDataInfo**
 * Requests application pages received from the last task.
 * Masquerades as a new user every request and waits for a random value of seconds between 3 and 6 before a new request.
 * Scraping data on these pages.
@@ -84,7 +144,7 @@ in which case the cell will be empty.
 
 ****
 
-[SteamAppInfoCSVJoiner, SteamDLCInfoCSVJoiner]
+**[SteamAppInfoCSVJoiner, SteamDLCInfoCSVJoiner]**
 * Collects the results of all successful instances of the past task and merges them into a new file containing statistics about applications.
 * Fills in the empty cells 'nan'.
 

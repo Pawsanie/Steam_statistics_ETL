@@ -89,7 +89,7 @@ At the beginning of this script, the values of variables are described, <br/>
 by changing the values of which you can change this pipeline.<br/>
 **File location:**<br>
 ./:open_file_folder:Steam_statistics_tasks<br>
-   ├── :file_folder:start_steam_statistics_ETL.sh<br>
+   ├── :page_facing_up:start_steam_statistics_ETL.sh<br>
 The script contains an example of all the necessary arguments to run.<br/>
 To launch the pipeline through this script, do not forget to make it executable.
 ```bash
@@ -114,7 +114,7 @@ The example above shows the launch of one task.
 Also note that the task pipeline itself is described in the 'steam_statistics_luigi_ETL.py' script.<br/>
 **File location:**<br>
 ./:open_file_folder:Steam_statistics_tasks<br>
-   ├── :file_folder:steam_statistics_luigi_ETL.py<br>
+   ├── :page_facing_up:steam_statistics_luigi_ETL.py<br>
 
 ## Description of tasks:
 **AllSteamProductsData**

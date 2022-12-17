@@ -46,8 +46,6 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
     priority: int = 100
     # Landing path settings:
     directory_for_csv_join: str = 'ProductsInfo'
-    # Merge settings:
-    # merge_columns_names: list[str] = ['app_id']
 
     # 'apps_which_are_not_game_list' needs to be supplemented, according to test results ->
     apps_which_are_not_game: list[str] = [
@@ -105,8 +103,7 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
                                                     nested_file: path_to_file
                                                 }
                                             )
-
-        self.interested_data: dict[str, DataFrame] = self.task_table_data_parser()
+        self.task_table_data_parser()
 
     def steam_apps_data_cleaning(self, all_apps_data_frame: DataFrame) -> DataFrame:
         """
@@ -141,8 +138,8 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
             self.directory_for_csv_join,
             self.date_path_part
         ])
-        # self.task_data_landing(
-        #     data_to_landing=all_apps_data_frame.replace(r'^\s*$', 'NULL', regex=True),
-        #     output_path=self.output_path,
-        #     file_name=self.file_name
-        # )
+        self.task_data_landing(
+            data_to_landing=all_apps_data_frame.replace(r'^\s*$', 'NULL', regex=True),
+            output_path=self.output_path,
+            file_name=self.file_name
+        )

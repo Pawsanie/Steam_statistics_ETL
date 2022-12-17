@@ -46,9 +46,8 @@ create_diagrams_steam_statistics_ancestor_file_mask='csv'
 create_diagrams_steam_statistics_loglevel=30
 
 # Date:
-#date_path_part=$(date +%F)  # Today
+date_path_part=$(date +%F)  # Today
 #date_path_part=$(date +%F --date "YYYY-MM-DD")  # Exemple
-date_path_part=$(date +%F --date "2022-12-10")  # Exemple
 
 
 # Start:

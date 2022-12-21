@@ -2,11 +2,11 @@ from random import uniform, randint
 
 from luigi import run
 
-from Steam_statistics_tasks.AllSteamProductsData_luigi_task import AllSteamProductsDataTask
-from Steam_statistics_tasks.GetSteamProductsDataInfo_luigi_task import GetSteamProductsDataInfoTask
-from Steam_statistics_tasks.SteamProductsInfoCSVJoiner_luigi_task import \
+from Steam_statistics_ETL.Steam_statistics_tasks.AllSteamProductsData_luigi_task import AllSteamProductsDataTask
+from Steam_statistics_ETL.Steam_statistics_tasks.GetSteamProductsDataInfo_luigi_task import GetSteamProductsDataInfoTask
+from Steam_statistics_ETL.Steam_statistics_tasks.SteamProductsInfoCSVJoiner_luigi_task import \
     SteamProductsInfoInfoCSVJoinerTask
-from Steam_statistics_tasks.CreateDiagrams_luigi_task import CreateDiagramsSteamStatisticsTask
+from Steam_statistics_ETL.Steam_statistics_tasks.CreateDiagrams_luigi_task import CreateDiagramsSteamStatisticsTask
 """
 Steam statistics Luigi ETL.
 """

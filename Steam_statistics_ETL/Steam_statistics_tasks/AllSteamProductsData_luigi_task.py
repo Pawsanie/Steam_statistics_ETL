@@ -87,7 +87,7 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
                     file_list.append(path_to_file)
         if len(file_list) != 0:
             self.result_successor: list[str] = file_list
-            interested_data: dict[str, DataFrame] = self.task_universal_parser_part()
+            interested_data: dict[str, DataFrame] = self.get_extract_data(requires=file_list)
             all_apps_parsing_data: None = None
             for data in interested_data.values():
                 all_apps_parsing_data: DataFrame = self.data_frames_merge(

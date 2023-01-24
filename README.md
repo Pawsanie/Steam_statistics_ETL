@@ -148,6 +148,36 @@ in which case the cell will be empty.
 * Collects the results of all successful instances of the past task and merges them into a new file containing statistics about applications.
 * Fills in the empty cells 'nan'.
 
+## Known Problems:
+### FakeUserAgentError:
+When a task tries to send a request to a page, a number of **fake-useragent errors** appear:
+```text
+FakeUserAgentError:
+Error occurred during loading data. Trying to use cache server https://fake-useragent.herokuapp.com/browsers/0.1.11
+...
+urllib.error.HTTPError: HTTP Error 503: Service Unavailable
+...
+fake_useragent.errors.FakeUserAgentError: Maximum amount of retries reached
+...
+```
+This is due to the outdated version of the fake-useragent.<br>
+**Solution:**<br>
+Update the fake-useragent with the terminal, or command line.
+```bash
+pip install fake-useragent --upgrade
+```
+### bs4.FeatureNotFound:
+```text
+raise FeatureNotFound:
+bs4.FeatureNotFound: Couldn't find a tree builder with the features you requested: lxml. Do you need to install a parser library?
+```
+It looks like you don't have the lxml library installed.<br>
+**Solution:**<br>
+Install the lxml library with terminal, or command line
+```bash
+pip install lxml
+```
+
 ## Known Bugs:
 * Applications that do not have a price receive as a value not 0, but literally emptiness.
 * Sometimes it is not possible to scrape information about the publisher and developer of the application.

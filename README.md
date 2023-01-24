@@ -173,7 +173,7 @@ bs4.FeatureNotFound: Couldn't find a tree builder with the features you requeste
 ```
 It looks like you don't have the lxml library installed.<br>
 **Solution:**<br>
-Install the lxml library with terminal, or command line
+Install the lxml library with terminal, or command line.
 ```bash
 pip install lxml
 ```

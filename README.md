@@ -153,4 +153,6 @@ in which case the cell will be empty.
 * Sometimes it is not possible to scrape information about the publisher and developer of the application.
 The value in the cell will be empty.
 
-Thank you for showing interest in my work.
+***
+
+**Thank you** for your interest in my work.<br><br>

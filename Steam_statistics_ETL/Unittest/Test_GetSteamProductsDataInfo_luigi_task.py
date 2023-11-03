@@ -36,9 +36,11 @@ class TestGetSteamProductsDataInfo(TestParameters):
         """
         The operability of the GetSteamProductsDataInfo task itself, without writing to disk.
         """
-        with patch.object(GetSteamProductsDataInfoTask,
-                          'task_data_landing',
-                          return_value=None):
+        with patch.object(
+                GetSteamProductsDataInfoTask,
+                'task_data_landing',
+                return_value=None
+        ):
             GetSteamProductsDataInfoTask.make_flag = MagicMock(
                 return_value=devnull
             )

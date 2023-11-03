@@ -31,15 +31,17 @@ class TestAllSteamProductsData(TestParameters):
         """
         The operability of the AllSteamAppsData task itself, without writing to disk.
         """
-        with patch.object(AllSteamProductsDataTask,
-                          'task_data_landing',
-                          return_value=None):
+        with patch.object(
+                AllSteamProductsDataTask,
+                'task_data_landing',
+                return_value=None
+        ):
             is_there_an_error = self.task_class_name.set_status_message
             self.assertEqual(is_there_an_error, None)
 
     def AllSteamProductsData_run(self):
         """
-        Separate health check of the AllSteamAppsData.run module.
+        Separate health check of the 'AllSteamAppsData.run' module.
         """
         # self.prepare_data_landing_for_testing()
         with patch.object(AllSteamProductsDataTask,
@@ -49,7 +51,8 @@ class TestAllSteamProductsData(TestParameters):
                           #     self=self.task_class_name,
                           #     data_to_landing=self.get_test_data_frame(),
                           #     output_path=self.get_test_path(),
-                          #     file_name='null')
+                          #     file_name='null'
+                          #     )
                           ):
             is_there_an_error = self.task_class_name.run()
             self.assertRaises(TypeError, is_there_an_error)

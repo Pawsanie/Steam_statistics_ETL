@@ -30,9 +30,11 @@ class TestSteamProductsInfoCSVJoiner(TestParameters):
         """
         The operability of the SteamProductsInfoInfoCSVJoiner task itself, without writing to disk.
         """
-        with patch.object(SteamProductsInfoInfoCSVJoinerTask,
-                          'task_data_landing',
-                          return_value=None):
+        with patch.object(
+                SteamProductsInfoInfoCSVJoinerTask,
+                'task_data_landing',
+                return_value=None
+        ):
             is_there_an_error = self.task_class_name.set_status_message
             self.assertEqual(is_there_an_error, None)
 

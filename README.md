@@ -116,6 +116,22 @@ Also note that the task pipeline itself is described in the 'steam_statistics_lu
 ./:open_file_folder:Steam_statistics_ETL<br>
    └── :page_facing_up:steam_statistics_luigi_ETL.py<br>
 
+## Launch in Docker:
+To run a docker container with etl, you can use a ready-made dockerfile.<br>
+To do this, run the build command with administrator rights in Windows, or with sudo privileges in Unix-like systems.<br>
+**Example docker build command:**
+```commandline
+docker build -t luigi-steam -f С:\Git\Steam_statistics_ETL\Docker\dockerfile.df С:\Git\Steam_statistics_ETL\Docker\
+```
+Wait for the image to build.
+
+Go to your local repository folder.<br>
+Start building the docker image with a shell command.<br>
+**Example docker run command:**
+```commandline
+docker run -t --name Steam_Statistics luigi-steam
+```
+
 ## Description of tasks:
 **AllSteamProductsData**
 * Retrieves a list of applications from steam Web-API.

@@ -1,6 +1,7 @@
 from datetime import date
 from os import path, makedirs, remove
-from random import randint, uniform
+from random import randint \
+    # , uniform
 
 from pandas import DataFrame
 from luigi import Parameter, DateParameter
@@ -22,34 +23,44 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
     # Luigi parameters:
     landing_path_part: str = Parameter(
         significant=True,
-        description='Root path for landing task result.')
+        description='Root path for landing task result.'
+    )
     file_mask: str = Parameter(
         significant=True,
-        description='File format for landing.')
+        description='File format for landing.'
+    )
     ancestor_file_mask: str = Parameter(
         significant=True,
-        description='File format for extract.')
+        description='File format for extract.'
+    )
     date_path_part: date = DateParameter(
         significant=True,
         default=date.today(),
-        description='Date for root path')
+        description='Date for root path'
+    )
+
     # Luigi loging parameters:
     logfile_path: str = Parameter(
         default="steam_products_data_info.log",
-        description='Path to ".log" file')
+        description='Path to ".log" file'
+    )
     loglevel: int = Parameter(
         default=30,
-        description='Log Level')
+        description='Log Level'
+    )
+
     # Task settings:
     task_namespace: str = 'GetSteamProductsDataInfo'
     priority: int = 5000
     retry_count: int = 1
+
     # Collections base values:
     is_not_application_list: list[str] = [
         'Soundtrack', 'OST', 'Artbook', 'Texture', 'Demo', 'Playtest',
         'test2', 'test3', 'Pieterw', 'Closed Beta', 'Open Beta', 'RPG Maker',
         'Pack', 'Trailer', 'Teaser', 'Digital Art Book', 'Preorder Bonus'
     ]
+
     # Wait settings:
     time_wait: int = randint(1, 3)
     # time_wait: float = uniform(0.1, 0.3)
@@ -131,9 +142,11 @@ class GetSteamProductsDataInfoTask(UniversalLuigiTask, ParsingSteamData, Specifi
     def run(self):
         # Logging settings:
         logging_config(self.logfile_path, int(self.loglevel))
+
         # Path settings:
         self.date_path_part: str = self.get_date_path_part()
         self.output_path: str = path.join(*[str(self.landing_path_part), self.date_path_part])
+
         # Result Successor:
         self.result_successor: str = self.input()['AllSteamProductsData']
 

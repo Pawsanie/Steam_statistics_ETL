@@ -79,9 +79,11 @@ class ExtractDataFromWarHouse(DataFramesMerge):
                 else:
                     path_to_table: str = str.replace(flag.path, self.success_flag, '')
                     self.dir_list.append(path_to_table)
+
         elif type(self.result_successor) is str:
             path_to_table: str = str.replace(self.result_successor, self.success_flag, '')
             self.dir_list.append(path_to_table)
+
         else:
             path_to_table: str = str.replace(self.result_successor.path, self.success_flag, '')
             self.dir_list.append(path_to_table)
@@ -89,6 +91,7 @@ class ExtractDataFromWarHouse(DataFramesMerge):
             for dirs, folders, files in walk(parsing_dir):
                 for file in files:
                     partition_path: str = path.join(*[dirs, file])
+
                     if path.isfile(partition_path) and self.file_mask in file:
                         partition_path_split: tuple[str] = PurePath(partition_path).parts
                         partition_file: str = partition_path_split[-1]
@@ -101,7 +104,9 @@ class ExtractDataFromWarHouse(DataFramesMerge):
                         interested_partition_path: str = path.join(
                             *[partition_path,
                               partition_date,
-                              partition_file])
+                              partition_file]
+                        )
+
                         # Result:
                         self.interested_partition.setdefault(partition_date, {}) \
                             .update({partition_file: interested_partition_path})
@@ -134,12 +139,15 @@ class ExtractDataFromWarHouse(DataFramesMerge):
         for key in self.interested_partition:
             data_from_files: None = None
             files = self.interested_partition.get(key).values()
+
             for file in files:  # Parsing tables in to raw DataFrame.
                 extracted_data: DataFrame = self.how_to_extract(file)
-                # Merging Pandas DataFrames
+                # Merging Pandas DataFrames:
                 data_from_files: DataFrame = self.data_frames_merge(
                     data_from_files=data_from_files,
-                    extracted_data=extracted_data)
+                    extracted_data=extracted_data
+                )
+
             self.interested_data[key]: dict[str, DataFrame] = data_from_files
 
 
@@ -149,21 +157,27 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
     """
     landing_path_part: str = Parameter(
         significant=True,
-        description='Root path for landing task result.')
+        description='Root path for landing task result.'
+    )
     file_mask: str = Parameter(
         significant=True,
-        description='File format for landing.')
+        description='File format for landing.'
+    )
     ancestor_file_mask: str = Parameter(
         significant=True,
-        description='File format for extract.')
+        description='File format for extract.'
+    )
     date_path_part: date = DateParameter(
         significant=True,
         default=date.today(),
-        description='Date for root path')
+        description='Date for root path'
+    )
     file_name: str = Parameter(
         significant=True,
         default='',
-        description='File name for landing.')
+        description='File name for landing.'
+    )
+
     # Task settings:
     success_flag: str = '_Validate_Success'
     output_path: str = ''  # Must be rewrite in "run()" method.
@@ -221,25 +235,31 @@ class UniversalLuigiTask(Task, ExtractDataFromWarHouse):
             file_name: str = self.file_name
         if output_path is None:
             output_path: str = self.output_path
+
         # Landing:
         data_type_need: str = f"{self.file_mask}"
         data_from_files: DataFrame = DataFrame(data_to_landing)
+
         if not path.exists(output_path):
             makedirs(output_path)
         flag_path: str = path.join(*[output_path, self.success_flag])
         output_path: str = path.join(*[output_path, f"{file_name}.{self.file_mask}"])
+
         if data_type_need == 'json':
             data_from_files: str = data_from_files.to_json(orient='records')
             data_from_files: str = json.loads(data_from_files)
             json_data: str = json.dumps(data_from_files, indent=4, ensure_ascii=False)
             with open(output_path, 'w', encoding='utf-8') as json_file:
                 json_file.write(json_data)
+
         if data_type_need == 'parquet':
-            parquet_table = Table.from_pandas(data_to_landing)
+            parquet_table: Table = Table.from_pandas(data_to_landing)
             parquet.write_table(parquet_table, output_path, use_dictionary=False, compression=None)
+
         if data_type_need == 'csv':
             data_to_csv: str = data_to_landing.to_csv(index=False, sep=';')
             with open(output_path, 'w') as csv_file:
                 csv_file.write(data_to_csv)
+
         with open(flag_path, 'w'):
             pass

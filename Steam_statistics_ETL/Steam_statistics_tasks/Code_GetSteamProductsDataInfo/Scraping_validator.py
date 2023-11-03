@@ -29,7 +29,7 @@ class ScrapingValidator(DataFramesMerge):
         """
         path_to_file: str = path.join(*[self.output_path, catalogue_name])
         file_path: str = path.join(*[path_to_file, file_name])
-        df: DataFrame = data_frame.to_dict('records')
+        df: list[dict] = data_frame.to_dict('records')
         df: str = str(df[0]) + '\n'
         if not path.exists(path_to_file):
             makedirs(path_to_file)
@@ -64,7 +64,8 @@ class ScrapingValidator(DataFramesMerge):
             )
             product_data_frame: DataFrame = self.data_frames_merge(
                 data_from_files=product_data_frame,
-                extracted_data=new_df_row)
+                extracted_data=new_df_row
+            )
             logging.info("'" + app_name + "' scraping successfully completed.")
         return product_data_frame
 
@@ -75,11 +76,13 @@ class ScrapingValidator(DataFramesMerge):
         Unsuitable product safe, add to DataFrame and logging info massage.
         """
         date_today: list[str] = str(datetime.today()).split(' ')
-        new_df_row: DataFrame = DataFrame(data={
-            'app_id': [app_id],
-            'app_name': [app_name],
-            'scan_date': [date_today[0]]
-        })
+        new_df_row: DataFrame = DataFrame(
+            data={
+                'app_id': [app_id],
+                'app_name': [app_name],
+                'scan_date': [date_today[0]]
+            }
+        )
         self.safe_dict_data(
             data_frame=new_df_row,
             file_name=safe_file_name,
@@ -106,10 +109,14 @@ class ScrapingValidator(DataFramesMerge):
         data_for_validation: dict = {
             "Steam_Apps_Info": [apps_df, apps_df_redy],
             "Steam_DLC_Info": [dlc_df, dlc_df_redy],
-            "Unsuitable_region_Products_Info": [unsuitable_region_products_df,
-                                                unsuitable_region_products_df_redy],
-            "Products_not_for_unlogged_user_Info": [products_not_for_unlogged_user_df,
-                                                    products_not_for_unlogged_user_df_redy]
+            "Unsuitable_region_Products_Info": [
+                unsuitable_region_products_df,
+                unsuitable_region_products_df_redy
+            ],
+            "Products_not_for_unlogged_user_Info": [
+                products_not_for_unlogged_user_df,
+                products_not_for_unlogged_user_df_redy
+            ]
         }
         apps_and_dlc_df_list: list = []
         for key in data_for_validation:

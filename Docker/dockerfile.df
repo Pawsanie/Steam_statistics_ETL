@@ -1,0 +1,42 @@
+# System initialization:
+FROM python:3.11
+
+# Alpine initialization:
+USER root
+RUN \
+    adduser --allow-bad-names Luigi && \
+    apt-get install -y git && \
+    apt-get install -y gcc && \
+    apt-get install -y g++ && \
+    apt-get install -y bash && \
+    pip3 install --upgrade pip
+
+# Python initialization:
+USER Luigi
+RUN \
+    pip3 install matplotlib && \
+    pip3 install luigi && \
+    pip3 install pandas && \
+    pip3 install fake_useragent && \
+    pip3 install requests && \
+    pip3 install beautifulsoup4 && \
+    pip3 install pyarrow && \
+    pip3 install tqdm && \
+    pip3 install lxml
+
+# Luigi initialization:
+USER Luigi
+RUN \
+    git clone https://github.com/Pawsanie/Steam_statistics_ETL.git ~/Steam_statistics_ETL && \
+    mkdir -p ~/Steam_ETL/Data_Lake/All_steam_products_data && \
+    mkdir -p ~/Steam_ETL/Logs/ && \
+    mkdir -p ~/Steam_ETL/Data_Lake/Info_about_steam_products && \
+    mkdir -p ~/Steam_ETL/Data_Warehouse/Steam_apps_info && \
+    mkdir -p ~/Steam_ETL/Data_Warehouse/Steam_DLC_info && \
+    mkdir -p ~/Steam_ETL/Data_Warehouse/Diagram_Steam_Statistics && \
+    chmod +x ~/Steam_statistics_ETL/start_steam_statistics_ETL.sh
+
+# Doker initialization:
+WORKDIR /home/Luigi/Steam_statistics_ETL/
+CMD ["/home/Luigi/Steam_statistics_ETL/start_steam_statistics_ETL.sh"]
+LABEL server="Luigi" destination="STEAM"

@@ -21,35 +21,43 @@ class CreateDiagramsSteamStatisticsTask(UniversalLuigiTask):
     # Luigi parameters:
     landing_path_part: str = Parameter(
         significant=True,
-        description='Root path for landing task result.')
+        description='Root path for landing task result.'
+    )
     file_mask: str = Parameter(
         significant=True,
-        description='File format for landing.')
+        description='File format for landing.'
+    )
     ancestor_file_mask: str = Parameter(
         significant=True,
-        description='File format for extract.')
+        description='File format for extract.'
+    )
     date_path_part: date = DateParameter(
         significant=True,
         default=date.today(),
-        description='Date for root path')
+        description='Date for root path'
+    )
+
     # Luigi loging parameters:
     logfile_path: str = Parameter(
         default="steam_products_info.log",
-        description='Path to ".log" file')
+        description='Path to ".log" file'
+    )
     loglevel: int = Parameter(
         default=30,
-        description='Log Level')
-    # Task settings:
-    task_namespace = 'CreateDiagramsSteamStatistics'
-    priority = 200
+        description='Log Level'
+    )
 
-    columns = [
+    # Task settings:
+    task_namespace: str = 'CreateDiagramsSteamStatistics'
+    priority: int = 200
+
+    columns: list[str] = [
         'app_id', 'app_name', 'developer', 'rating_all_time_percent',
         'rating_all_time_count', 'rating_30d_percent', 'rating_30d_count',
         'publisher', 'price', 'steam_release_date', 'tags', 'scan_date'
     ]
 
-    colors = ['r', 'y', 'g', 'b']
+    colors: list[str] = ['r', 'y', 'g', 'b']
 
     def __int__(self):
         self.interested_aps: dict[str, DataFrame] = {}
@@ -74,7 +82,8 @@ class CreateDiagramsSteamStatisticsTask(UniversalLuigiTask):
                    shadow=True,
                    explode=(0, 0, 0.1, 0),
                    radius=1.2,
-                   autopct='%1.1f%%')
+                   autopct='%1.1f%%'
+                   )
 
         pyplot.savefig(fname=path_to_save_diagram,
                        # dpi='figure',
@@ -85,9 +94,11 @@ class CreateDiagramsSteamStatisticsTask(UniversalLuigiTask):
                        pad_inches=0.1,
                        facecolor='auto',
                        edgecolor='auto',
-                       backend=None)
+                       backend=None
+                       )
 
-    def get_steam_products_tags_list_and_slices_count(self, cors_number: int,
+    @staticmethod
+    def get_steam_products_tags_list_and_slices_count(cors_number: int,
                                                       interest_df: DataFrame) -> list[list[str], list[int]]:
         """
         Make slices for diagram.

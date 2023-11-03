@@ -17,14 +17,18 @@ class SpecificFilePathsGenerator:
         return path.join(*[self.output_path, 'DLC_info', '_safe_dict_dlc_data'])
 
     def unsuitable_region_products_df_safe_dict_data_path(self):
-        return path.join(*[self.output_path,
-                           'Products_not_for_this_region_info',
-                           '_safe_dict_products_not_for_this_region_data'])
+        return path.join(*[
+            self.output_path,
+            'Products_not_for_this_region_info',
+            '_safe_dict_products_not_for_this_region_data'
+        ])
 
     def products_not_for_unlogged_user_df_safe_dict_data_path(self):
-        return path.join(*[self.output_path,
-                           'Products_not_for_unlogged_user_info',
-                           '_safe_dict_must_be_logged_to_scrapping_products'])
+        return path.join(*[
+            self.output_path,
+            'Products_not_for_unlogged_user_info',
+            '_safe_dict_must_be_logged_to_scrapping_products'
+        ])
 
     def get_product_save_file_path_list(self, products_save_file_list: list[str]) -> list[str]:
         """

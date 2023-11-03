@@ -20,30 +20,40 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
     # Luigi parameters:
     landing_path_part: str = Parameter(
         significant=True,
-        description='Root path for landing task result.')
+        description='Root path for landing task result.'
+    )
     file_mask: str = Parameter(
         significant=True,
-        description='File format for landing.')
+        description='File format for landing.'
+    )
     ancestor_file_mask: str = Parameter(
         significant=True,
-        description='File format for extract.')
+        description='File format for extract.'
+    )
     date_path_part: date = DateParameter(
         significant=True,
         default=date.today(),
-        description='Date for root path')
+        description='Date for root path'
+    )
     file_name: str = Parameter(
         significant=True,
-        description='File name for landing.')
+        description='File name for landing.'
+    )
+
     # Luigi loging parameters:
     logfile_path: str = Parameter(
         default="steam_products_info.log",
-        description='Path to ".log" file')
+        description='Path to ".log" file'
+    )
     loglevel: int = Parameter(
         default=30,
-        description='Log Level')
+        description='Log Level'
+    )
+
     # Task settings:
     task_namespace: str = 'SteamProductsInfo'
     priority: int = 100
+
     # Landing path settings:
     directory_for_csv_join: str = 'ProductsInfo'
 
@@ -57,7 +67,7 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
 
     def output(self) -> LocalTarget:
         """
-        Specific Luigi.output method for this Task.
+        Specific 'Luigi.output' method for this Task.
         """
         output_path: str = path.join(*[
             str(self.landing_path_part),
@@ -120,10 +130,13 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
     def run(self):
         # Logging settings:
         logging_config(self.logfile_path, int(self.loglevel))
+
         # Result Successor:
         self.result_successor = self.input()['GetSteamProductsDataInfo']
+
         # Path settings:
         self.date_path_part: str = self.get_date_path_part()
+
         # Run:
         self.get_csv_for_join()
         all_apps_data_frame: None = None
@@ -132,6 +145,7 @@ class SteamProductsInfoInfoCSVJoinerTask(UniversalLuigiTask):
                 data_from_files=all_apps_data_frame,
                 extracted_data=data)
         all_apps_data_frame: DataFrame = self.steam_apps_data_cleaning(all_apps_data_frame)
+
         # Path settings:
         self.output_path: str = path.join(*[
             self.landing_path_part,

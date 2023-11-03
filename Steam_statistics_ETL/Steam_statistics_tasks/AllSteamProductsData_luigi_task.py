@@ -20,27 +20,36 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
     # Luigi parameters:
     landing_path_part: str = Parameter(
         significant=True,
-        description='Root path for landing task result.')
+        description='Root path for landing task result.'
+    )
     file_mask: str = Parameter(
         significant=True,
-        description='File format for landing.')
+        description='File format for landing.'
+    )
     ancestor_file_mask: str = Parameter(
         significant=True,
-        description='File format for extract.')
+        description='File format for extract.'
+    )
     file_name: str = Parameter(
         significant=True,
-        description='File name for landing.')
+        description='File name for landing.'
+    )
     date_path_part: date = DateParameter(
         significant=True,
         default=date.today(),
-        description='Date for root path')
+        description='Date for root path'
+    )
+
     # Luigi loging parameters:
     logfile_path: str = Parameter(
         default="all_steam_products.log",
-        description='Path to ".log" file')
+        description='Path to ".log" file'
+    )
     loglevel: int = Parameter(
         default=30,
-        description='Log Level')
+        description='Log Level'
+    )
+
     # Task settings:
     task_namespace: str = 'AllSteamProductsData'
     priority: int = 300
@@ -48,9 +57,11 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
     def run(self):
         # Logging settings:
         logging_config(self.logfile_path, int(self.loglevel))
+
         # Path settings:
         self.date_path_part: str = self.get_date_path_part()
         self.output_path: str = path.join(*[str(self.landing_path_part), self.date_path_part])
+
         # Run:
         if path.exists(path.join(*[
             str(self.landing_path_part),
@@ -64,7 +75,8 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
             steam_apps_list: DataFrame = self.steam_apps_validator(steam_apps_list, partition_path)
             self.task_data_landing(data_to_landing=steam_apps_list)
 
-    def steam_aps_from_web_api_parser(self, interested_data: dict[str]) -> dict[str]:
+    @staticmethod
+    def steam_aps_from_web_api_parser(interested_data: dict[str]) -> dict[str]:
         """
         Parses the result received from the Steam Web-API.
         """
@@ -85,6 +97,7 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
                 if self.success_flag in file:
                     path_to_file: str = path.join(*[dirs, file])
                     file_list.append(path_to_file)
+
         if len(file_list) != 0:
             self.result_successor: list[str] = file_list
             interested_data: dict[str, DataFrame] = self.get_extract_data(requires=file_list)
@@ -97,8 +110,9 @@ class AllSteamProductsDataTask(UniversalLuigiTask):
 
             interested_apps: DataFrame = new_steam_apps_list[
                 ~new_steam_apps_list['name']
-                .isin(all_apps_parsing_data['name'])]\
+                .isin(all_apps_parsing_data['name'])] \
                 .reset_index(drop=True)
+
         else:
             interested_apps: dict[str] = steam_apps_list
         return interested_apps

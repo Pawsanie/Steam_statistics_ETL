@@ -128,7 +128,7 @@ Wait for the image to build.
 Start building the docker image with a shell command.<br>
 **Example docker run command:**
 ```commandline
-docker run -t --name Steam_Statistics luigi-steam
+docker run -d -t --name Steam_Statistics luigi-steam
 ```
 
 ## Description of tasks:

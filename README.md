@@ -125,7 +125,6 @@ docker build -t luigi-steam -f С:\Git\Steam_statistics_ETL\Docker\dockerfile.df
 ```
 Wait for the image to build.
 
-Go to your local repository folder.<br>
 Start building the docker image with a shell command.<br>
 **Example docker run command:**
 ```commandline

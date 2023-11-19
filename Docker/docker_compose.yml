@@ -1,28 +1,31 @@
 version: '1.0'
 services:
 
-  Vault:
+  vault:
     build:
-      context: ./Steam_statistics_ETL/Docker
-      dockerfile: ./Steam_statistics_ETL/Docker/Vault.df
-    container_name: Steam_statistics-Vault
+      dockerfile: Vault.df
+#      context: ./Steam_statistics_ETL/Docker
+#      dockerfile: ./Steam_statistics_ETL/Docker/Vault.df
+    container_name: Steam_statistics-Vaults
     ports:
       - "8200:8200"
     environment:
       VAULT_DEV_ROOT_TOKEN_ID: "my-root-token"
 
-  PostgreSQL:
+  postgresql:
     build:
-      context: ./Steam_statistics_ETL/Docker
-      dockerfile: ./Steam_statistics_ETL/Docker/PostgreSQL.df
+      dockerfile: PostgreSQL.df
+#      context: ./Steam_statistics_ETL/Docker
+#      dockerfile: ./Steam_statistics_ETL/Docker/PostgreSQL.df
     container_name: Steam_statistics-PostgreSQL
     ports:
       - "8080:80"
 
   #Elastick_kash:
 
-  Luigi_ETL:
+  luigi_etl:
     build:
-      context: ./Steam_statistics_ETL/Docker
-      dockerfile: ./Steam_statistics_ETL/Docker/Luigi_ETL.df
+      dockerfile: Luigi_ETL.df
+#      context: ./Steam_statistics_ETL/Docker
+#      dockerfile: ./Steam_statistics_ETL/Docker/Luigi_ETL.df
     container_name: Steam_statistics-Luigi_ETL

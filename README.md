@@ -121,7 +121,7 @@ To run a docker container with etl, you can use a ready-made dockerfile.<br>
 To do this, run the build command with administrator rights in Windows, or with sudo privileges in Unix-like systems.<br>
 **Example docker build command:**
 ```commandline
-docker build -t luigi-steam -f С:\Git\Steam_statistics_ETL\Docker\luigi_etl.df С:\Git\Steam_statistics_ETL\Docker\
+docker build -t luigi-steam -f С:\Git\Steam_statistics_ETL\Docker\luigi_ETL.df С:\Git\Steam_statistics_ETL\Docker\
 ```
 Wait for the image to build.
 

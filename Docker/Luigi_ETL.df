@@ -38,5 +38,6 @@ RUN \
 
 # Doker initialization:
 WORKDIR /home/Luigi/Steam_statistics_ETL/
-CMD ["/home/Luigi/Steam_statistics_ETL/start_steam_statistics_ETL.sh"]
+ENTRYPOINT ["/home/Luigi/Steam_statistics_ETL/start_steam_statistics_ETL.sh"]
+CMD ["bash"]
 LABEL server="Luigi" destination="STEAM"

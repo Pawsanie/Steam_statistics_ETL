@@ -1,0 +1,24 @@
+# System initialization:
+FROM vault:1.13.3
+
+# Set Environment:
+RUN \
+  root_token_id=$(head -c 16 /dev/urandom | base64 | tr -d '+/=') \
+  password_dba=$(head -c 16 /dev/urandom | base64 | tr -d '+/=') \
+  password_Luigi=$(head -c 16 /dev/urandom | base64 | tr -d '+/=')
+ENV \
+  VAULT_DEV_ROOT_TOKEN_ID=$root_token_id
+
+# Enable IPC_LOCK:
+RUN \
+  set -eux && apk --no-cache add su-exec
+
+# Doker initialization:
+ENTRYPOINT [ \
+            "sh", "-c", "vault server -dev \
+            & sleep 5 && vault kv put secret/steam_statistics/dba value=$password_dba \
+            && vault kv put secret/steam_statistics/luigi value=$password_Luigi \
+            && tail -f /dev/null" \
+            ]
+CMD ["vault", "server", "-dev"]
+LABEL server="Vault" destination="STEAM"

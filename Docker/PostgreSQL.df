@@ -1,0 +1,33 @@
+# System initialization:
+FROM postgres:16.1
+
+# PostgreSQL initialization:
+USER root
+RUN \
+    cat <<'EOF' > /docker-entrypoint-initdb.d/init-user-db.sh \
+    echo "#!/bin/bash
+set -e
+
+password_dba=$(vault read -address="$VAULT_ADDR" -format=json secret/steam_statistics/dba | jq -r '.data_base.password')
+password_Luigi=$(vault read -address="$VAULT_ADDR" -format=json secret/steam_statistics/luigi | jq -r '.data_base.password')
+
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+
+    CREATE USER dba WITH PASSWORD $password_dba;
+    CREATE USER luigi WITH PASSWORD $password_Luigi;
+
+    CREATE DATABASE steam_statistics;
+
+    GRANT ALL PRIVILEGES ON DATABASE steam_statistics TO dba;
+
+    GRANT CONNECT ON DATABASE steam_statistics TO luigi;
+    GRANT USAGE ON SCHEMA public TO luigi;
+    GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO luigi;
+    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO luigi;
+
+EOSQL" \
+    EOF \
+
+# Doker initialization:
+CMD ["bash"]
+LABEL server="PostgreSQL" destination="STEAM"

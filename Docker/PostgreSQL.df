@@ -1,33 +1,56 @@
 # System initialization:
 FROM postgres:16.1
 
+# Debian initialization:
+USER root
+RUN \
+    apt update && \
+    apt-get install -y curl && \
+    apt-get install -y lsb-base && \
+    apt-get install -y jq && \
+    apt-get install -y wget
+RUN \
+    wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg && \
+    gpg --no-default-keyring --keyring /usr/share/keyrings/hashicorp-archive-keyring.gpg --fingerprint && \
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(grep VERSION_CODENAME /etc/os-release | cut -d= -f2) main" \
+    | tee /etc/apt/sources.list.d/hashicorp.list && \
+    apt update
+RUN \
+    apt-get install -y vault && \
+    apt-get clean
+
 # PostgreSQL initialization:
 USER root
 RUN \
+    mkdir /docker-entrypoint-initdb.d \
+    touch /docker-entrypoint-initdb.d/init-user-db.sh \
+    chmod +x /docker-entrypoint-initdb.d/init-user-db.sh \
+    vault_address="http://0.0.0.0:8200" \
     cat <<'EOF' > /docker-entrypoint-initdb.d/init-user-db.sh \
-    echo "#!/bin/bash
-set -e
+    echo "#!/bin/bash \
+set -e \
 
-password_dba=$(vault read -address="$VAULT_ADDR" -format=json secret/steam_statistics/dba | jq -r '.data_base.password')
-password_Luigi=$(vault read -address="$VAULT_ADDR" -format=json secret/steam_statistics/luigi | jq -r '.data_base.password')
+password_dba=$(vault read -address="$vault_address" -format=json secret/steam_statistics/dba | jq -r '.data_base.password') \
+password_Luigi=$(vault read -address="$vault_address" -format=json secret/steam_statistics/luigi | jq -r '.data_base.password') \
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL \
 
-    CREATE USER dba WITH PASSWORD $password_dba;
-    CREATE USER luigi WITH PASSWORD $password_Luigi;
+    CREATE USER dba WITH PASSWORD $password_dba; \
+    CREATE USER luigi WITH PASSWORD $password_Luigi; \
 
-    CREATE DATABASE steam_statistics;
+    CREATE DATABASE steam_statistics; \
 
-    GRANT ALL PRIVILEGES ON DATABASE steam_statistics TO dba;
+    GRANT ALL PRIVILEGES ON DATABASE steam_statistics TO dba; \
 
-    GRANT CONNECT ON DATABASE steam_statistics TO luigi;
-    GRANT USAGE ON SCHEMA public TO luigi;
-    GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO luigi;
-    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO luigi;
+    GRANT CONNECT ON DATABASE steam_statistics TO luigi; \
+    GRANT USAGE ON SCHEMA public TO luigi; \
+    GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO luigi; \
+    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO luigi; \
 
 EOSQL" \
-    EOF \
+    EOF
 
 # Doker initialization:
+#ENTRYPOINT [""]
 CMD ["bash"]
 LABEL server="PostgreSQL" destination="STEAM"

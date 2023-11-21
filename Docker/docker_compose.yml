@@ -9,8 +9,10 @@ services:
     container_name: Steam_statistics-Vaults
     ports:
       - "8200:8200"
-    environment:
-      VAULT_DEV_ROOT_TOKEN_ID: "my-root-token"
+      - "8201:8201"
+    cap_add:
+      - IPC_LOCK
+    restart: always
 
   postgresql:
     build:
@@ -20,6 +22,8 @@ services:
     container_name: Steam_statistics-PostgreSQL
     ports:
       - "8080:80"
+      - "8201:8201"
+    restart: always
 
   #Elastick_kash:
 
@@ -29,3 +33,4 @@ services:
 #      context: ./Steam_statistics_ETL/Docker
 #      dockerfile: ./Steam_statistics_ETL/Docker/Luigi_ETL.df
     container_name: Steam_statistics-Luigi_ETL
+    restart: always

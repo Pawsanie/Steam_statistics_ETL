@@ -9,7 +9,8 @@ RUN \
     apt-get install -y gcc && \
     apt-get install -y g++ && \
     apt-get install -y bash && \
-    pip3 install --upgrade pip
+    pip3 install --upgrade pip \
+    apt-get clean
 
 # Python initialization:
 USER Luigi

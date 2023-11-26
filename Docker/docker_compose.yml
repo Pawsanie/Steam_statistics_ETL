@@ -7,6 +7,8 @@ services:
 #      context: ./Steam_statistics_ETL/Docker
 #      dockerfile: ./Steam_statistics_ETL/Docker/Vault.df
     container_name: Steam_statistics-Vaults
+    networks:
+      - steam_statistics_etl_network
     ports:
       - "8200:8200"
       - "8201:8201"
@@ -20,17 +22,28 @@ services:
 #      context: ./Steam_statistics_ETL/Docker
 #      dockerfile: ./Steam_statistics_ETL/Docker/PostgreSQL.df
     container_name: Steam_statistics-PostgreSQL
+    depends_on:
+      - vault
+    networks:
+      - steam_statistics_etl_network
     ports:
       - "8080:80"
-      - "8201:8201"
     restart: always
 
   #Elastick_kash:
 
-  luigi_etl:
-    build:
-      dockerfile: Luigi_ETL.df
-#      context: ./Steam_statistics_ETL/Docker
-#      dockerfile: ./Steam_statistics_ETL/Docker/Luigi_ETL.df
-    container_name: Steam_statistics-Luigi_ETL
-    restart: always
+#  luigi_etl:
+#    build:
+#      dockerfile: Luigi_ETL.df
+##      context: ./Steam_statistics_ETL/Docker
+##      dockerfile: ./Steam_statistics_ETL/Docker/Luigi_ETL.df
+#    container_name: Steam_statistics-Luigi_ETL
+#    networks:
+#      - steam_statistics_etl_network
+#    depends_on:
+#      - vault
+#      - postgresql
+#    restart: always
+
+networks:
+  steam_statistics_etl_network:

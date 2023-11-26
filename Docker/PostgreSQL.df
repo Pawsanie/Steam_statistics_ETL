@@ -27,24 +27,24 @@ RUN \
     chmod +x /root/docker_entrypoint/init_user_db.sh
 RUN \
     vault_address="$(getent hosts service1 | awk '{ print $1 }'):8200" \
-    echo -e "#!/bin/bash \
+    echo "#!/bin/bash\n\
 
-password_dba=$(vault read -address="$vault_address" -format=json secret/steam_statistics/dba | jq -r '.data_base.password') \
-password_Luigi=$(vault read -address="$vault_address" -format=json secret/steam_statistics/luigi | jq -r '.data_base.password') \
+password_dba=$(vault read -address="$vault_address" -format=json secret/steam_statistics/dba | jq -r '.data_base.password')\n\
+password_Luigi=$(vault read -address="$vault_address" -format=json secret/steam_statistics/luigi | jq -r '.data_base.password')\n\
 
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL \
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL\n\
 
-    CREATE USER dba WITH PASSWORD $password_dba; \
-    CREATE USER luigi WITH PASSWORD $password_Luigi; \
+CREATE USER dba WITH PASSWORD $password_dba;\n\
+CREATE USER luigi WITH PASSWORD $password_Luigi;\n\
 
-    CREATE DATABASE steam_statistics; \
+CREATE DATABASE steam_statistics;\n\
 
-    GRANT ALL PRIVILEGES ON DATABASE steam_statistics TO dba; \
+GRANT ALL PRIVILEGES ON DATABASE steam_statistics TO dba;\n\
 
-    GRANT CONNECT ON DATABASE steam_statistics TO luigi; \
-    GRANT USAGE ON SCHEMA public TO luigi; \
-    GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO luigi; \
-    GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO luigi; \
+GRANT CONNECT ON DATABASE steam_statistics TO luigi;\n\
+GRANT USAGE ON SCHEMA public TO luigi;\n\
+GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO luigi;\n\
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO luigi;\n\
 
 EOSQL" > /root/docker_entrypoint/init_user_db.sh
 

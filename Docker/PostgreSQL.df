@@ -22,13 +22,12 @@ RUN \
 # PostgreSQL initialization:
 USER root
 RUN \
-    mkdir /docker-entrypoint-initdb.d \
-    touch /docker-entrypoint-initdb.d/init-user-db.sh \
-    chmod +x /docker-entrypoint-initdb.d/init-user-db.sh \
+    mkdir -p /root/docker_entrypoint  && \
+    touch /root/docker_entrypoint/init_user_db.sh && \
+    chmod +x /root/docker_entrypoint/init_user_db.sh
+RUN \
     vault_address="$(getent hosts service1 | awk '{ print $1 }'):8200" \
-    cat <<'EOF' > /docker-entrypoint-initdb.d/init-user-db.sh \
-    echo "#!/bin/bash \
-set -e \
+    echo -e "#!/bin/bash \
 
 password_dba=$(vault read -address="$vault_address" -format=json secret/steam_statistics/dba | jq -r '.data_base.password') \
 password_Luigi=$(vault read -address="$vault_address" -format=json secret/steam_statistics/luigi | jq -r '.data_base.password') \
@@ -47,10 +46,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     GRANT SELECT, INSERT ON ALL TABLES IN SCHEMA public TO luigi; \
     GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO luigi; \
 
-EOSQL" \
-    EOF
+EOSQL" > /root/docker_entrypoint/init_user_db.sh
 
 # Doker initialization:
-#ENTRYPOINT [""]
+ENTRYPOINT ["/root/docker_entrypoint/init_user_db.sh"]
 CMD ["bash"]
 LABEL server="PostgreSQL" destination="STEAM"

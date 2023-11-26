@@ -28,6 +28,7 @@ services:
       - steam_statistics_etl_network
     ports:
       - "8080:80"
+      - "5432:5432"
     restart: always
 
   #Elastick_kash:

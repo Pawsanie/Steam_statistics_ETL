@@ -25,7 +25,7 @@ RUN \
     mkdir /docker-entrypoint-initdb.d \
     touch /docker-entrypoint-initdb.d/init-user-db.sh \
     chmod +x /docker-entrypoint-initdb.d/init-user-db.sh \
-    vault_address="http://0.0.0.0:8200" \
+    vault_address="$(getent hosts service1 | awk '{ print $1 }'):8200" \
     cat <<'EOF' > /docker-entrypoint-initdb.d/init-user-db.sh \
     echo "#!/bin/bash \
 set -e \

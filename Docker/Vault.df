@@ -43,11 +43,10 @@ RUN \
 
 # Doker initialization:
 ENTRYPOINT [ \
-            "sh", "-c", "vault server -dev \
-            & sleep 5 \
-            && vault kv put secret/steam_statistics/dba value=$password_dba \
-            && vault kv put secret/steam_statistics/luigi value=$password_Luigi \
-            && tail -f /dev/null" \
+            "sh", "-c", "vault server -dev", \
+            "vault kv put secret/steam_statistics/dba value='$password_dba'", \
+            "vault kv put secret/steam_statistics/luigi value='$password_Luigi'", \
+            "tail -f /dev/null" \
             ]
 CMD ["vault", "server", "-config=/vault/config/vault.hcl", "-dev"]
 LABEL server="Vault" destination="STEAM"

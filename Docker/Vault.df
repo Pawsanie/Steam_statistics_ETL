@@ -7,7 +7,7 @@ RUN \
   password_dba=$(head -c 16 /dev/urandom | base64 | tr -d '+/=') \
   password_Luigi=$(head -c 16 /dev/urandom | base64 | tr -d '+/=') \
 
-  touch /vault/config/vault.hcl &&\
+  touch /vault/config/vault.hcl && \
   echo -e '{\n\
   "storage": {\n\
     "file": {\n\
@@ -40,13 +40,34 @@ ENV \
 # Enable IPC_LOCK and Bash:
 RUN \
   set -eux && apk --no-cache add su-exec bash
+  
+# Vault initialization:
+RUN \
+  mkdir /vault/init && \
+  touch /vault/init/init.sh && \
+  touch /root/vault_keys && \
+  echo -e "#!/bin/bash\n\
+init_output=\$(vault operator init -key-shares=1 -key-threshold=1)\n\
+unsealing_key=\$(echo "$init_output" | awk '/Unseal Key 1:/ {print $NF}')\n\
+root_token=\$(echo "$init_output" | awk '/Root Token:/ {print $NF}')\n\
+echo \$unsealing_key > /root/vault_keys\n\
+echo \$root_token >> /root/vault_keys\n\
+vault operator unseal "\$unsealing_key"\
+" > /vault/init/init.sh  && \
+  chmod +X /vault/init/init.sh
 
 # Doker initialization:
 ENTRYPOINT [ \
-            "bash", "-c", "vault server -config=/vault/config/vault.hcl", \
+            "bash", "-c", \
+            "vault server -config=/vault/config/vault.hcl", \
+            "/vault/init/init.sh", \
             "vault kv put secret/steam_statistics/dba value='$password_dba'", \
             "vault kv put secret/steam_statistics/luigi value='$password_Luigi'", \
             "tail -f /dev/null" \
             ]
-CMD ["bash", "-c", "vault server -config=/vault/config/vault.hcl", "tail -f /dev/null"]
+CMD [ \
+  "bash", "-c", \
+  "vault server -config=/vault/config/vault.hcl", \
+  "tail -f /dev/null" \
+  ]
 LABEL server="Vault" destination="STEAM"

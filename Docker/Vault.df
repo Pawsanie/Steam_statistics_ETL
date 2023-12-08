@@ -48,11 +48,11 @@ RUN \
   touch /root/vault_keys && \
   echo -e "#!/bin/bash\n\
 init_output=\$(vault operator init -key-shares=1 -key-threshold=1)\n\
-unsealing_key=\$(echo "\$init_output" | awk '/Unseal Key 1:/ {print $NF}')\n\
-root_token=\$(echo "\$init_output" | awk '/Root Token:/ {print $NF}')\n\
-echo "\$unsealing_key" > /root/vault_keys\n\
-echo "\$root_token" >> /root/vault_keys\n\
-vault operator unseal key "\$unsealing_key"\
+unsealing_key=\$(echo -e \"\$init_output\" | grep \"Unseal Key 1:\" | awk '/Unseal Key 1:/ {print \$4}')\n\
+root_token=\$(echo -e \"\$init_output\" | grep \"Initial Root Token:\" | awk '/Initial Root Token:/ {print \$4}')\n\
+echo \"\$unsealing_key\" > /root/vault_keys\n\
+echo \"\$root_token\" >> /root/vault_keys\n\
+vault operator unseal key \"\$unsealing_key\"\
 " > /vault/init/init.sh  && \
   chmod +x /vault/init/init.sh
 

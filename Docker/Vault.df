@@ -52,7 +52,7 @@ unsealing_key=\$(echo -e \"\$init_output\" | grep \"Unseal Key 1:\" | awk '/Unse
 root_token=\$(echo -e \"\$init_output\" | grep \"Initial Root Token:\" | awk '/Initial Root Token:/ {print \$4}')\n\
 echo \"\$unsealing_key\" > /root/vault_keys\n\
 echo \"\$root_token\" >> /root/vault_keys\n\
-vault operator unseal key \"\$unsealing_key\"\
+vault operator unseal \"\$unsealing_key\"\
 " > /vault/init/init.sh  && \
   chmod +x /vault/init/init.sh
 

@@ -54,7 +54,7 @@ echo \$unsealing_key > /root/vault_keys\n\
 echo \$root_token >> /root/vault_keys\n\
 vault operator unseal "\$unsealing_key"\
 " > /vault/init/init.sh  && \
-  chmod +X /vault/init/init.sh
+  chmod +x /vault/init/init.sh
 
 # Doker initialization:
 ENTRYPOINT [ \

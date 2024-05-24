@@ -5,8 +5,8 @@ FROM vault:1.13.3
 RUN \
   root_token_id=$(head -c 16 /dev/urandom | base64 | tr -d '+/=') \
   mkdir /vault_data && \
-
   touch /vault/config/vault.hcl && \
+\
   echo -e '{\n\
   "storage": {\n\
     "file": {\n\
@@ -53,7 +53,7 @@ if ! \$(echo -e \"\$init_output\" | grep -q \"Vault is already initialized\"); t
     echo \"\$unsealing_key\" > /vault_data/vault_keys\n\
     echo \"\$root_token\" >> /vault_data/vault_keys\n\
     vault operator unseal \"\$unsealing_key\"\n\
-  
+\
     vault login $root_token\n\
     password_dba=$(head -c 16 /dev/urandom | base64 | tr -d '+/=')\n\
     password_Luigi=$(head -c 16 /dev/urandom | base64 | tr -d '+/=')\n\
@@ -71,7 +71,7 @@ fi\
 RUN \
   touch /vault/init/ENTRYPOINT.sh && \
   echo -e "#!/bin/bash\n\
-
+\
 vault server -config=/vault/config/vault.hcl &\n\
 vault_pid=\$! &\n\
 sleep 5 &&\n\

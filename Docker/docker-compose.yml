@@ -1,9 +1,10 @@
-version: '1.0'
+version: '2'
 services:
 
   vault:
     build:
-      dockerfile: Dockerfile.Vault
+      context: ./Vault
+      dockerfile: Dockerfile
     container_name: Steam_statistics-Vaults
     volumes:
       - vault_data:/vault_data
@@ -18,7 +19,8 @@ services:
 
   postgresql:
     build:
-      dockerfile: Dockerfile.PostgreSQL
+      context: ./PostgreSQL
+      dockerfile: Dockerfile
     container_name: Steam_statistics-PostgreSQL
     depends_on:
       - vault
@@ -31,9 +33,8 @@ services:
 
 #  luigi_etl:
 #    build:
-#      dockerfile: Dockerfile.Luigi_ETL
-##      context: ./Steam_statistics_ETL/Docker
-##      dockerfile: ./Steam_statistics_ETL/Docker/Luigi_ETL.df
+#      context: ./Luigi_ETL
+#      dockerfile: Dockerfile
 #    container_name: Steam_statistics-Luigi_ETL
 #    networks:
 #      - steam_statistics_etl_network
@@ -41,6 +42,7 @@ services:
 #      - vault
 #      - postgresql
 #    restart: always
+
 volumes:
   vault_data:
 

@@ -3,10 +3,10 @@ services:
 
   vault:
     build:
-      dockerfile: Vault.df
-#      context: ./Steam_statistics_ETL/Docker
-#      dockerfile: ./Steam_statistics_ETL/Docker/Vault.df
+      dockerfile: Dockerfile.Vault
     container_name: Steam_statistics-Vaults
+    volumes:
+      - vault_data:/vault_data
     networks:
       - steam_statistics_etl_network
     ports:
@@ -18,9 +18,7 @@ services:
 
   postgresql:
     build:
-      dockerfile: PostgreSQL.df
-#      context: ./Steam_statistics_ETL/Docker
-#      dockerfile: ./Steam_statistics_ETL/Docker/PostgreSQL.df
+      dockerfile: Dockerfile.PostgreSQL
     container_name: Steam_statistics-PostgreSQL
     depends_on:
       - vault
@@ -31,11 +29,9 @@ services:
       - "5432:5432"
     restart: always
 
-  #Elastick_kash:
-
 #  luigi_etl:
 #    build:
-#      dockerfile: Luigi_ETL.df
+#      dockerfile: Dockerfile.Luigi_ETL
 ##      context: ./Steam_statistics_ETL/Docker
 ##      dockerfile: ./Steam_statistics_ETL/Docker/Luigi_ETL.df
 #    container_name: Steam_statistics-Luigi_ETL
@@ -45,6 +41,8 @@ services:
 #      - vault
 #      - postgresql
 #    restart: always
+volumes:
+  vault_data:
 
 networks:
   steam_statistics_etl_network:

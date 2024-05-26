@@ -54,12 +54,14 @@ if ! \$(echo -e \"\$init_output\" | grep -q \"Vault is already initialized\"); t
     echo \"\$root_token\" >> /vault_data/vault_keys\n\
     vault operator unseal \"\$unsealing_key\"\n\
 \
-    vault login $root_token\n\
-    password_dba=$(head -c 16 /dev/urandom | base64 | tr -d '+/=')\n\
-    password_Luigi=$(head -c 16 /dev/urandom | base64 | tr -d '+/=')\n\
-    vault kv put secret/steam_statistics/dba value="$password_dba"\n\
-    vault kv put secret/steam_statistics/luigi value="$password_Luigi"\n\
+    export VAULT_TOKEN=\"\$root_token\"\n\
+    password_dba=\$(head -c 16 /dev/urandom | base64 | tr -d '+/=')\n\
+    password_Luigi=\$(head -c 16 /dev/urandom | base64 | tr -d '+/=')\n\
+    vault secrets enable -path=steam_statistics kv\n\
+    vault kv put steam_statistics/dba/PostgreSQL login=\"dba\" password=\"\$password_dba\"\n\
+    vault kv put steam_statistics/luigi/PostgreSQL login=\"luigi\" password=\"\$password_Luigi\"\n\
     unset VAULT_TOKEN\n\
+\
 else\n\
     unsealing_key=\$(sed -n \"1p\" /vault_data/vault_keys)\n\
     vault operator unseal \$unsealing_key\n\
